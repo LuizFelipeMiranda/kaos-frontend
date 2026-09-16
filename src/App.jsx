@@ -364,7 +364,7 @@ function App() {
               )}
               <br/>
               {/* Botão para Sair da Sala adicionado aqui */}
-              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>🚪 SAIR DA SALA</button>
+              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}> SAIR DA SALA</button>
             </>
           )}
 
