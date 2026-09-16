@@ -7,7 +7,7 @@ import musicaTema from './assets/tema.mp3';
 import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
 
-const socket = io('https://kaos-backend-xyz.onrender.com');
+const socket = io('https://kaos-backend-83du.onrender.com');
 
 const getCorCss = (cor) => {
   switch(cor) {
