@@ -30,7 +30,7 @@ const renderValorCarta = (valor) => {
 const gerarSeedAleatoria = () => Math.random().toString(36).substring(7);
 
 const getPosicaoOponente = (index, totalOponentes) => {
-  if (totalOponentes === 1) return { top: '8%', left: '50%' }; // Movido um pouquinho para dentro da mesa
+  if (totalOponentes === 1) return { top: '8%', left: '50%' }; 
   if (totalOponentes === 2) return index === 0 ? { top: '15%', left: '10%' } : { top: '15%', left: '90%' };
   if (totalOponentes === 3) return index === 0 ? { top: '40%', left: '0%' } : index === 1 ? { top: '10%', left: '50%' } : { top: '40%', left: '100%' };
   if (totalOponentes === 4) return index === 0 ? { top: '40%', left: '0%' } : index === 1 ? { top: '12%', left: '30%' } : index === 2 ? { top: '12%', left: '70%' } : { top: '40%', left: '100%' };
@@ -63,19 +63,16 @@ function App() {
   const [alvoSelecionado, setAlvoSelecionado] = useState(null);
   const [vencedor, setVencedor] = useState(null);
 
-  // ESTADOS DE CONFIGURAÇÃO DE ÁUDIO
   const [modalConfigAberto, setModalConfigAberto] = useState(false);
   const [musicaAtiva, setMusicaAtiva] = useState(true);
   const [volumeMusica, setVolumeMusica] = useState(0.4);
   const [efeitosAtivos, setEfeitosAtivos] = useState(true);
   const [volumeEfeitos, setVolumeEfeitos] = useState(0.7);
 
-  // Referências para os elementos de áudio do navegador
   const audioMusicaRef = useRef(null);
   const audioEfeitoRef = useRef(null);
   const audioAlarmeRef = useRef(null);
 
-  // Controla a música de fundo
   useEffect(() => {
     if (audioMusicaRef.current) {
       audioMusicaRef.current.volume = volumeMusica;
@@ -87,7 +84,6 @@ function App() {
     }
   }, [musicaAtiva, volumeMusica]);
 
-  // Função auxiliar para tocar efeitos sonoros (envolvida em useCallback)
   const tocarEfeito = useCallback((tipo = 'carta') => {
     if (!efeitosAtivos) return;
     if (tipo === 'carta' && audioEfeitoRef.current) {
@@ -155,6 +151,16 @@ function App() {
   const passarVez = () => { if (turnoAtual === socket.id) socket.emit('passar_vez', minhaSala); };
   const baterNaMesa = () => { if (euJaBati) return; setEuJaBati(true); socket.emit('bater_mesa', minhaSala); };
 
+  // === NOVA FUNÇÃO: SAIR DA SALA ===
+  const sairDaSala = () => {
+    socket.emit('sair_sala', minhaSala);
+    setMinhaSala(null);
+    setJogadores([]);
+    setInfoJogadores([]);
+    setJogoIniciado(false);
+    setVencedor(null);
+  };
+
   const toggleSelecao = (cartaClicada) => {
     if (turnoAtual !== socket.id) return;
     tocarEfeito('carta');
@@ -188,7 +194,6 @@ function App() {
 
   return (
     <div>
-      {/* ELEMENTOS DE ÁUDIO INVISÍVEIS NO HTML */}
       <audio ref={audioMusicaRef} src={musicaTema} loop />
       <audio ref={audioEfeitoRef} src={somCarta} />
       <audio ref={audioAlarmeRef} src={somAlarme} />
@@ -309,10 +314,8 @@ function App() {
           </div>
         </div>
       ) : (
-        /* MENU INICIAL COM BOTÃO DE CONFIGURAÇÕES NO CANTO SUPERIOR DIREITO DO CARD */
         <div className="container" style={{ position: 'relative' }}>
           
-          {/* BOTÃO DE CONFIGURAÇÕES (Engrenagem no canto superior direito) */}
           <button 
             onClick={() => setModalConfigAberto(true)} 
             style={{ position: 'absolute', top: '20px', right: '20px', background: '#f1c40f', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
@@ -332,7 +335,8 @@ function App() {
                 </div>
               </div>
               <div>
-                <input type="text" placeholder="Seu apelido..." value={nome} onChange={(e) => setNome(e.target.value)} />
+                {/* Limite de 12 caracteres adicionado aqui */}
+                <input type="text" placeholder="Seu apelido..." maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} />
               </div>
               <div style={{ marginTop: '20px' }}>
                 <button className="btn btn-verde" onClick={criarSala}>Criar Nova Sala</button>
@@ -356,18 +360,19 @@ function App() {
               {jogadores[0]?.id === socket.id ? (
                 <button className="btn btn-vermelho" onClick={iniciarPartida} style={{ marginTop: '20px', fontSize: '24px' }}>▶ INICIAR PARTIDA</button>
               ) : (
-                <p style={{ fontSize: '18px', fontWeight: 'bold' }}>Aguardando o dono da sala...</p>
+                <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>Aguardando o dono da sala iniciar...</p>
               )}
+              <br/>
+              {/* Botão para Sair da Sala adicionado aqui */}
+              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>🚪 SAIR DA SALA</button>
             </>
           )}
 
-          {/* MODAL DE CONFIGURAÇÕES DE ÁUDIO */}
           {modalConfigAberto && (
             <div className="modal-overlay">
               <div className="modal-content" style={{ width: '320px' }}>
                 <h2>🔊 Configurações</h2>
                 
-                {/* Controle de Música */}
                 <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
                     <MusicNote size={24} /> Música de Fundo
@@ -385,7 +390,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Controle de Efeitos Sonoros */}
                 <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
                     <SpeakerHigh size={24} /> Efeitos Sonoros
