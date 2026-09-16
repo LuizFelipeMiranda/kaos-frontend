@@ -372,7 +372,7 @@ function App() {
                 <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>Aguardando o dono da sala iniciar...</p>
               )}
               <br/>
-              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>🚪 SAIR DA SALA</button>
+              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>SAIR DA SALA</button>
             </>
           )}
 
