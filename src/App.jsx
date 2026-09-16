@@ -133,12 +133,23 @@ function App() {
     });
 
     socket.on('fim_de_jogo', (nomeGanhador) => { setVencedor(nomeGanhador); });
+    
     socket.on('erro', (mensagem) => { setErro(mensagem); setTimeout(() => setErro(''), 4000); });
+
+    // === PROTEÇÃO DE TELA CONGELADA ===
+    // Se a conexão cair ou o servidor reiniciar, ele avisa e reseta o jogo para evitar bugs de "tela fantasma"
+    socket.on('disconnect', () => {
+      setErro('🔴 Conexão perdida com o servidor! A tela será atualizada em instantes...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 5000);
+    });
 
     return () => {
       socket.off('sala_criada'); socket.off('entrou_na_sala'); socket.off('atualizar_jogadores');
       socket.off('partida_iniciada'); socket.off('estado_atualizado'); socket.off('erro');
       socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo');
+      socket.off('disconnect');
     };
   }, [nome, meuAvatarSeed, tocarEfeito]);
 
@@ -151,7 +162,6 @@ function App() {
   const passarVez = () => { if (turnoAtual === socket.id) socket.emit('passar_vez', minhaSala); };
   const baterNaMesa = () => { if (euJaBati) return; setEuJaBati(true); socket.emit('bater_mesa', minhaSala); };
 
-  // === NOVA FUNÇÃO: SAIR DA SALA ===
   const sairDaSala = () => {
     socket.emit('sair_sala', minhaSala);
     setMinhaSala(null);
@@ -212,7 +222,7 @@ function App() {
             {turnoAtual === socket.id ? 'SUA VEZ!' : jogadorDaVez ? `VEZ DE ${jogadorDaVez.nome.toUpperCase()}` : 'Aguarde...'}
           </div>
           
-          {erro && <div style={{ backgroundColor: '#ff7675', color: '#fff', padding: '10px 15px', borderRadius: '10px', border: '3px solid #000', fontWeight: 'bold', display: 'inline-block', marginBottom: '10px' }}>{erro}</div>}
+          {erro && <div style={{ backgroundColor: '#ff7675', color: '#fff', padding: '10px 15px', borderRadius: '10px', border: '3px solid #000', fontWeight: 'bold', display: 'inline-block', marginBottom: '10px', zIndex: 1100, position: 'relative' }}>{erro}</div>}
 
           <div className="mesa-redonda">
             {oponentes.map((op, index) => {
@@ -335,7 +345,6 @@ function App() {
                 </div>
               </div>
               <div>
-                {/* Limite de 12 caracteres adicionado aqui */}
                 <input type="text" placeholder="Seu apelido..." maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} />
               </div>
               <div style={{ marginTop: '20px' }}>
@@ -363,8 +372,7 @@ function App() {
                 <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>Aguardando o dono da sala iniciar...</p>
               )}
               <br/>
-              {/* Botão para Sair da Sala adicionado aqui */}
-              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}> SAIR DA SALA</button>
+              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>🚪 SAIR DA SALA</button>
             </>
           )}
 
@@ -414,7 +422,7 @@ function App() {
             </div>
           )}
 
-          {erro && <p style={{ color: '#ff4757', fontWeight: 'bold', fontSize: '20px', marginTop: '20px' }}>{erro}</p>}
+          {erro && <p style={{ color: '#ff4757', fontWeight: 'bold', fontSize: '20px', marginTop: '20px', zIndex: 1100, position: 'relative' }}>{erro}</p>}
         </div>
       )}
     </div>
