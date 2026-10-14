@@ -8,6 +8,10 @@ import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
 import somVitoria from './assets/vitoria.mp3'; // <-- Novo som de vitória adicionado
 
+
+// Importando o QR code livepix
+import qrCodeImg from './assets/livepix.png'
+
 const socket = io('https://kaos-backend-83du.onrender.com');
 
 const getCorCss = (cor) => {
@@ -381,7 +385,7 @@ function App() {
                 <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>Ajude a manter o KAOS online e sem anúncios.</p>
                 
                 {/* Substitua o src pela URL da imagem do seu QR Code gerado no LivePix */}
-                <img src="https://widget.livepix.gg/embed/1d94de25-2428-4f0c-9434-86a377070e63" alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
+                <img src={qrCodeImg} alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
                 
                 <br/>
                 {/* Substitua o href pelo link direto do seu LivePix */}
