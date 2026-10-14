@@ -375,6 +375,20 @@ function App() {
                 <input type="text" placeholder="Código..." value={codigoSalaInput} onChange={(e) => setCodigoSalaInput(e.target.value)} style={{ width: '120px' }} />
                 <button className="btn btn-azul" onClick={entrarSala}>Entrar</button>
               </div>
+              {/* === INÍCIO DA ÁREA DE DOAÇÃO LIVEPIX === */}
+              <div style={{ marginTop: '40px', padding: '15px', border: '3px dashed #f1c40f', borderRadius: '15px', backgroundColor: '#fffdf0', maxWidth: '400px', margin: '40px auto 0 auto' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#f39c12' }}>☕ pague-me um cafézinho!</h3>
+                <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>Ajude a manter o KAOS online e sem anúncios.</p>
+                
+                {/* Substitua o src pela URL da imagem do seu QR Code gerado no LivePix */}
+                <img src="https://widget.livepix.gg/embed/1d94de25-2428-4f0c-9434-86a377070e63" alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
+                
+                <br/>
+                {/* Substitua o href pelo link direto do seu LivePix */}
+                <a href="https://livepix.gg/felpz3r4" target="_blank" rel="noreferrer" className="btn btn-roxo btn-pequeno" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
+                  Doar via LivePix
+                </a>
+              </div>
             </>
           ) : (
             <>
