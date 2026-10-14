@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, SpeakerSlash, MusicNote } from '@phosphor-icons/react';
+import { HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, SpeakerSlash, MusicNote, BookBookmark } from '@phosphor-icons/react';
 
 // Importando os áudios da pasta assets
 import musicaTema from './assets/tema.mp3';
 import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
+import somVitoria from './assets/vitoria.mp3'; // <-- Novo som de vitória adicionado
 
 const socket = io('https://kaos-backend-83du.onrender.com');
 
@@ -64,6 +65,7 @@ function App() {
   const [vencedor, setVencedor] = useState(null);
 
   const [modalConfigAberto, setModalConfigAberto] = useState(false);
+  const [modalRegrasAberto, setModalRegrasAberto] = useState(false); // Estado para o modal de regras
   const [musicaAtiva, setMusicaAtiva] = useState(true);
   const [volumeMusica, setVolumeMusica] = useState(0.4);
   const [efeitosAtivos, setEfeitosAtivos] = useState(true);
@@ -72,6 +74,7 @@ function App() {
   const audioMusicaRef = useRef(null);
   const audioEfeitoRef = useRef(null);
   const audioAlarmeRef = useRef(null);
+  const audioVitoriaRef = useRef(null); // Ref para o áudio de vitória
 
   useEffect(() => {
     if (audioMusicaRef.current) {
@@ -83,6 +86,15 @@ function App() {
       }
     }
   }, [musicaAtiva, volumeMusica]);
+
+  // Efeito disparado quando alguém ganha o jogo
+  useEffect(() => {
+    if (vencedor && audioVitoriaRef.current && efeitosAtivos) {
+      audioVitoriaRef.current.volume = volumeEfeitos;
+      audioVitoriaRef.current.currentTime = 0;
+      audioVitoriaRef.current.play().catch(() => {});
+    }
+  }, [vencedor, efeitosAtivos, volumeEfeitos]);
 
   const tocarEfeito = useCallback((tipo = 'carta') => {
     if (!efeitosAtivos) return;
@@ -132,12 +144,12 @@ function App() {
       setTimeout(() => setErro(''), 6000); 
     });
 
-    socket.on('fim_de_jogo', (nomeGanhador) => { setVencedor(nomeGanhador); });
+    socket.on('fim_de_jogo', (nomeGanhador) => { 
+      setVencedor(nomeGanhador); 
+    });
     
     socket.on('erro', (mensagem) => { setErro(mensagem); setTimeout(() => setErro(''), 4000); });
 
-    // === PROTEÇÃO DE TELA CONGELADA ===
-    // Se a conexão cair ou o servidor reiniciar, ele avisa e reseta o jogo para evitar bugs de "tela fantasma"
     socket.on('disconnect', () => {
       setErro('🔴 Conexão perdida com o servidor! A tela será atualizada em instantes...');
       setTimeout(() => {
@@ -207,6 +219,7 @@ function App() {
       <audio ref={audioMusicaRef} src={musicaTema} loop />
       <audio ref={audioEfeitoRef} src={somCarta} />
       <audio ref={audioAlarmeRef} src={somAlarme} />
+      <audio ref={audioVitoriaRef} src={somVitoria} />
 
       {vencedor ? (
         <div className="container" style={{ marginTop: '100px' }}>
@@ -326,6 +339,15 @@ function App() {
       ) : (
         <div className="container" style={{ position: 'relative' }}>
           
+          {/* BOTÃO DO LIVRO DE REGRAS (Canto Superior Esquerdo) */}
+          <button 
+            onClick={() => setModalRegrasAberto(true)} 
+            style={{ position: 'absolute', top: '20px', left: '20px', background: '#3498db', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
+            title="Regras do Jogo"
+          >
+            <BookBookmark size={26} weight="bold" color="#fff" />
+          </button>
+
           <button 
             onClick={() => setModalConfigAberto(true)} 
             style={{ position: 'absolute', top: '20px', right: '20px', background: '#f1c40f', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
@@ -372,12 +394,45 @@ function App() {
                 <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>Aguardando o dono da sala iniciar...</p>
               )}
               <br/>
-              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>SAIR DA SALA</button>
+              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>🚪 SAIR DA SALA</button>
             </>
           )}
 
+          {/* MODAL DE REGRAS */}
+          {modalRegrasAberto && (
+            <div className="modal-overlay" style={{ zIndex: 1200 }}>
+              <div className="modal-content" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
+                <h2 style={{ textAlign: 'center', marginTop: 0 }}>📖 Regras do KAOS</h2>
+                
+                <h3 style={{ color: '#2ecc71' }}>🎯 Objetivo</h3>
+                <p style={{ marginTop: '5px' }}>Ser o primeiro jogador a ficar sem cartas na mão.</p>
+
+                <h3 style={{ color: '#e74c3c' }}>🃏 Cartas Especiais</h3>
+                <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
+                  <li><strong>Bloqueio:</strong> Pula a vez do próximo jogador.</li>
+                  <li><strong>Inverter:</strong> Inverte o sentido do jogo.</li>
+                  <li><strong>+2 e +4:</strong> O próximo compra as cartas ou joga outro +2/+4 para acumular e passar a punição para o próximo!</li>
+                  <li><strong>Coringa (Preto):</strong> Pode ser jogado a qualquer momento para escolher a cor da mesa.</li>
+                </ul>
+
+                <h3 style={{ color: '#3498db' }}>🌪️ A Regra do Zero (0)</h3>
+                <p style={{ marginTop: '5px' }}>Jogou um 0? Escolha trocar suas cartas com um oponente específico ou "Girar" todas as mãos na direção do jogo.</p>
+
+                <h3 style={{ color: '#9b59b6' }}>🚨 A Regra do Nove (9)</h3>
+                <p style={{ marginTop: '5px' }}>Sempre que o "9" for jogado, um botão gigante aparecerá na tela. O último jogador a bater na mesa compra o número de cartas correspondente aos 9 jogados!</p>
+
+                <h3 style={{ color: '#ff4757' }}>🗣️ KAOS!</h3>
+                <p style={{ marginTop: '5px' }}>Quando tiver apenas 2 cartas e jogar uma (ficando com 1), você DEVE clicar no botão "KAOS!". Se esquecer e alguém denunciar, você compra 1 carta extra de punição.</p>
+
+                <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                  <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>Entendi!</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {modalConfigAberto && (
-            <div className="modal-overlay">
+            <div className="modal-overlay" style={{ zIndex: 1200 }}>
               <div className="modal-content" style={{ width: '320px' }}>
                 <h2>🔊 Configurações</h2>
                 
