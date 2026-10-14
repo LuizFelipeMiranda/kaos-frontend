@@ -384,11 +384,9 @@ function App() {
                 <h3 style={{ margin: '0 0 10px 0', color: '#f39c12' }}>☕ pague-me um cafézinho!</h3>
                 <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>Ajude a manter o KAOS online e sem anúncios.</p>
                 
-                {/* Substitua o src pela URL da imagem do seu QR Code gerado no LivePix */}
                 <img src={qrCodeImg} alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
                 
                 <br/>
-                {/* Substitua o href pelo link direto do seu LivePix */}
                 <a href="https://livepix.gg/felpz3r4" target="_blank" rel="noreferrer" className="btn btn-roxo btn-pequeno" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
                   Doar via LivePix
                 </a>
