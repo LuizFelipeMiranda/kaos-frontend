@@ -317,8 +317,7 @@ function App() {
 
             <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)}>KAOS!</button>
 
-            {/* A MÃO ESTÁ AGORA ACIMA DOS BOTÕES DE AÇÃO */}
-            <div className="mao-container" style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', padding: '0 10px 10px 10px', maxWidth: '1000px', margin: '0 auto' }}>
+            <div className="mao-container" style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', padding: '0 10px 10px 10px', maxWidth: '1000px', margin: '15px auto' }}>
               {minhaMao.map((carta) => {
                 const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
                 let classes = "carta";
