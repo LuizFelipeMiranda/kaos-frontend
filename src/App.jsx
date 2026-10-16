@@ -441,7 +441,7 @@ function App() {
                   <h3 style={{ color: '#9b59b6' }}>A Regra do Nove (9)</h3>
                   <p style={{ marginTop: '5px' }}>Sempre que o "9" for jogado, um botão gigante aparecerá no ecrã. O último jogador a bater na mesa compra o número de cartas correspondente aos 9 jogados!</p>
 
-                  <h3 style={{ color: '#ff4757' }}>KAOS! (O Antigo UNO)</h3>
+                  <h3 style={{ color: '#ff4757' }}>KAOS!</h3>
                   <p style={{ marginTop: '5px' }}>Quando tiver apenas 2 cartas e for jogar uma (ficando com 1 na mão), DEVE clicar no botão "KAOS!". Se esquecer e alguém denunciar, compra 1 carta extra de punição.</p>
 
                   <div style={{ textAlign: 'center', marginTop: '20px' }}>
