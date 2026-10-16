@@ -410,7 +410,7 @@ function App() {
                 <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>Aguardando o dono da sala iniciar...</p>
               )}
               <br/>
-              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>🚪 SAIR DA SALA</button>
+              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>SAIR DA SALA</button>
             </>
           )}
 
@@ -418,26 +418,26 @@ function App() {
           {modalRegrasAberto && (
             <div className="modal-overlay" style={{ zIndex: 1200 }}>
               <div className="modal-content" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
-                <h2 style={{ textAlign: 'center', marginTop: 0 }}>📖 Regras do KAOS</h2>
+                <h2 style={{ textAlign: 'center', marginTop: 0 }}>Regras do KAOS</h2>
                 
-                <h3 style={{ color: '#2ecc71' }}>🎯 Objetivo</h3>
+                <h3 style={{ color: '#2ecc71' }}>Objetivo</h3>
                 <p style={{ marginTop: '5px' }}>Ser o primeiro jogador a ficar sem cartas na mão.</p>
 
-                <h3 style={{ color: '#e74c3c' }}>🃏 Cartas Especiais</h3>
+                <h3 style={{ color: '#e74c3c' }}>Cartas Especiais</h3>
                 <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
-                  <li><strong>Bloqueio:</strong> Pula a vez do próximo jogador.</li>
+                  <li><strong>Bloqueio:</strong> Pula a vez do próximo jogador (Seu efeito acumula).</li>
                   <li><strong>Inverter:</strong> Inverte o sentido do jogo.</li>
                   <li><strong>+2 e +4:</strong> O próximo compra as cartas ou joga outro +2/+4 para acumular e passar a punição para o próximo!</li>
-                  <li><strong>Coringa (Preto):</strong> Pode ser jogado a qualquer momento para escolher a cor da mesa.</li>
+                  <li><strong>Coringa (Preto):</strong> Pode ser jogado a qualquer momento para escolher a cor da próxima carta a ser jogada na mesa.</li>
                 </ul>
 
-                <h3 style={{ color: '#3498db' }}>🌪️ A Regra do Zero (0)</h3>
+                <h3 style={{ color: '#3498db' }}>A Regra do Zero (0)</h3>
                 <p style={{ marginTop: '5px' }}>Jogou um 0? Escolha trocar suas cartas com um oponente específico ou "Girar" todas as mãos na direção do jogo.</p>
 
-                <h3 style={{ color: '#9b59b6' }}>🚨 A Regra do Nove (9)</h3>
-                <p style={{ marginTop: '5px' }}>Sempre que o "9" for jogado, um botão gigante aparecerá na tela. O último jogador a bater na mesa compra o número de cartas correspondente aos 9 jogados!</p>
+                <h3 style={{ color: '#9b59b6' }}>A Regra do Nove (9)</h3>
+                <p style={{ marginTop: '5px' }}>Sempre que o "9" for jogado, um botão gigante aparecerá na tela. O último jogador a bater na mesa compra o número de cartas correspondente aos 9 jogados!(Fique sempre alerta!)</p>
 
-                <h3 style={{ color: '#ff4757' }}>🗣️ KAOS!</h3>
+                <h3 style={{ color: '#ff4757' }}>KAOS!</h3>
                 <p style={{ marginTop: '5px' }}>Quando tiver apenas 2 cartas e jogar uma (ficando com 1), você DEVE clicar no botão "KAOS!". Se esquecer e alguém denunciar, você compra 1 carta extra de punição.</p>
 
                 <div style={{ textAlign: 'center', marginTop: '20px' }}>
