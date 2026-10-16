@@ -6,7 +6,7 @@ import { HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, ArrowsClockwise, A
 import musicaTema from './assets/tema.mp3';
 import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
-import somVitoria from './assets/vitoria.mp3'; // <-- Novo som de vitória adicionado
+import somVitoria from './assets/vitoria.mp3'; 
 
 
 // Importando o QR code livepix
