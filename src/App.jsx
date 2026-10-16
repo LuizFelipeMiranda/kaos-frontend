@@ -5,6 +5,7 @@ import { HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, ArrowsClockwise, A
 import musicaTema from './assets/tema.mp3';
 import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
+import livePixQRCode from './assets/livepix.png';
 
 const socket = io('https://kaos-backend-83du.onrender.com');
 
@@ -376,7 +377,7 @@ function App() {
                   </div>
                 </div>
                 <div>
-                  <input type="text" placeholder="A sua alcunha..." maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} />
+                  <input type="text" placeholder="Seu Nome" maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} />
                 </div>
                 <div style={{ marginTop: '20px' }}>
                   <button className="btn btn-verde" onClick={criarSala}>Criar Nova Sala</button>
@@ -389,7 +390,7 @@ function App() {
                   <h3 style={{ margin: '0 0 10px 0', color: '#f39c12' }}>Apoie o Servidor!</h3>
                   <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>Ajude a manter o KAOS online e sem anúncios.</p>
                   {/* COLOQUE AQUI O LINK DA IMAGEM DO SEU QR CODE */}
-                  <img src="URL_DA_SUA_IMAGEM_AQUI" alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
+                  <img src={livePixQRCode} alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
                   <br/>
                   <a href="https://livepix.gg/" target="_blank" rel="noreferrer" className="btn btn-roxo btn-pequeno" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
                     Doar via LivePix
