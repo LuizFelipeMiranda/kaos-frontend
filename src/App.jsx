@@ -1,16 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, SpeakerSlash, MusicNote, BookBookmark } from '@phosphor-icons/react';
+// Importação do novo ícone DeviceMobile adicionada aqui
+import { HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, SpeakerSlash, MusicNote, BookBookmark, DeviceMobile } from '@phosphor-icons/react';
 
-// Importando os áudios da pasta assets
 import musicaTema from './assets/tema.mp3';
 import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
-import somVitoria from './assets/vitoria.mp3'; 
-
-
-// Importando o QR code livepix
-import qrCodeImg from './assets/livepix.png'
+// import somVitoria from './assets/vitoria.mp3'; // Descomente quando tiver o som
 
 const socket = io('https://kaos-backend-83du.onrender.com');
 
@@ -69,7 +65,7 @@ function App() {
   const [vencedor, setVencedor] = useState(null);
 
   const [modalConfigAberto, setModalConfigAberto] = useState(false);
-  const [modalRegrasAberto, setModalRegrasAberto] = useState(false); // Estado para o modal de regras
+  const [modalRegrasAberto, setModalRegrasAberto] = useState(false); 
   const [musicaAtiva, setMusicaAtiva] = useState(true);
   const [volumeMusica, setVolumeMusica] = useState(0.4);
   const [efeitosAtivos, setEfeitosAtivos] = useState(true);
@@ -78,7 +74,7 @@ function App() {
   const audioMusicaRef = useRef(null);
   const audioEfeitoRef = useRef(null);
   const audioAlarmeRef = useRef(null);
-  const audioVitoriaRef = useRef(null); // Ref para o áudio de vitória
+  const audioVitoriaRef = useRef(null); 
 
   useEffect(() => {
     if (audioMusicaRef.current) {
@@ -91,7 +87,6 @@ function App() {
     }
   }, [musicaAtiva, volumeMusica]);
 
-  // Efeito disparado quando alguém ganha o jogo
   useEffect(() => {
     if (vencedor && audioVitoriaRef.current && efeitosAtivos) {
       audioVitoriaRef.current.volume = volumeEfeitos;
@@ -155,7 +150,7 @@ function App() {
     socket.on('erro', (mensagem) => { setErro(mensagem); setTimeout(() => setErro(''), 4000); });
 
     socket.on('disconnect', () => {
-      setErro('🔴 Conexão perdida com o servidor! A tela será atualizada em instantes...');
+      setErro('🔴 Conexão perdida! O ecrã será atualizado em instantes...');
       setTimeout(() => {
         window.location.reload();
       }, 5000);
@@ -220,282 +215,293 @@ function App() {
 
   return (
     <div>
+      {/* ECRÃ DE AVISO PARA DISPOSITIVOS MÓVEIS NA VERTICAL */}
+      <div className="aviso-rotacao">
+        <DeviceMobile size={100} color="#f1c40f" />
+        <h1 style={{ fontFamily: 'Fredoka', marginTop: '20px' }}>Rode o seu telemóvel!</h1>
+        <p style={{ fontSize: '18px', maxWidth: '300px', lineHeight: '1.5' }}>
+          O KAOS foi desenhado para ser jogado na horizontal, garantindo o espaço perfeito para a mesa e as suas cartas.
+        </p>
+      </div>
+
+      {/* ÁUDIOS ESCONDIDOS */}
       <audio ref={audioMusicaRef} src={musicaTema} loop />
       <audio ref={audioEfeitoRef} src={somCarta} />
       <audio ref={audioAlarmeRef} src={somAlarme} />
-      <audio ref={audioVitoriaRef} src={somVitoria} />
+      {/* <audio ref={audioVitoriaRef} src={somVitoria} /> Descomente quando tiver o som */}
 
-      {vencedor ? (
-        <div className="container" style={{ marginTop: '100px' }}>
-          <h1 className="logo-kaos"><div className="carta-k-logo">K</div>AOS</h1>
-          <h1 style={{ fontSize: '50px', color: '#f1c40f' }}>🏆 VENCEDOR! 🏆</h1>
-          <h2 style={{ fontSize: '40px' }}>{vencedor} acabou com as cartas!</h2>
-          <button className="btn btn-azul" onClick={() => { setVencedor(null); setJogoIniciado(false); }}>Voltar para o Lobby</button>
-        </div>
-      ) : jogoIniciado ? (
-        <div style={{ textAlign: 'center', marginTop: '10px' }}>
-          
-          <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
-            {turnoAtual === socket.id ? 'SUA VEZ!' : jogadorDaVez ? `VEZ DE ${jogadorDaVez.nome.toUpperCase()}` : 'Aguarde...'}
+      {/* TUDO DENTRO DA CLASSE OCULTAR-NO-RETRATO PARA ESCONDER QUANDO O AVISO APARECER */}
+      <div className="ocultar-no-retrato">
+        
+        {/* === NOVA POSIÇÃO DA NOTIFICAÇÃO (MUDOU PARA AQUI, FORA DO FLUXO CENTRAL) === */}
+        {erro && <div className="notificacao-topo-esquerdo">{erro}</div>}
+
+        {vencedor ? (
+          <div className="container" style={{ marginTop: '100px' }}>
+            <h1 className="logo-kaos"><div className="carta-k-logo">K</div>AOS</h1>
+            <h1 style={{ fontSize: '50px', color: '#f1c40f' }}>🏆 VENCEDOR! 🏆</h1>
+            <h2 style={{ fontSize: '40px' }}>{vencedor} acabou com as cartas!</h2>
+            <button className="btn btn-azul" onClick={() => { setVencedor(null); setJogoIniciado(false); }}>Voltar para o Lobby</button>
           </div>
-          
-          {erro && <div style={{ backgroundColor: '#ff7675', color: '#fff', padding: '10px 15px', borderRadius: '10px', border: '3px solid #000', fontWeight: 'bold', display: 'inline-block', marginBottom: '10px', zIndex: 1100, position: 'relative' }}>{erro}</div>}
+        ) : jogoIniciado ? (
+          <div style={{ textAlign: 'center', marginTop: '10px' }}>
+            
+            <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
+              {turnoAtual === socket.id ? 'A SUA VEZ!' : jogadorDaVez ? `VEZ DE ${jogadorDaVez.nome.toUpperCase()}` : 'Aguarde...'}
+            </div>
 
-          <div className="mesa-redonda">
-            {oponentes.map((op, index) => {
-              const ehVezDele = turnoAtual === op.id;
-              return (
-                <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentes.length)}>
-                  <div className="oponente-avatar" style={{ borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000' }}>
-                    <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} alt="Avatar" width="100%" height="100%" />
+            <div className="mesa-redonda">
+              {oponentes.map((op, index) => {
+                const ehVezDele = turnoAtual === op.id;
+                return (
+                  <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentes.length)}>
+                    <div className="oponente-avatar" style={{ borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000' }}>
+                      <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} alt="Avatar" width="100%" height="100%" />
+                    </div>
+                    
+                    <div className="cartas-oponente">
+                      {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => (
+                        <div key={i} className="carta-verso">K</div>
+                      ))}
+                      {op.qtdCartas > 15 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px'}}>+{op.qtdCartas - 15}</span>}
+                    </div>
+
+                    <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#000' }}>{op.nome}</div>
                   </div>
-                  
-                  <div className="cartas-oponente">
-                    {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => (
-                      <div key={i} className="carta-verso">K</div>
+                );
+              })}
+
+              <div className="centro-mesa">
+                <div className="coluna-baralho">
+                  <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id ? 'pointer' : 'default' }}>
+                    <Cards size={48} weight="duotone" color="#ecf0f1" />
+                  </div>
+                  {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && (
+                    <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0}}>COMPRAR</button>
+                  )}
+                </div>
+
+                <div key={cartaMesa.id} className="carta carta-mesa animate-drop" style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff' }}>
+                  {renderValorCarta(cartaMesa.valor)}
+                </div>
+
+                <div className="direcao-indicador">
+                  {sentido === 1 ? <ArrowsClockwise size={50} className="spin-horario" /> : <ArrowsCounterClockwise size={50} className="spin-anti" />}
+                </div>
+              </div>
+            </div>
+
+            {escolhendoAlvoZero && (
+              <div className="modal-overlay">
+                <div className="modal-content">
+                  <h2 style={{margin: '0 0 15px 0'}}>Regra do Zero! O que deseja fazer?</h2>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                    <button className="btn btn-cinza" onClick={() => confirmarAlvoZero('ninguem')}>NADA (Passar)</button>
+                    <button className="btn btn-verde" onClick={() => confirmarAlvoZero('todos')}>RODAR TODAS AS MÃOS</button>
+                  </div>
+                  <h3 style={{margin: '15px 0 10px 0'}}>Ou trocar com:</h3>
+                  <div className="grid-opcoes-zero">
+                    {oponentes.map(j => (
+                      <button key={j.id} className="btn btn-azul" onClick={() => confirmarAlvoZero(j.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                        <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} />
+                        {j.nome} ({j.qtdCartas})
+                      </button>
                     ))}
-                    {op.qtdCartas > 15 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px'}}>+{op.qtdCartas - 15}</span>}
                   </div>
-
-                  <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#000' }}>{op.nome}</div>
-                </div>
-              );
-            })}
-
-            <div className="centro-mesa">
-              <div className="coluna-baralho">
-                <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id ? 'pointer' : 'default' }}>
-                  <Cards size={48} weight="duotone" color="#ecf0f1" />
-                </div>
-                {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && (
-                  <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0}}>COMPRAR</button>
-                )}
-              </div>
-
-              <div key={cartaMesa.id} className="carta carta-mesa animate-drop" style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff' }}>
-                {renderValorCarta(cartaMesa.valor)}
-              </div>
-
-              <div className="direcao-indicador">
-                {sentido === 1 ? <ArrowsClockwise size={50} className="spin-horario" /> : <ArrowsCounterClockwise size={50} className="spin-anti" />}
-              </div>
-            </div>
-          </div>
-
-          {escolhendoAlvoZero && (
-            <div className="modal-overlay">
-              <div className="modal-content">
-                <h2 style={{margin: '0 0 15px 0'}}>Regra do Zero! O que deseja fazer?</h2>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                  <button className="btn btn-cinza" onClick={() => confirmarAlvoZero('ninguem')}>NADA (Passar)</button>
-                  <button className="btn btn-verde" onClick={() => confirmarAlvoZero('todos')}>GIRAR TODAS AS MÃOS</button>
-                </div>
-                <h3 style={{margin: '15px 0 10px 0'}}>Ou trocar com:</h3>
-                <div className="grid-opcoes-zero">
-                  {oponentes.map(j => (
-                    <button key={j.id} className="btn btn-azul" onClick={() => confirmarAlvoZero(j.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                      <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} />
-                      {j.nome} ({j.qtdCartas})
-                    </button>
-                  ))}
                 </div>
               </div>
-            </div>
-          )}
-
-          {escolhendoCorPara && (
-            <div className="modal-overlay"><div className="modal-content"><h2>Escolha a nova cor:</h2><div style={{ display: 'flex', gap: '15px' }}>{['vermelho', 'azul', 'verde', 'amarelo'].map(cor => (<button key={cor} onClick={() => confirmarCorCoringa(cor)} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button>))}</div></div></div>
-          )}
-
-          {eventoNoveAtivo && (
-            <div className="modal-overlay" style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}><div style={{ textAlign: 'center' }}><h1 style={{ color: '#ff4757', fontSize: '60px', fontFamily: 'Fredoka', WebkitTextStroke: '3px #000' }}>BATA NA MESA!</h1><button onClick={baterNaMesa} disabled={euJaBati} style={{ width: '250px', height: '250px', borderRadius: '50%', border: '10px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '8px 8px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={140} color="#000" /></button></div></div>
-          )}
-
-          <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)}>KAOS!</button>
-
-          <div className="painel-acoes">
-            {turnoAtual === socket.id && cartasSelecionadas.length > 0 && (
-              <button className="btn btn-verde" onClick={tentarJogarSelecionadas}>JOGAR ({cartasSelecionadas.length}) CARTAS</button>
             )}
-            {turnoAtual === socket.id && comprasAcumuladas > 0 && (
-              <button className="btn btn-vermelho" onClick={comprarCarta}>ACEITAR PUNIÇÃO (+{comprasAcumuladas})</button>
+
+            {escolhendoCorPara && (
+              <div className="modal-overlay"><div className="modal-content"><h2>Escolha a nova cor:</h2><div style={{ display: 'flex', gap: '15px' }}>{['vermelho', 'azul', 'verde', 'amarelo'].map(cor => (<button key={cor} onClick={() => confirmarCorCoringa(cor)} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button>))}</div></div></div>
             )}
-            {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && (
-              <button className="btn btn-cinza" onClick={passarVez}>⏭ PASSAR A VEZ</button>
+
+            {eventoNoveAtivo && (
+              <div className="modal-overlay" style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}><div style={{ textAlign: 'center' }}><h1 style={{ color: '#ff4757', fontSize: '60px', fontFamily: 'Fredoka', WebkitTextStroke: '3px #000' }}>BATA NA MESA!</h1><button onClick={baterNaMesa} disabled={euJaBati} style={{ width: '250px', height: '250px', borderRadius: '50%', border: '10px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '8px 8px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={140} color="#000" /></button></div></div>
             )}
-          </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', padding: '0 10px 10px 10px', maxWidth: '1000px', margin: '0 auto' }}>
-            {minhaMao.map((carta) => {
-              const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
-              let classes = "carta";
-              if (taSelecionada) classes += " selecionada";
-              if (turnoAtual !== socket.id) classes += " desabilitada";
+            <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)}>KAOS!</button>
 
-              return (
-                <div key={carta.id} onClick={() => toggleSelecao(carta)} className={classes} style={{ backgroundColor: getCorCss(carta.cor), color: carta.cor === 'amarelo' ? '#000' : '#fff' }}>
-                  {renderValorCarta(carta.valor)}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div className="container" style={{ position: 'relative' }}>
-          
-          {/* BOTÃO DO LIVRO DE REGRAS (Canto Superior Esquerdo) */}
-          <button 
-            onClick={() => setModalRegrasAberto(true)} 
-            style={{ position: 'absolute', top: '20px', left: '20px', background: '#3498db', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
-            title="Regras do Jogo"
-          >
-            <BookBookmark size={26} weight="bold" color="#fff" />
-          </button>
-
-          <button 
-            onClick={() => setModalConfigAberto(true)} 
-            style={{ position: 'absolute', top: '20px', right: '20px', background: '#f1c40f', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
-            title="Configurações de Áudio"
-          >
-            <Gear size={26} weight="bold" color="#000" />
-          </button>
-
-          <div className="logo-kaos"><div className="carta-k-logo">K</div>AOS</div>
-          
-          {!minhaSala ? (
-            <>
-              <div className="avatar-seletor-container">
-                <h3>Seu Avatar (Clique para mudar)</h3>
-                <div className="avatar-display" onClick={roletarAvatar}>
-                  <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${meuAvatarSeed}`} alt="Avatar" width="100%" height="100%" />
-                </div>
-              </div>
-              <div>
-                <input type="text" placeholder="Seu apelido..." maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} />
-              </div>
-              <div style={{ marginTop: '20px' }}>
-                <button className="btn btn-verde" onClick={criarSala}>Criar Nova Sala</button>
-                <h3 style={{ margin: '15px 0' }}>OU</h3>
-                <input type="text" placeholder="Código..." value={codigoSalaInput} onChange={(e) => setCodigoSalaInput(e.target.value)} style={{ width: '120px' }} />
-                <button className="btn btn-azul" onClick={entrarSala}>Entrar</button>
-              </div>
-              {/* === INÍCIO DA ÁREA DE DOAÇÃO LIVEPIX === */}
-              <div style={{ marginTop: '40px', padding: '15px', border: '3px dashed #f1c40f', borderRadius: '15px', backgroundColor: '#fffdf0', maxWidth: '400px', margin: '40px auto 0 auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#f39c12' }}>☕ pague-me um cafézinho!</h3>
-                <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>Ajude a manter o KAOS online e sem anúncios.</p>
-                
-                <img src={qrCodeImg} alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
-                
-                <br/>
-                <a href="https://livepix.gg/felpz3r4" target="_blank" rel="noreferrer" className="btn btn-roxo btn-pequeno" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
-                  Doar via LivePix
-                </a>
-              </div>
-            </>
-          ) : (
-            <>
-              <h2>Código da Sala: <span style={{fontSize: '40px', color: '#ff4757'}}>{minhaSala}</span></h2>
-              <h3>Jogadores ({jogadores.length}/6):</h3>
-              <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                {jogadores.map((jogador, index) => (
-                  <li key={index} style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${jogador.avatar}`} width="50" height="50" style={{ borderRadius: '50%', backgroundColor: '#ecf0f1', border: '3px solid #000' }} />
-                    {jogador.nome} {jogador.id === socket.id ? '(Você)' : ''} {index === 0 && '- Host'}
-                  </li>
-                ))}
-              </ul>
-              {jogadores[0]?.id === socket.id ? (
-                <button className="btn btn-vermelho" onClick={iniciarPartida} style={{ marginTop: '20px', fontSize: '24px' }}>▶ INICIAR PARTIDA</button>
-              ) : (
-                <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>Aguardando o dono da sala iniciar...</p>
+            <div className="painel-acoes">
+              {turnoAtual === socket.id && cartasSelecionadas.length > 0 && (
+                <button className="btn btn-verde" onClick={tentarJogarSelecionadas}>JOGAR ({cartasSelecionadas.length}) CARTAS</button>
               )}
-              <br/>
-              <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>SAIR DA SALA</button>
-            </>
-          )}
+              {turnoAtual === socket.id && comprasAcumuladas > 0 && (
+                <button className="btn btn-vermelho" onClick={comprarCarta}>ACEITAR PUNIÇÃO (+{comprasAcumuladas})</button>
+              )}
+              {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && (
+                <button className="btn btn-cinza" onClick={passarVez}>⏭ PASSAR A VEZ</button>
+              )}
+            </div>
 
-          {/* MODAL DE REGRAS */}
-          {modalRegrasAberto && (
-            <div className="modal-overlay" style={{ zIndex: 1200 }}>
-              <div className="modal-content" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
-                <h2 style={{ textAlign: 'center', marginTop: 0 }}>Regras do KAOS</h2>
-                
-                <h3 style={{ color: '#2ecc71' }}>Objetivo</h3>
-                <p style={{ marginTop: '5px' }}>Ser o primeiro jogador a ficar sem cartas na mão.</p>
+            {/* ADICIONADA A CLASSE mao-container PARA AJUDAR NA RESPONSIVIDADE */}
+            <div className="mao-container" style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', padding: '0 10px 10px 10px', maxWidth: '1000px', margin: '0 auto' }}>
+              {minhaMao.map((carta) => {
+                const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
+                let classes = "carta";
+                if (taSelecionada) classes += " selecionada";
+                if (turnoAtual !== socket.id) classes += " desabilitada";
 
-                <h3 style={{ color: '#e74c3c' }}>Cartas Especiais</h3>
-                <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
-                  <li><strong>Bloqueio:</strong> Pula a vez do próximo jogador (Seu efeito acumula).</li>
-                  <li><strong>Inverter:</strong> Inverte o sentido do jogo.</li>
-                  <li><strong>+2 e +4:</strong> O próximo compra as cartas ou joga outro +2/+4 para acumular e passar a punição para o próximo!</li>
-                  <li><strong>Coringa (Preto):</strong> Pode ser jogado a qualquer momento para escolher a cor da próxima carta a ser jogada na mesa.</li>
+                return (
+                  <div key={carta.id} onClick={() => toggleSelecao(carta)} className={classes} style={{ backgroundColor: getCorCss(carta.cor), color: carta.cor === 'amarelo' ? '#000' : '#fff' }}>
+                    {renderValorCarta(carta.valor)}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="container" style={{ position: 'relative' }}>
+            
+            <button 
+              onClick={() => setModalRegrasAberto(true)} 
+              style={{ position: 'absolute', top: '20px', left: '20px', background: '#3498db', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
+              title="Regras do Jogo"
+            >
+              <BookBookmark size={26} weight="bold" color="#fff" />
+            </button>
+
+            <button 
+              onClick={() => setModalConfigAberto(true)} 
+              style={{ position: 'absolute', top: '20px', right: '20px', background: '#f1c40f', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
+              title="Configurações de Áudio"
+            >
+              <Gear size={26} weight="bold" color="#000" />
+            </button>
+
+            <div className="logo-kaos"><div className="carta-k-logo">K</div>AOS</div>
+            
+            {!minhaSala ? (
+              <>
+                <div className="avatar-seletor-container">
+                  <h3>O seu Avatar (Clique para mudar)</h3>
+                  <div className="avatar-display" onClick={roletarAvatar}>
+                    <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${meuAvatarSeed}`} alt="Avatar" width="100%" height="100%" />
+                  </div>
+                </div>
+                <div>
+                  <input type="text" placeholder="A sua alcunha..." maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} />
+                </div>
+                <div style={{ marginTop: '20px' }}>
+                  <button className="btn btn-verde" onClick={criarSala}>Criar Nova Sala</button>
+                  <h3 style={{ margin: '15px 0' }}>OU</h3>
+                  <input type="text" placeholder="Código..." value={codigoSalaInput} onChange={(e) => setCodigoSalaInput(e.target.value)} style={{ width: '120px' }} />
+                  <button className="btn btn-azul" onClick={entrarSala}>Entrar</button>
+                </div>
+
+                {/* ÁREA DE DOAÇÃO (Opcional - Mantenha ou edite conforme desejar) */}
+                <div style={{ marginTop: '40px', padding: '15px', border: '3px dashed #f1c40f', borderRadius: '15px', backgroundColor: '#fffdf0', maxWidth: '400px', margin: '40px auto 0 auto' }}>
+                  <h3 style={{ margin: '0 0 10px 0', color: '#f39c12' }}>☕ Apoie o Servidor!</h3>
+                  <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>Ajude a manter o KAOS online e sem anúncios.</p>
+                  <a href="https://livepix.gg/" target="_blank" rel="noreferrer" className="btn btn-roxo btn-pequeno" style={{ display: 'inline-block', marginTop: '5px', textDecoration: 'none' }}>
+                    Doar via LivePix
+                  </a>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2>Código da Sala: <span style={{fontSize: '40px', color: '#ff4757'}}>{minhaSala}</span></h2>
+                <h3>Jogadores ({jogadores.length}/6):</h3>
+                <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                  {jogadores.map((jogador, index) => (
+                    <li key={index} style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${jogador.avatar}`} width="50" height="50" style={{ borderRadius: '50%', backgroundColor: '#ecf0f1', border: '3px solid #000' }} />
+                      {jogador.nome} {jogador.id === socket.id ? '(Você)' : ''} {index === 0 && '- Host'}
+                    </li>
+                  ))}
                 </ul>
+                {jogadores[0]?.id === socket.id ? (
+                  <button className="btn btn-vermelho" onClick={iniciarPartida} style={{ marginTop: '20px', fontSize: '24px' }}>▶ INICIAR PARTIDA</button>
+                ) : (
+                  <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>A aguardar que o anfitrião inicie...</p>
+                )}
+                <br/>
+                <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>🚪 SAIR DA SALA</button>
+              </>
+            )}
 
-                <h3 style={{ color: '#3498db' }}>A Regra do Zero (0)</h3>
-                <p style={{ marginTop: '5px' }}>Jogou um 0? Escolha trocar suas cartas com um oponente específico ou "Girar" todas as mãos na direção do jogo.</p>
+            {/* MODAL DE REGRAS */}
+            {modalRegrasAberto && (
+              <div className="modal-overlay" style={{ zIndex: 1200 }}>
+                <div className="modal-content" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
+                  <h2 style={{ textAlign: 'center', marginTop: 0 }}>📖 Regras do KAOS</h2>
+                  
+                  <h3 style={{ color: '#2ecc71' }}>🎯 Objetivo</h3>
+                  <p style={{ marginTop: '5px' }}>Ser o primeiro jogador a ficar sem cartas na mão.</p>
 
-                <h3 style={{ color: '#9b59b6' }}>A Regra do Nove (9)</h3>
-                <p style={{ marginTop: '5px' }}>Sempre que o "9" for jogado, um botão gigante aparecerá na tela. O último jogador a bater na mesa compra o número de cartas correspondente aos 9 jogados!(Fique sempre alerta!)</p>
+                  <h3 style={{ color: '#e74c3c' }}>🃏 Cartas Especiais</h3>
+                  <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
+                    <li><strong>Bloqueio:</strong> Passa a vez do próximo jogador.</li>
+                    <li><strong>Inverter:</strong> Inverte o sentido do jogo.</li>
+                    <li><strong>+2 e +4:</strong> O próximo compra as cartas ou joga outro +2/+4 para acumular e passar a punição para o próximo!</li>
+                    <li><strong>Coringa (Preto):</strong> Pode ser jogado a qualquer momento para escolher a cor da mesa.</li>
+                  </ul>
 
-                <h3 style={{ color: '#ff4757' }}>KAOS!</h3>
-                <p style={{ marginTop: '5px' }}>Quando tiver apenas 2 cartas e jogar uma (ficando com 1), você DEVE clicar no botão "KAOS!". Se esquecer e alguém denunciar, você compra 1 carta extra de punição.</p>
+                  <h3 style={{ color: '#3498db' }}>🌪️ A Regra do Zero (0)</h3>
+                  <p style={{ marginTop: '5px' }}>Jogou um 0? Escolha trocar as suas cartas com um oponente específico ou "Rodar" todas as mãos na direção do jogo.</p>
 
-                <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                  <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>Entendi!</button>
+                  <h3 style={{ color: '#9b59b6' }}>🚨 A Regra do Nove (9)</h3>
+                  <p style={{ marginTop: '5px' }}>Sempre que o "9" for jogado, um botão gigante aparecerá no ecrã. O último jogador a bater na mesa compra o número de cartas correspondente aos 9 jogados!</p>
+
+                  <h3 style={{ color: '#ff4757' }}>🗣️ KAOS! (O Antigo UNO)</h3>
+                  <p style={{ marginTop: '5px' }}>Quando tiver apenas 2 cartas e jogar uma (ficando com 1), DEVE clicar no botão "KAOS!". Se esquecer e alguém denunciar, compra 1 carta extra de punição.</p>
+
+                  <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>Entendi!</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {modalConfigAberto && (
-            <div className="modal-overlay" style={{ zIndex: 1200 }}>
-              <div className="modal-content" style={{ width: '320px' }}>
-                <h2>🔊 Configurações</h2>
-                
-                <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
-                    <MusicNote size={24} /> Música de Fundo
+            {modalConfigAberto && (
+              <div className="modal-overlay" style={{ zIndex: 1200 }}>
+                <div className="modal-content" style={{ width: '320px' }}>
+                  <h2>🔊 Configurações</h2>
+                  
+                  <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
+                      <MusicNote size={24} /> Música de Fundo
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+                      <button className="btn btn-pequeno" onClick={() => setMusicaAtiva(!musicaAtiva)} style={{ backgroundColor: musicaAtiva ? '#2ecc71' : '#e74c3c' }}>
+                        {musicaAtiva ? <SpeakerHigh size={20}/> : <SpeakerSlash size={20}/>}
+                      </button>
+                      <input 
+                        type="range" min="0" max="1" step="0.05" 
+                        value={volumeMusica} 
+                        onChange={(e) => setVolumeMusica(parseFloat(e.target.value))}
+                        style={{ width: '100%', cursor: 'pointer', margin: 0, padding: 0 }} 
+                      />
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-                    <button className="btn btn-pequeno" onClick={() => setMusicaAtiva(!musicaAtiva)} style={{ backgroundColor: musicaAtiva ? '#2ecc71' : '#e74c3c' }}>
-                      {musicaAtiva ? <SpeakerHigh size={20}/> : <SpeakerSlash size={20}/>}
-                    </button>
-                    <input 
-                      type="range" min="0" max="1" step="0.05" 
-                      value={volumeMusica} 
-                      onChange={(e) => setVolumeMusica(parseFloat(e.target.value))}
-                      style={{ width: '100%', cursor: 'pointer', margin: 0, padding: 0 }} 
-                    />
+
+                  <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
+                      <SpeakerHigh size={24} /> Efeitos Sonoros
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+                      <button className="btn btn-pequeno" onClick={() => setEfeitosAtivos(!efeitosAtivos)} style={{ backgroundColor: efeitosAtivos ? '#2ecc71' : '#e74c3c' }}>
+                        {efeitosAtivos ? <SpeakerHigh size={20}/> : <SpeakerSlash size={20}/>}
+                      </button>
+                      <input 
+                        type="range" min="0" max="1" step="0.05" 
+                        value={volumeEfeitos} 
+                        onChange={(e) => setVolumeEfeitos(parseFloat(e.target.value))}
+                        style={{ width: '100%', cursor: 'pointer', margin: 0, padding: 0 }} 
+                      />
+                    </div>
                   </div>
+
+                  <button className="btn btn-azul" onClick={() => setModalConfigAberto(false)} style={{ marginTop: '10px', width: '100%' }}>
+                    Fechar
+                  </button>
                 </div>
-
-                <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
-                    <SpeakerHigh size={24} /> Efeitos Sonoros
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-                    <button className="btn btn-pequeno" onClick={() => setEfeitosAtivos(!efeitosAtivos)} style={{ backgroundColor: efeitosAtivos ? '#2ecc71' : '#e74c3c' }}>
-                      {efeitosAtivos ? <SpeakerHigh size={20}/> : <SpeakerSlash size={20}/>}
-                    </button>
-                    <input 
-                      type="range" min="0" max="1" step="0.05" 
-                      value={volumeEfeitos} 
-                      onChange={(e) => setVolumeEfeitos(parseFloat(e.target.value))}
-                      style={{ width: '100%', cursor: 'pointer', margin: 0, padding: 0 }} 
-                    />
-                  </div>
-                </div>
-
-                <button className="btn btn-azul" onClick={() => setModalConfigAberto(false)} style={{ marginTop: '10px', width: '100%' }}>
-                  Fechar
-                </button>
               </div>
-            </div>
-          )}
+            )}
 
-          {erro && <p style={{ color: '#ff4757', fontWeight: 'bold', fontSize: '20px', marginTop: '20px', zIndex: 1100, position: 'relative' }}>{erro}</p>}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
