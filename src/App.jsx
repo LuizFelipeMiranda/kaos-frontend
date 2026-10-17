@@ -10,7 +10,7 @@ import livePixQRCode from './assets/livepix.png';
 
 const socket = io('https://kaos-backend-83du.onrender.com');
 
-// === DICIONÁRIO DE IDIOMAS (INCLUI REGRAS) ===
+// === DICIONÁRIO DE IDIOMAS COM NOVAS REGRAS ===
 const dic = {
   pt: {
     suaVez: "A SUA VEZ!", vezDe: "VEZ DE", aguarde: "Aguarde...", comprar: "COMPRAR",
@@ -25,10 +25,12 @@ const dic = {
     config: "Configurações", musica: "Música de Fundo", efeitos: "Efeitos Sonoros", fechar: "Fechar",
     vencedor: "VENCEDOR!", acabouCartas: "acabou com as cartas!", voltarLobby: "Voltar para o Lobby",
     vitorias: "Vitórias", idioma: "Idioma", tempo: "Duração",
-    // REGRAS
+    // REGRAS COMPLETAS
     regrasTitulo: "Regras do Jogo",
-    objetivoTitulo: "Objetivo",
-    objetivoTexto: "Ser o primeiro jogador a ficar sem cartas na mão.",
+    regrasBasicasTitulo: "Regras Básicas",
+    regrasBasicasTexto: "Cada jogador começa com 7 cartas. O seu objetivo é ser o primeiro a ficar sem cartas. Deve jogar cartas que combinem com a Cor ou com o Número da carta no topo da mesa.",
+    sequenciasTitulo: "Múltiplas Cartas e Sequências",
+    sequenciasTexto: "Pode jogar mais de uma carta ao mesmo tempo se elas tiverem o MESMO VALOR (ex: três cartas '5', ou dois 'Bloqueios') OU se formarem uma SEQUÊNCIA DA MESMA COR (ex: 3, 4 e 5 vermelhos, ou 9, 8 e 7 azuis, ou seja, em ordem crescente ou decrescente).",
     cartasEspeciaisTitulo: "Cartas Especiais",
     bloqueioNome: "Bloqueio:",
     bloqueioTexto: "Passa a vez do próximo jogador. Se jogar vários bloqueios ao mesmo tempo, o efeito acumula.",
@@ -41,7 +43,7 @@ const dic = {
     regraZeroTitulo: "A Regra do Zero (0)",
     regraZeroTexto: "Jogou um 0? Escolha trocar as suas cartas com um oponente específico ou 'Rodar' todas as mãos.",
     regraNoveTitulo: "A Regra do Nove (9)",
-    regraNoveTexto: "Sempre que o '9' for jogado, um botão gigante aparecerá no ecrã. O último a bater compra as cartas!",
+    regraNoveTexto: "Sempre que o '9' for jogado, um botão gigante aparecerá. O último a bater compra as cartas de punição!",
     kaosTitulo: "KAOS!",
     kaosTexto: "Quando tiver apenas 2 cartas e for jogar uma (ficando com 1), DEVE clicar no botão 'KAOS!'. Se esquecer e denunciarem, compra 1 carta extra."
   },
@@ -58,10 +60,12 @@ const dic = {
     config: "Settings", musica: "Background Music", efeitos: "Sound Effects", fechar: "Close",
     vencedor: "WINNER!", acabouCartas: "finished their cards!", voltarLobby: "Back to Lobby",
     vitorias: "Wins", idioma: "Language", tempo: "Match Time",
-    // RULES
+    // COMPLETED RULES
     regrasTitulo: "Game Rules",
-    objetivoTitulo: "Objective",
-    objetivoTexto: "Be the first player to get rid of all the cards in your hand.",
+    regrasBasicasTitulo: "Basic Rules",
+    regrasBasicasTexto: "Each player starts with 7 cards. Your objective is to be the first to get rid of all your cards. You must play cards that match the Color or the Number of the top card.",
+    sequenciasTitulo: "Multiple Cards and Sequences",
+    sequenciasTexto: "You can play more than one card at the same time if they have the SAME VALUE (e.g., three '5' cards, or two 'Skips') OR if they form a SEQUENCE OF THE SAME COLOR (e.g., red 3, 4, and 5, or blue 9, 8, and 7, meaning ascending or descending order).",
     cartasEspeciaisTitulo: "Special Cards",
     bloqueioNome: "Skip:",
     bloqueioTexto: "Skips the next player's turn. If you play multiple skips, the effect stacks.",
@@ -120,7 +124,6 @@ function App() {
   const [jogadores, setJogadores] = useState([]);
   const [infoJogadores, setInfoJogadores] = useState([]); 
   
-  // === ESTADOS PARA O SORTEIO INICIAL ===
   const [mostrandoSorteio, setMostrandoSorteio] = useState(false);
   const [jogadorSorteado, setJogadorSorteado] = useState(null);
   const [roletaIndex, setRoletaIndex] = useState(0);
@@ -152,14 +155,13 @@ function App() {
   const [volumeEfeitos, setVolumeEfeitos] = useState(0.7);
 
   const [tempoPartida, setTempoPartida] = useState(0);
-  const [tempoTurnoRestante, setTempoTurnoRestante] = useState(15);
+  const [tempoTurnoRestante, setTempoTurnoRestante] = useState(20); // Atualizado para 20s
 
   const audioMusicaRef = useRef(null);
   const audioEfeitoRef = useRef(null);
   const audioAlarmeRef = useRef(null);
   const audioVitoriaRef = useRef(null); 
 
-  // Cronómetro Geral da Partida
   useEffect(() => {
     let interval;
     if (jogoIniciado && !vencedor) {
@@ -170,18 +172,17 @@ function App() {
     };
   }, [jogoIniciado, vencedor]);
 
-  // Contagem regressiva precisa e puramente local do tempo do turno
+  // Contagem do turno (agora congela se o eventoNoveAtivo for true)
   useEffect(() => {
     let interval;
-    if (jogoIniciado && !vencedor) {
+    if (jogoIniciado && !vencedor && !eventoNoveAtivo) {
       interval = setInterval(() => {
         setTempoTurnoRestante(prev => Math.max(prev - 1, 0));
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [jogoIniciado, vencedor, turnoAtual]);
+  }, [jogoIniciado, vencedor, turnoAtual, eventoNoveAtivo]);
 
-  // Lógica Musical
   useEffect(() => {
     if (vencedor) {
       if (audioMusicaRef.current) audioMusicaRef.current.pause(); 
@@ -216,7 +217,6 @@ function App() {
     }
   }, [efeitosAtivos, volumeEfeitos]);
 
-  // Animação de Roleta do Sorteio
   useEffect(() => {
     if (mostrandoSorteio && jogadorSorteado && jogadores.length > 0) {
       let tick = 0;
@@ -238,21 +238,20 @@ function App() {
     socket.on('entrou_na_sala', (codigo) => { setMinhaSala(codigo); });
     socket.on('atualizar_jogadores', (lista) => { setJogadores(lista); setInfoJogadores(lista); });
     
-    // Alerta do Sorteio
     socket.on('sorteando_primeiro_jogador', (idSorteado) => {
       setJogadorSorteado(idSorteado);
       setMostrandoSorteio(true);
     });
 
     socket.on('partida_iniciada', (dados) => {
-      setMostrandoSorteio(false); // Fecha o ecrã de sorteio
+      setMostrandoSorteio(false); 
       setJogadorSorteado(null);
       setJogoIniciado(true); setMinhaMao(dados.minhaMao); setCartaMesa(dados.cartaMesa); 
       setTurnoAtual(dados.turnoAtual); setJaComprou(dados.comprouNestaRodada);
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []);
       setCartasSelecionadas([]); setVencedor(null); setTempoPartida(0);
-      setTempoTurnoRestante(15); 
+      setTempoTurnoRestante(20); // Volta para 20s
       tocarEfeito('carta');
     });
     
@@ -262,14 +261,13 @@ function App() {
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []);
       setCartasSelecionadas([]); 
-      setTempoTurnoRestante(15); 
+      setTempoTurnoRestante(20); // Volta para 20s
       tocarEfeito('carta');
     });
 
     socket.on('iniciar_evento_nove', () => { 
       setEventoNoveAtivo(true); 
       setEuJaBati(false); 
-      // Calculo de área ampliada (entre 25-75% da altura e 15-85% da largura) - totalmente visível e seguro
       setPosicaoNove({ 
         top: `${Math.floor(Math.random() * 50) + 25}%`, 
         left: `${Math.floor(Math.random() * 70) + 15}%` 
@@ -309,8 +307,10 @@ function App() {
   const criarSala = () => { if (!nome) return setErro('Digite o seu nome!'); socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed }); };
   const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
   const iniciarPartida = () => { socket.emit('iniciar_partida', minhaSala); };
-  const comprarCarta = () => { if (turnoAtual === socket.id) socket.emit('comprar_carta', minhaSala); };
-  const passarVez = () => { if (turnoAtual === socket.id) socket.emit('passar_vez', minhaSala); };
+  
+  const comprarCarta = () => { if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('comprar_carta', minhaSala); };
+  const passarVez = () => { if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('passar_vez', minhaSala); };
+  
   const baterNaMesa = () => { if (euJaBati) return; setEuJaBati(true); socket.emit('bater_mesa', minhaSala); };
 
   const sairDaSala = () => {
@@ -325,13 +325,13 @@ function App() {
   };
 
   const toggleSelecao = (cartaClicada) => {
-    if (turnoAtual !== socket.id) return;
+    if (turnoAtual !== socket.id || eventoNoveAtivo) return;
     tocarEfeito('carta');
     setCartasSelecionadas((ant) => ant.find(c => c.id === cartaClicada.id) ? ant.filter(c => c.id !== cartaClicada.id) : [...ant, cartaClicada]);
   };
 
   const tentarJogarSelecionadas = () => {
-    if (cartasSelecionadas.length === 0) return;
+    if (cartasSelecionadas.length === 0 || eventoNoveAtivo) return;
     const ultimaCarta = cartasSelecionadas[cartasSelecionadas.length - 1];
     const temZero = cartasSelecionadas.some(c => c.valor === '0');
     
@@ -377,7 +377,6 @@ function App() {
       <audio ref={audioAlarmeRef} src={somAlarme} />
       <audio ref={audioVitoriaRef} src={somVitoria} />
 
-      {/* OVERLAY DE SORTEIO */}
       {mostrandoSorteio && (
         <div className="modal-overlay" style={{ zIndex: 3000, flexDirection: 'column', backgroundColor: 'rgba(0,0,0,0.85)' }}>
           <h1 style={{ color: '#fff', fontSize: '30px', marginBottom: '30px', textAlign: 'center' }}>{t.sorteando}</h1>
@@ -412,7 +411,7 @@ function App() {
             <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
               <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
               <div style={{ fontSize: '15px', marginTop: '4px', textAlign: 'center', color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                <Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s
+                {eventoNoveAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
               </div>
             </div>
 
@@ -439,10 +438,10 @@ function App() {
 
               <div className="centro-mesa">
                 <div className="coluna-baralho">
-                  <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id ? 'pointer' : 'default' }}>
+                  <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default' }}>
                     <Cards size={48} weight="duotone" color="#ecf0f1" />
                   </div>
-                  {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && (
+                  {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
                     <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0}}>{t.comprar}</button>
                   )}
                 </div>
@@ -482,7 +481,6 @@ function App() {
               <div className="modal-overlay"><div className="modal-content"><h2>{t.escolhaCor}</h2><div style={{ display: 'flex', gap: '15px' }}>{['vermelho', 'azul', 'verde', 'amarelo'].map(cor => (<button key={cor} onClick={() => confirmarCorCoringa(cor)} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button>))}</div></div></div>
             )}
 
-            {/* Evento 9 Reduzido em 20% e Sem Texto */}
             {eventoNoveAtivo && (
               <div style={{ position: 'fixed', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 2000, pointerEvents: 'none' }}>
                 <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '160px', height: '160px', borderRadius: '50%', border: '8px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '6px 6px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={96} color="#000" /></button>
@@ -496,7 +494,7 @@ function App() {
                 const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
                 let classes = "carta";
                 if (taSelecionada) classes += " selecionada";
-                if (turnoAtual !== socket.id) classes += " desabilitada";
+                if (turnoAtual !== socket.id || eventoNoveAtivo) classes += " desabilitada";
 
                 return (
                   <div key={carta.id} onClick={() => toggleSelecao(carta)} className={classes} style={{ backgroundColor: getCorCss(carta.cor), color: carta.cor === 'amarelo' ? '#000' : '#fff' }}>
@@ -507,13 +505,13 @@ function App() {
             </div>
 
             <div className="painel-acoes" style={{ marginBottom: '20px' }}>
-              {turnoAtual === socket.id && cartasSelecionadas.length > 0 && (
+              {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && (
                 <button className="btn btn-verde" onClick={tentarJogarSelecionadas}>{t.jogar} ({cartasSelecionadas.length}) {t.cartas}</button>
               )}
-              {turnoAtual === socket.id && comprasAcumuladas > 0 && (
+              {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && (
                 <button className="btn btn-vermelho" onClick={comprarCarta}>{t.aceitarPunicao} (+{comprasAcumuladas})</button>
               )}
-              {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && (
+              {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && (
                 <button className="btn btn-cinza" onClick={passarVez}>{t.passarVez}</button>
               )}
             </div>
@@ -593,30 +591,34 @@ function App() {
               </>
             )}
 
+            {/* LIVRO DE REGRAS COMPLETO */}
             {modalRegrasAberto && (
               <div className="modal-overlay" style={{ zIndex: 1200 }}>
-                <div className="modal-content" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
+                <div className="modal-content" style={{ width: '90%', maxWidth: '550px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
                   <h2 style={{ textAlign: 'center', marginTop: 0 }}>{t.regrasTitulo}</h2>
                   
-                  <h3 style={{ color: '#2ecc71' }}>{t.objetivoTitulo}</h3>
-                  <p style={{ marginTop: '5px' }}>{t.objetivoTexto}</p>
+                  <h3 style={{ color: '#2ecc71', margin: '15px 0 5px 0' }}>{t.regrasBasicasTitulo}</h3>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regrasBasicasTexto}</p>
 
-                  <h3 style={{ color: '#e74c3c' }}>{t.cartasEspeciaisTitulo}</h3>
-                  <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
+                  <h3 style={{ color: '#f39c12', margin: '15px 0 5px 0' }}>{t.sequenciasTitulo}</h3>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.sequenciasTexto}</p>
+
+                  <h3 style={{ color: '#e74c3c', margin: '15px 0 5px 0' }}>{t.cartasEspeciaisTitulo}</h3>
+                  <ul style={{ paddingLeft: '20px', margin: '0 0 10px 0', fontSize: '15px' }}>
                     <li><strong>{t.bloqueioNome}</strong> {t.bloqueioTexto}</li>
                     <li><strong>{t.inverterNome}</strong> {t.inverterTexto}</li>
                     <li><strong>{t.maisCartasNome}</strong> {t.maisCartasTexto}</li>
                     <li><strong>{t.coringaNome}</strong> {t.coringaTexto}</li>
                   </ul>
 
-                  <h3 style={{ color: '#3498db' }}>{t.regraZeroTitulo}</h3>
-                  <p style={{ marginTop: '5px' }}>{t.regraZeroTexto}</p>
+                  <h3 style={{ color: '#3498db', margin: '15px 0 5px 0' }}>{t.regraZeroTitulo}</h3>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regraZeroTexto}</p>
 
-                  <h3 style={{ color: '#9b59b6' }}>{t.regraNoveTitulo}</h3>
-                  <p style={{ marginTop: '5px' }}>{t.regraNoveTexto}</p>
+                  <h3 style={{ color: '#9b59b6', margin: '15px 0 5px 0' }}>{t.regraNoveTitulo}</h3>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regraNoveTexto}</p>
 
-                  <h3 style={{ color: '#ff4757' }}>{t.kaosTitulo}</h3>
-                  <p style={{ marginTop: '5px' }}>{t.kaosTexto}</p>
+                  <h3 style={{ color: '#ff4757', margin: '15px 0 5px 0' }}>{t.kaosTitulo}</h3>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.kaosTexto}</p>
 
                   <div style={{ textAlign: 'center', marginTop: '20px' }}>
                     <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>{t.fechar}</button>
