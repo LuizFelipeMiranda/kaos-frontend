@@ -429,6 +429,7 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
 }
 
 /* Ajustes de Responsividade para Telemóveis na Horizontal (Landscape) */
+/* Ajustes de Responsividade para Telemóveis na Horizontal (Landscape) */
 @media (max-height: 500px) and (orientation: landscape) {
   .container {
     margin: 10px auto;
@@ -463,10 +464,12 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
     box-shadow: 3px 3px 0 #000, inset 0 -3px 0 rgba(0,0,0,0.2);
   }
 
-  /* Ajusta a mesa para caber as cartas na base do ecrã */
+  /* === CORREÇÃO: Impede que a mesa fique demasiado larga no telemóvel === */
   .mesa-redonda {
     margin-top: 15px;
     height: 40vh; 
+    width: 80%; /* Não deixa esticar ao longo de todo o ecrã */
+    max-width: 500px; /* Impede expansão excessiva */
     min-height: 140px;
     border-width: 6px;
   }
@@ -518,5 +521,8 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   .mao-container {
     padding: 0 5px 5px 5px !important;
     gap: 4px !important;
+    position: relative;
+    z-index: 10;
+    margin-top: 1rem;
   }
 }

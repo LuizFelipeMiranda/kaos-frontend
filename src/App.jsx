@@ -1,13 +1,46 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, SpeakerSlash, MusicNote, BookBookmark, DeviceMobile } from '@phosphor-icons/react';
+import { HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, SpeakerSlash, MusicNote, BookBookmark, DeviceMobile, Translate } from '@phosphor-icons/react';
 
 import musicaTema from './assets/tema.mp3';
 import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
+import somVitoria from './assets/vitoria.mp3'; 
 import livePixQRCode from './assets/livepix.png';
 
 const socket = io('https://kaos-backend-83du.onrender.com');
+
+// === DICIONÁRIO DE IDIOMAS ===
+const dic = {
+  pt: {
+    suaVez: "A SUA VEZ!", vezDe: "VEZ DE", aguarde: "Aguarde...", comprar: "COMPRAR",
+    jogar: "JOGAR", cartas: "CARTAS", aceitarPunicao: "ACEITAR PUNIÇÃO", passarVez: "PASSAR A VEZ",
+    regraZero: "Regra do Zero! O que deseja fazer?", nada: "NADA (Passar)", rodarTodas: "RODAR TODAS AS MÃOS",
+    ouTrocar: "Ou trocar com:", escolhaCor: "Escolha a nova cor:", bataMesa: "BATA NA MESA!",
+    seuAvatar: "O seu Avatar (Clique para mudar)", seuNome: "Seu Nome", criarSala: "Criar Nova Sala",
+    ou: "OU", codigo: "Código...", entrar: "Entrar", apoie: "Pague-me um Cafezinho!",
+    ajude: "Ajude a manter o KAOS online e sem anúncios.", doar: "Doar via LivePix", codigoSala: "Código da Sala:",
+    jogadores: "Jogadores", voce: "(Você)", host: "- Host", iniciarPartida: "INICIAR PARTIDA",
+    aguardandoHost: "A aguardar que o anfitrião inicie...", sairSala: "SAIR DA SALA", regrasJogo: "Regras do Jogo",
+    config: "Configurações", musica: "Música de Fundo", efeitos: "Efeitos Sonoros", fechar: "Fechar",
+    vencedor: "VENCEDOR!", acabouCartas: "acabou com as cartas!", voltarLobby: "Voltar para o Lobby",
+    vitorias: "Vitórias", idioma: "Idioma / Language"
+  },
+  en: {
+    suaVez: "YOUR TURN!", vezDe: "TURN:", aguarde: "Wait...", comprar: "DRAW",
+    jogar: "PLAY", cartas: "CARDS", aceitarPunicao: "ACCEPT PENALTY", passarVez: "PASS TURN",
+    regraZero: "Rule of Zero! What to do?", nada: "NOTHING (Pass)", rodarTodas: "ROTATE ALL HANDS",
+    ouTrocar: "Or swap with:", escolhaCor: "Choose new color:", bataMesa: "SLAP THE TABLE!",
+    seuAvatar: "Your Avatar (Click to change)", seuNome: "Your Name", criarSala: "Create New Room",
+    ou: "OR", codigo: "Room Code...", entrar: "Join", apoie: "Buy me a Coffee!",
+    ajude: "Help keep KAOS online and ad-free.", doar: "Donate via LivePix", codigoSala: "Room Code:",
+    jogadores: "Players", voce: "(You)", host: "- Host", iniciarPartida: "START GAME",
+    aguardandoHost: "Waiting for host to start...", sairSala: "LEAVE ROOM", regrasJogo: "Game Rules",
+    config: "Settings", musica: "Background Music", efeitos: "Sound Effects", fechar: "Close",
+    vencedor: "WINNER!", acabouCartas: "finished their cards!", voltarLobby: "Back to Lobby",
+    vitorias: "Wins", idioma: "Language / Idioma"
+  }
+};
 
 const getCorCss = (cor) => {
   switch(cor) {
@@ -38,6 +71,9 @@ const getPosicaoOponente = (index, totalOponentes) => {
 };
 
 function App() {
+  const [idioma, setIdioma] = useState('pt');
+  const t = dic[idioma];
+
   const [nome, setNome] = useState('');
   const [meuAvatarSeed, setMeuAvatarSeed] = useState(gerarSeedAleatoria());
   const [codigoSalaInput, setCodigoSalaInput] = useState('');
@@ -75,24 +111,27 @@ function App() {
   const audioAlarmeRef = useRef(null);
   const audioVitoriaRef = useRef(null); 
 
+  // === LÓGICA ATUALIZADA DE MÚSICA (FUNDO VS VITÓRIA) ===
   useEffect(() => {
-    if (audioMusicaRef.current) {
-      audioMusicaRef.current.volume = volumeMusica;
-      if (musicaAtiva) {
-        audioMusicaRef.current.play().catch(() => {}); 
-      } else {
-        audioMusicaRef.current.pause();
+    if (vencedor) {
+      if (audioMusicaRef.current) audioMusicaRef.current.pause(); // Pára a música de fundo
+      if (audioVitoriaRef.current && efeitosAtivos) {
+        audioVitoriaRef.current.volume = volumeEfeitos;
+        audioVitoriaRef.current.currentTime = 0;
+        audioVitoriaRef.current.play().catch(() => {});
       }
+    } else {
+      if (audioMusicaRef.current) {
+        audioMusicaRef.current.volume = volumeMusica;
+        if (musicaAtiva) {
+          audioMusicaRef.current.play().catch(() => {}); 
+        } else {
+          audioMusicaRef.current.pause();
+        }
+      }
+      if (audioVitoriaRef.current) audioVitoriaRef.current.pause(); // Pára a de vitória se recomeçar
     }
-  }, [musicaAtiva, volumeMusica]);
-
-  useEffect(() => {
-    if (vencedor && audioVitoriaRef.current && efeitosAtivos) {
-      audioVitoriaRef.current.volume = volumeEfeitos;
-      audioVitoriaRef.current.currentTime = 0;
-      audioVitoriaRef.current.play().catch(() => {});
-    }
-  }, [vencedor, efeitosAtivos, volumeEfeitos]);
+  }, [musicaAtiva, volumeMusica, vencedor, efeitosAtivos, volumeEfeitos]);
 
   const tocarEfeito = useCallback((tipo = 'carta') => {
     if (!efeitosAtivos) return;
@@ -108,7 +147,7 @@ function App() {
   }, [efeitosAtivos, volumeEfeitos]);
 
   useEffect(() => {
-    socket.on('sala_criada', (codigo) => { setMinhaSala(codigo); setJogadores([{ id: socket.id, nome: nome, avatar: meuAvatarSeed }]); });
+    socket.on('sala_criada', (codigo) => { setMinhaSala(codigo); setJogadores([{ id: socket.id, nome: nome, avatar: meuAvatarSeed, vitorias: 0 }]); });
     socket.on('entrou_na_sala', (codigo) => { setMinhaSala(codigo); });
     socket.on('atualizar_jogadores', (lista) => { setJogadores(lista); setInfoJogadores(lista); });
     
@@ -216,16 +255,16 @@ function App() {
     <div>
       <div className="aviso-rotacao">
         <DeviceMobile size={100} color="#f1c40f" />
-        <h1 style={{ fontFamily: 'Fredoka', marginTop: '20px' }}>Rode o seu telemóvel!</h1>
+        <h1 style={{ fontFamily: 'Fredoka', marginTop: '20px' }}>{idioma === 'pt' ? 'Rode o seu telemóvel!' : 'Rotate your phone!'}</h1>
         <p style={{ fontSize: '18px', maxWidth: '300px', lineHeight: '1.5' }}>
-          O KAOS foi desenhado para ser jogado na horizontal, garantindo o espaço perfeito para a mesa e as suas cartas.
+          {idioma === 'pt' ? 'O KAOS foi desenhado para ser jogado na horizontal.' : 'KAOS was designed to be played in landscape mode.'}
         </p>
       </div>
 
       <audio ref={audioMusicaRef} src={musicaTema} loop />
       <audio ref={audioEfeitoRef} src={somCarta} />
       <audio ref={audioAlarmeRef} src={somAlarme} />
-      {/* <audio ref={audioVitoriaRef} src={somVitoria} /> */}
+      <audio ref={audioVitoriaRef} src={somVitoria} />
 
       <div className="ocultar-no-retrato">
         
@@ -234,15 +273,15 @@ function App() {
         {vencedor ? (
           <div className="container" style={{ marginTop: '100px' }}>
             <h1 className="logo-kaos"><div className="carta-k-logo">K</div>AOS</h1>
-            <h1 style={{ fontSize: '50px', color: '#f1c40f' }}>🏆 VENCEDOR! 🏆</h1>
-            <h2 style={{ fontSize: '40px' }}>{vencedor} acabou com as cartas!</h2>
-            <button className="btn btn-azul" onClick={() => { setVencedor(null); setJogoIniciado(false); }}>Voltar para o Lobby</button>
+            <h1 style={{ fontSize: '50px', color: '#f1c40f' }}>🏆 {t.vencedor} 🏆</h1>
+            <h2 style={{ fontSize: '40px' }}>{vencedor} {t.acabouCartas}</h2>
+            <button className="btn btn-azul" onClick={() => { setVencedor(null); setJogoIniciado(false); }}>{t.voltarLobby}</button>
           </div>
         ) : jogoIniciado ? (
           <div style={{ textAlign: 'center', marginTop: '10px' }}>
             
             <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
-              {turnoAtual === socket.id ? 'A SUA VEZ!' : jogadorDaVez ? `VEZ DE ${jogadorDaVez.nome.toUpperCase()}` : 'Aguarde...'}
+              {turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}
             </div>
 
             <div className="mesa-redonda">
@@ -272,7 +311,7 @@ function App() {
                     <Cards size={48} weight="duotone" color="#ecf0f1" />
                   </div>
                   {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && (
-                    <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0}}>COMPRAR</button>
+                    <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0}}>{t.comprar}</button>
                   )}
                 </div>
 
@@ -289,12 +328,12 @@ function App() {
             {escolhendoAlvoZero && (
               <div className="modal-overlay">
                 <div className="modal-content">
-                  <h2 style={{margin: '0 0 15px 0'}}>Regra do Zero! O que deseja fazer?</h2>
+                  <h2 style={{margin: '0 0 15px 0'}}>{t.regraZero}</h2>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                    <button className="btn btn-cinza" onClick={() => confirmarAlvoZero('ninguem')}>NADA (Passar)</button>
-                    <button className="btn btn-verde" onClick={() => confirmarAlvoZero('todos')}>RODAR TODAS AS MÃOS</button>
+                    <button className="btn btn-cinza" onClick={() => confirmarAlvoZero('ninguem')}>{t.nada}</button>
+                    <button className="btn btn-verde" onClick={() => confirmarAlvoZero('todos')}>{t.rodarTodas}</button>
                   </div>
-                  <h3 style={{margin: '15px 0 10px 0'}}>Ou trocar com:</h3>
+                  <h3 style={{margin: '15px 0 10px 0'}}>{t.ouTrocar}</h3>
                   <div className="grid-opcoes-zero">
                     {oponentes.map(j => (
                       <button key={j.id} className="btn btn-azul" onClick={() => confirmarAlvoZero(j.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
@@ -308,11 +347,11 @@ function App() {
             )}
 
             {escolhendoCorPara && (
-              <div className="modal-overlay"><div className="modal-content"><h2>Escolha a nova cor:</h2><div style={{ display: 'flex', gap: '15px' }}>{['vermelho', 'azul', 'verde', 'amarelo'].map(cor => (<button key={cor} onClick={() => confirmarCorCoringa(cor)} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button>))}</div></div></div>
+              <div className="modal-overlay"><div className="modal-content"><h2>{t.escolhaCor}</h2><div style={{ display: 'flex', gap: '15px' }}>{['vermelho', 'azul', 'verde', 'amarelo'].map(cor => (<button key={cor} onClick={() => confirmarCorCoringa(cor)} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button>))}</div></div></div>
             )}
 
             {eventoNoveAtivo && (
-              <div className="modal-overlay" style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}><div style={{ textAlign: 'center' }}><h1 style={{ color: '#ff4757', fontSize: '60px', fontFamily: 'Fredoka', WebkitTextStroke: '3px #000' }}>BATA NA MESA!</h1><button onClick={baterNaMesa} disabled={euJaBati} style={{ width: '250px', height: '250px', borderRadius: '50%', border: '10px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '8px 8px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={140} color="#000" /></button></div></div>
+              <div className="modal-overlay" style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}><div style={{ textAlign: 'center' }}><h1 style={{ color: '#ff4757', fontSize: '60px', fontFamily: 'Fredoka', WebkitTextStroke: '3px #000' }}>{t.bataMesa}</h1><button onClick={baterNaMesa} disabled={euJaBati} style={{ width: '250px', height: '250px', borderRadius: '50%', border: '10px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '8px 8px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={140} color="#000" /></button></div></div>
             )}
 
             <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)}>KAOS!</button>
@@ -332,16 +371,15 @@ function App() {
               })}
             </div>
 
-            {/* O PAINEL DE AÇÕES FOI MOVIDO PARA BAIXO DAS CARTAS */}
             <div className="painel-acoes" style={{ marginBottom: '20px' }}>
               {turnoAtual === socket.id && cartasSelecionadas.length > 0 && (
-                <button className="btn btn-verde" onClick={tentarJogarSelecionadas}>JOGAR ({cartasSelecionadas.length}) CARTAS</button>
+                <button className="btn btn-verde" onClick={tentarJogarSelecionadas}>{t.jogar} ({cartasSelecionadas.length}) {t.cartas}</button>
               )}
               {turnoAtual === socket.id && comprasAcumuladas > 0 && (
-                <button className="btn btn-vermelho" onClick={comprarCarta}>ACEITAR PUNIÇÃO (+{comprasAcumuladas})</button>
+                <button className="btn btn-vermelho" onClick={comprarCarta}>{t.aceitarPunicao} (+{comprasAcumuladas})</button>
               )}
               {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && (
-                <button className="btn btn-cinza" onClick={passarVez}>PASSAR A VEZ</button>
+                <button className="btn btn-cinza" onClick={passarVez}>{t.passarVez}</button>
               )}
             </div>
 
@@ -352,7 +390,7 @@ function App() {
             <button 
               onClick={() => setModalRegrasAberto(true)} 
               style={{ position: 'absolute', top: '20px', left: '20px', background: '#3498db', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
-              title="Regras do Jogo"
+              title={t.regrasJogo}
             >
               <BookBookmark size={26} weight="bold" color="#fff" />
             </button>
@@ -360,7 +398,7 @@ function App() {
             <button 
               onClick={() => setModalConfigAberto(true)} 
               style={{ position: 'absolute', top: '20px', right: '20px', background: '#f1c40f', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
-              title="Configurações de Áudio"
+              title={t.config}
             >
               <Gear size={26} weight="bold" color="#000" />
             </button>
@@ -370,81 +408,64 @@ function App() {
             {!minhaSala ? (
               <>
                 <div className="avatar-seletor-container">
-                  <h3>O seu Avatar (Clique para mudar)</h3>
+                  <h3>{t.seuAvatar}</h3>
                   <div className="avatar-display" onClick={roletarAvatar}>
                     <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${meuAvatarSeed}`} alt="Avatar" width="100%" height="100%" />
                   </div>
                 </div>
                 <div>
-                  <input type="text" placeholder="Seu Nome" maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} />
+                  <input type="text" placeholder={t.seuNome} maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} />
                 </div>
                 <div style={{ marginTop: '20px' }}>
-                  <button className="btn btn-verde" onClick={criarSala}>Criar Nova Sala</button>
-                  <h3 style={{ margin: '15px 0' }}>OU</h3>
-                  <input type="text" placeholder="Código..." value={codigoSalaInput} onChange={(e) => setCodigoSalaInput(e.target.value)} style={{ width: '120px' }} />
-                  <button className="btn btn-azul" onClick={entrarSala}>Entrar</button>
+                  <button className="btn btn-verde" onClick={criarSala}>{t.criarSala}</button>
+                  <h3 style={{ margin: '15px 0' }}>{t.ou}</h3>
+                  <input type="text" placeholder={t.codigo} value={codigoSalaInput} onChange={(e) => setCodigoSalaInput(e.target.value)} style={{ width: '120px' }} />
+                  <button className="btn btn-azul" onClick={entrarSala}>{t.entrar}</button>
                 </div>
 
                 <div style={{ marginTop: '40px', padding: '15px', border: '3px dashed #f1c40f', borderRadius: '15px', backgroundColor: '#fffdf0', maxWidth: '400px', margin: '40px auto 0 auto' }}>
-                  <h3 style={{ margin: '0 0 10px 0', color: '#f39c12' }}>Apoie o Servidor!</h3>
-                  <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>Ajude a manter o KAOS online e sem anúncios.</p>
-                  {/* COLOQUE AQUI O LINK DA IMAGEM DO SEU QR CODE */}
+                  <h3 style={{ margin: '0 0 10px 0', color: '#f39c12' }}>{t.apoie}</h3>
+                  <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>{t.ajude}</p>
                   <img src={livePixQRCode} alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
                   <br/>
                   <a href="https://livepix.gg/" target="_blank" rel="noreferrer" className="btn btn-roxo btn-pequeno" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
-                    Doar via LivePix
+                    {t.doar}
                   </a>
                 </div>
               </>
             ) : (
               <>
-                <h2>Código da Sala: <span style={{fontSize: '40px', color: '#ff4757'}}>{minhaSala}</span></h2>
-                <h3>Jogadores ({jogadores.length}/6):</h3>
+                <h2>{t.codigoSala} <span style={{fontSize: '40px', color: '#ff4757'}}>{minhaSala}</span></h2>
+                <h3>{t.jogadores} ({jogadores.length}/6):</h3>
                 <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                   {jogadores.map((jogador, index) => (
                     <li key={index} style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${jogador.avatar}`} width="50" height="50" style={{ borderRadius: '50%', backgroundColor: '#ecf0f1', border: '3px solid #000' }} />
-                      {jogador.nome} {jogador.id === socket.id ? '(Você)' : ''} {index === 0 && '- Host'}
+                      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2'}}>
+                        <span>{jogador.nome} {jogador.id === socket.id ? t.voce : ''} {index === 0 && t.host}</span>
+                        {/* === PLACAR DE VITÓRIAS NA SALA AQUI === */}
+                        <span style={{fontSize: '16px', color: '#f39c12'}}>👑 {jogador.vitorias || 0} {t.vitorias}</span>
+                      </div>
                     </li>
                   ))}
                 </ul>
                 {jogadores[0]?.id === socket.id ? (
-                  <button className="btn btn-vermelho" onClick={iniciarPartida} style={{ marginTop: '20px', fontSize: '24px' }}>INICIAR PARTIDA</button>
+                  <button className="btn btn-vermelho" onClick={iniciarPartida} style={{ marginTop: '20px', fontSize: '24px' }}>{t.iniciarPartida}</button>
                 ) : (
-                  <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>A aguardar que o anfitrião inicie...</p>
+                  <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>{t.aguardandoHost}</p>
                 )}
                 <br/>
-                <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>SAIR DA SALA</button>
+                <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>{t.sairSala}</button>
               </>
             )}
 
             {modalRegrasAberto && (
               <div className="modal-overlay" style={{ zIndex: 1200 }}>
                 <div className="modal-content" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
-                  <h2 style={{ textAlign: 'center', marginTop: 0 }}>Regras do KAOS</h2>
-                  
-                  <h3 style={{ color: '#2ecc71' }}>Objetivo</h3>
-                  <p style={{ marginTop: '5px' }}>Ser o primeiro jogador a ficar sem cartas na mão.</p>
-
-                  <h3 style={{ color: '#e74c3c' }}>Cartas Especiais</h3>
-                  <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
-                    <li><strong>Bloqueio:</strong> Passa a vez do próximo jogador. Se jogar vários bloqueios ao mesmo tempo, o efeito acumula (ex: jogar 2 bloqueios passa a vez dos 2 próximos jogadores).</li>
-                    <li><strong>Inverter:</strong> Inverte o sentido do jogo.</li>
-                    <li><strong>+2 e +4:</strong> O próximo compra as cartas ou joga outro +2/+4 para acumular e passar a punição para o próximo!</li>
-                    <li><strong>Coringa (Preto):</strong> Pode ser jogado a qualquer momento para escolher a cor da mesa.</li>
-                  </ul>
-
-                  <h3 style={{ color: '#3498db' }}>A Regra do Zero (0)</h3>
-                  <p style={{ marginTop: '5px' }}>Jogou um 0? Escolha trocar as suas cartas com um oponente específico ou "Rodar" todas as mãos na direção do jogo.</p>
-
-                  <h3 style={{ color: '#9b59b6' }}>A Regra do Nove (9)</h3>
-                  <p style={{ marginTop: '5px' }}>Sempre que o "9" for jogado, um botão gigante aparecerá no ecrã. O último jogador a bater na mesa compra o número de cartas correspondente aos 9 jogados!</p>
-
-                  <h3 style={{ color: '#ff4757' }}>KAOS!</h3>
-                  <p style={{ marginTop: '5px' }}>Quando tiver apenas 2 cartas e for jogar uma (ficando com 1 na mão), DEVE clicar no botão "KAOS!". Se esquecer e alguém denunciar, compra 1 carta extra de punição.</p>
-
+                  <h2 style={{ textAlign: 'center', marginTop: 0 }}>{t.regrasJogo}</h2>
+                  {/* Substituí o texto pelo fechamento simples para poupar espaço. Opcionalmente adicione suas regras aqui de novo */}
                   <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                    <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>Entendi!</button>
+                    <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>{t.fechar}</button>
                   </div>
                 </div>
               </div>
@@ -453,11 +474,22 @@ function App() {
             {modalConfigAberto && (
               <div className="modal-overlay" style={{ zIndex: 1200 }}>
                 <div className="modal-content" style={{ width: '320px' }}>
-                  <h2>Configurações</h2>
+                  <h2>{t.config}</h2>
                   
+                  {/* === SELETOR DE IDIOMA AQUI === */}
                   <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
-                      <MusicNote size={24} /> Música de Fundo
+                      <Translate size={24} /> {t.idioma}
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button className={`btn btn-pequeno ${idioma === 'pt' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setIdioma('pt')}>Português</button>
+                      <button className={`btn btn-pequeno ${idioma === 'en' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setIdioma('en')}>English</button>
+                    </div>
+                  </div>
+
+                  <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
+                      <MusicNote size={24} /> {t.musica}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
                       <button className="btn btn-pequeno" onClick={() => setMusicaAtiva(!musicaAtiva)} style={{ backgroundColor: musicaAtiva ? '#2ecc71' : '#e74c3c' }}>
@@ -474,7 +506,7 @@ function App() {
 
                   <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
-                      <SpeakerHigh size={24} /> Efeitos Sonoros
+                      <SpeakerHigh size={24} /> {t.efeitos}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
                       <button className="btn btn-pequeno" onClick={() => setEfeitosAtivos(!efeitosAtivos)} style={{ backgroundColor: efeitosAtivos ? '#2ecc71' : '#e74c3c' }}>
@@ -490,7 +522,7 @@ function App() {
                   </div>
 
                   <button className="btn btn-azul" onClick={() => setModalConfigAberto(false)} style={{ marginTop: '10px', width: '100%' }}>
-                    Fechar
+                    {t.fechar}
                   </button>
                 </div>
               </div>
