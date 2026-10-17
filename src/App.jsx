@@ -16,7 +16,7 @@ const dic = {
     suaVez: "A SUA VEZ!", vezDe: "VEZ DE", aguarde: "Aguarde...", comprar: "COMPRAR",
     jogar: "JOGAR", cartas: "CARTAS", aceitarPunicao: "ACEITAR PUNIÇÃO", passarVez: "PASSAR A VEZ",
     regraZero: "Regra do Zero! O que deseja fazer?", nada: "NADA (Passar)", rodarTodas: "RODAR TODAS AS MÃOS",
-    ouTrocar: "Ou trocar com:", escolhaCor: "Escolha a nova cor:", 
+    ouTrocar: "Ou trocar com:", escolhaCor: "Escolha a nova cor:", sorteando: "Sorteando quem começa...",
     seuAvatar: "O seu Avatar (Clique para mudar)", seuNome: "Seu Nome", criarSala: "Criar Nova Sala",
     ou: "OU", codigo: "Código...", entrar: "Entrar", apoie: "Pague-me um Cafezinho!",
     ajude: "Ajude a manter o KAOS online e sem anúncios.", doar: "Doar via LivePix", codigoSala: "Código da Sala:",
@@ -24,7 +24,7 @@ const dic = {
     aguardandoHost: "A aguardar que o anfitrião inicie...", sairSala: "SAIR DA SALA", 
     config: "Configurações", musica: "Música de Fundo", efeitos: "Efeitos Sonoros", fechar: "Fechar",
     vencedor: "VENCEDOR!", acabouCartas: "acabou com as cartas!", voltarLobby: "Voltar para o Lobby",
-    vitorias: "Vitórias", idioma: "Idioma / Language", tempo: "Duração",
+    vitorias: "Vitórias", idioma: "Idioma", tempo: "Duração",
     // REGRAS
     regrasTitulo: "Regras do Jogo",
     objetivoTitulo: "Objetivo",
@@ -49,7 +49,7 @@ const dic = {
     suaVez: "YOUR TURN!", vezDe: "TURN:", aguarde: "Wait...", comprar: "DRAW",
     jogar: "PLAY", cartas: "CARDS", aceitarPunicao: "ACCEPT PENALTY", passarVez: "PASS TURN",
     regraZero: "Rule of Zero! What to do?", nada: "NOTHING (Pass)", rodarTodas: "ROTATE ALL HANDS",
-    ouTrocar: "Or swap with:", escolhaCor: "Choose new color:",
+    ouTrocar: "Or swap with:", escolhaCor: "Choose new color:", sorteando: "Choosing who starts...",
     seuAvatar: "Your Avatar (Click to change)", seuNome: "Your Name", criarSala: "Create New Room",
     ou: "OR", codigo: "Room Code...", entrar: "Join", apoie: "Buy me a Coffee!",
     ajude: "Help keep KAOS online and ad-free.", doar: "Donate via LivePix", codigoSala: "Room Code:",
@@ -57,7 +57,7 @@ const dic = {
     aguardandoHost: "Waiting for host to start...", sairSala: "LEAVE ROOM", 
     config: "Settings", musica: "Background Music", efeitos: "Sound Effects", fechar: "Close",
     vencedor: "WINNER!", acabouCartas: "finished their cards!", voltarLobby: "Back to Lobby",
-    vitorias: "Wins", idioma: "Language / Idioma", tempo: "Match Time",
+    vitorias: "Wins", idioma: "Language", tempo: "Match Time",
     // RULES
     regrasTitulo: "Game Rules",
     objetivoTitulo: "Objective",
@@ -120,6 +120,11 @@ function App() {
   const [jogadores, setJogadores] = useState([]);
   const [infoJogadores, setInfoJogadores] = useState([]); 
   
+  // === ESTADOS PARA O SORTEIO INICIAL ===
+  const [mostrandoSorteio, setMostrandoSorteio] = useState(false);
+  const [jogadorSorteado, setJogadorSorteado] = useState(null);
+  const [roletaIndex, setRoletaIndex] = useState(0);
+
   const [erro, setErro] = useState('');
   const [jogoIniciado, setJogoIniciado] = useState(false);
   const [minhaMao, setMinhaMao] = useState([]);
@@ -176,6 +181,7 @@ function App() {
     return () => clearInterval(interval);
   }, [jogoIniciado, vencedor, turnoAtual]);
 
+  // Lógica Musical
   useEffect(() => {
     if (vencedor) {
       if (audioMusicaRef.current) audioMusicaRef.current.pause(); 
@@ -210,18 +216,43 @@ function App() {
     }
   }, [efeitosAtivos, volumeEfeitos]);
 
+  // Animação de Roleta do Sorteio
+  useEffect(() => {
+    if (mostrandoSorteio && jogadorSorteado && jogadores.length > 0) {
+      let tick = 0;
+      const interval = setInterval(() => {
+        setRoletaIndex(Math.floor(Math.random() * jogadores.length));
+        tick++;
+        if (tick > 25) { 
+          clearInterval(interval);
+          const finalIndex = jogadores.findIndex(j => j.id === jogadorSorteado);
+          setRoletaIndex(finalIndex !== -1 ? finalIndex : 0);
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [mostrandoSorteio, jogadorSorteado, jogadores]);
+
   useEffect(() => {
     socket.on('sala_criada', (codigo) => { setMinhaSala(codigo); setJogadores([{ id: socket.id, nome: nome, avatar: meuAvatarSeed, vitorias: 0 }]); });
     socket.on('entrou_na_sala', (codigo) => { setMinhaSala(codigo); });
     socket.on('atualizar_jogadores', (lista) => { setJogadores(lista); setInfoJogadores(lista); });
     
+    // Alerta do Sorteio
+    socket.on('sorteando_primeiro_jogador', (idSorteado) => {
+      setJogadorSorteado(idSorteado);
+      setMostrandoSorteio(true);
+    });
+
     socket.on('partida_iniciada', (dados) => {
+      setMostrandoSorteio(false); // Fecha o ecrã de sorteio
+      setJogadorSorteado(null);
       setJogoIniciado(true); setMinhaMao(dados.minhaMao); setCartaMesa(dados.cartaMesa); 
       setTurnoAtual(dados.turnoAtual); setJaComprou(dados.comprouNestaRodada);
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []);
       setCartasSelecionadas([]); setVencedor(null); setTempoPartida(0);
-      setTempoTurnoRestante(15); // Reinicia para exatos 15s locais
+      setTempoTurnoRestante(15); 
       tocarEfeito('carta');
     });
     
@@ -231,16 +262,17 @@ function App() {
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []);
       setCartasSelecionadas([]); 
-      setTempoTurnoRestante(15); // Reinicia para exatos 15s locais
+      setTempoTurnoRestante(15); 
       tocarEfeito('carta');
     });
 
     socket.on('iniciar_evento_nove', () => { 
       setEventoNoveAtivo(true); 
       setEuJaBati(false); 
+      // Calculo de área ampliada (entre 25-75% da altura e 15-85% da largura) - totalmente visível e seguro
       setPosicaoNove({ 
-        top: `${Math.floor(Math.random() * 40) + 30}%`, 
-        left: `${Math.floor(Math.random() * 60) + 20}%` 
+        top: `${Math.floor(Math.random() * 50) + 25}%`, 
+        left: `${Math.floor(Math.random() * 70) + 15}%` 
       }); 
       tocarEfeito('alarme'); 
     });
@@ -266,7 +298,7 @@ function App() {
 
     return () => {
       socket.off('sala_criada'); socket.off('entrou_na_sala'); socket.off('atualizar_jogadores');
-      socket.off('partida_iniciada'); socket.off('estado_atualizado'); socket.off('erro');
+      socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); socket.off('erro');
       socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo');
       socket.off('disconnect');
     };
@@ -289,6 +321,7 @@ function App() {
     setJogoIniciado(false);
     setVencedor(null);
     setTempoPartida(0); 
+    setMostrandoSorteio(false);
   };
 
   const toggleSelecao = (cartaClicada) => {
@@ -344,8 +377,22 @@ function App() {
       <audio ref={audioAlarmeRef} src={somAlarme} />
       <audio ref={audioVitoriaRef} src={somVitoria} />
 
+      {/* OVERLAY DE SORTEIO */}
+      {mostrandoSorteio && (
+        <div className="modal-overlay" style={{ zIndex: 3000, flexDirection: 'column', backgroundColor: 'rgba(0,0,0,0.85)' }}>
+          <h1 style={{ color: '#fff', fontSize: '30px', marginBottom: '30px', textAlign: 'center' }}>{t.sorteando}</h1>
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {jogadores.map((j, i) => (
+              <div key={j.id} style={{ transform: roletaIndex === i ? 'scale(1.3)' : 'scale(1)', opacity: roletaIndex === i ? 1 : 0.4, transition: 'all 0.1s', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="80" height="80" style={{ borderRadius: '50%', border: '4px solid #000', backgroundColor: '#fff', boxShadow: roletaIndex === i ? '0 0 20px #f1c40f' : 'none' }} />
+                <span style={{ color: '#fff', fontWeight: 'bold', marginTop: '10px', textShadow: '2px 2px 0 #000' }}>{j.nome}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="ocultar-no-retrato">
-        
         {erro && <div className="notificacao-topo-esquerdo" style={{ top: jogoIniciado ? '75px' : '20px' }}>{erro}</div>}
 
         {vencedor ? (
@@ -358,15 +405,12 @@ function App() {
         ) : jogoIniciado ? (
           <div style={{ textAlign: 'center', marginTop: '10px' }}>
             
-            {/* Cronómetro da Partida com Ícone à Esquerda */}
             <div style={{ position: 'fixed', top: '20px', left: '20px', fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', zIndex: 100, fontSize: '16px', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
             </div>
 
             <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
               <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
-              
-              {/* Temporizador do Turno com Ícone */}
               <div style={{ fontSize: '15px', marginTop: '4px', textAlign: 'center', color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                 <Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s
               </div>
@@ -438,10 +482,10 @@ function App() {
               <div className="modal-overlay"><div className="modal-content"><h2>{t.escolhaCor}</h2><div style={{ display: 'flex', gap: '15px' }}>{['vermelho', 'azul', 'verde', 'amarelo'].map(cor => (<button key={cor} onClick={() => confirmarCorCoringa(cor)} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button>))}</div></div></div>
             )}
 
-            {/* Evento 9 Atualizado - Somente Mão (Sem Texto) e Sobreposto (Z-Index 2000) */}
+            {/* Evento 9 Reduzido em 20% e Sem Texto */}
             {eventoNoveAtivo && (
               <div style={{ position: 'fixed', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 2000, pointerEvents: 'none' }}>
-                <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '200px', height: '200px', borderRadius: '50%', border: '10px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '8px 8px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={120} color="#000" /></button>
+                <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '160px', height: '160px', borderRadius: '50%', border: '8px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '6px 6px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={96} color="#000" /></button>
               </div>
             )}
 
@@ -534,8 +578,7 @@ function App() {
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${jogador.avatar}`} width="50" height="50" style={{ borderRadius: '50%', backgroundColor: '#ecf0f1', border: '3px solid #000' }} />
                       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2'}}>
                         <span>{jogador.nome} {jogador.id === socket.id ? t.voce : ''} {index === 0 && t.host}</span>
-                        {/* Removido o Ícone de Coroa */}
-                        <span style={{fontSize: '16px', color: '#f39c12'}}>{jogador.vitorias || 0} {t.vitorias}</span>
+                        <span style={{fontSize: '16px', color: '#f39c12'}}>{t.vitorias}: {jogador.vitorias || 0}</span>
                       </div>
                     </li>
                   ))}
@@ -550,7 +593,6 @@ function App() {
               </>
             )}
 
-            {/* Livro de Regras Totalmente Traduzido */}
             {modalRegrasAberto && (
               <div className="modal-overlay" style={{ zIndex: 1200 }}>
                 <div className="modal-content" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
@@ -588,7 +630,6 @@ function App() {
                 <div className="modal-content" style={{ width: '320px' }}>
                   <h2>{t.config}</h2>
                   
-                  {/* Bandeiras de Seleção de Idioma */}
                   <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
                       <span style={{ fontSize: '24px' }}>{idioma === 'pt' ? '🇧🇷' : '🇺🇸'}</span> {t.idioma}
