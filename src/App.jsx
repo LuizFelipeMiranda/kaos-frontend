@@ -24,7 +24,7 @@ const dic = {
     aguardandoHost: "A aguardar que o anfitrião inicie...", sairSala: "SAIR DA SALA", regrasJogo: "Regras do Jogo",
     config: "Configurações", musica: "Música de Fundo", efeitos: "Efeitos Sonoros", fechar: "Fechar",
     vencedor: "VENCEDOR!", acabouCartas: "acabou com as cartas!", voltarLobby: "Voltar para o Lobby",
-    vitorias: "Vitórias", idioma: "Idioma / Language"
+    vitorias: "Vitórias", idioma: "Idioma / Language", tempo: "Duração"
   },
   en: {
     suaVez: "YOUR TURN!", vezDe: "TURN:", aguarde: "Wait...", comprar: "DRAW",
@@ -38,7 +38,7 @@ const dic = {
     aguardandoHost: "Waiting for host to start...", sairSala: "LEAVE ROOM", regrasJogo: "Game Rules",
     config: "Settings", musica: "Background Music", efeitos: "Sound Effects", fechar: "Close",
     vencedor: "WINNER!", acabouCartas: "finished their cards!", voltarLobby: "Back to Lobby",
-    vitorias: "Wins", idioma: "Language / Idioma"
+    vitorias: "Wins", idioma: "Language / Idioma", tempo: "Match Time"
   }
 };
 
@@ -94,6 +94,8 @@ function App() {
   
   const [eventoNoveAtivo, setEventoNoveAtivo] = useState(false);
   const [euJaBati, setEuJaBati] = useState(false);
+  const [posicaoNove, setPosicaoNove] = useState({ top: '50%', left: '50%' }); 
+  
   const [escolhendoCorPara, setEscolhendoCorPara] = useState(null);
   const [escolhendoAlvoZero, setEscolhendoAlvoZero] = useState(null);
   const [alvoSelecionado, setAlvoSelecionado] = useState(null);
@@ -106,15 +108,40 @@ function App() {
   const [efeitosAtivos, setEfeitosAtivos] = useState(true);
   const [volumeEfeitos, setVolumeEfeitos] = useState(0.7);
 
+  const [tempoPartida, setTempoPartida] = useState(0);
+  const [inicioTurnoServer, setInicioTurnoServer] = useState(null);
+  const [tempoTurnoRestante, setTempoTurnoRestante] = useState(15);
+
   const audioMusicaRef = useRef(null);
   const audioEfeitoRef = useRef(null);
   const audioAlarmeRef = useRef(null);
   const audioVitoriaRef = useRef(null); 
 
-  // === LÓGICA ATUALIZADA DE MÚSICA (FUNDO VS VITÓRIA) ===
+  // === CORREÇÃO DO ERRO DO CRONÓMETRO DA PARTIDA ===
+  useEffect(() => {
+    let interval;
+    if (jogoIniciado && !vencedor) {
+      interval = setInterval(() => setTempoPartida(prev => prev + 1), 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [jogoIniciado, vencedor]);
+
+  useEffect(() => {
+    let interval;
+    if (jogoIniciado && !vencedor && inicioTurnoServer) {
+      interval = setInterval(() => {
+        const passado = Math.floor((Date.now() - inicioTurnoServer) / 1000);
+        setTempoTurnoRestante(Math.max(15 - passado, 0));
+      }, 500);
+    }
+    return () => clearInterval(interval);
+  }, [jogoIniciado, vencedor, inicioTurnoServer]);
+
   useEffect(() => {
     if (vencedor) {
-      if (audioMusicaRef.current) audioMusicaRef.current.pause(); // Pára a música de fundo
+      if (audioMusicaRef.current) audioMusicaRef.current.pause(); 
       if (audioVitoriaRef.current && efeitosAtivos) {
         audioVitoriaRef.current.volume = volumeEfeitos;
         audioVitoriaRef.current.currentTime = 0;
@@ -129,7 +156,7 @@ function App() {
           audioMusicaRef.current.pause();
         }
       }
-      if (audioVitoriaRef.current) audioVitoriaRef.current.pause(); // Pára a de vitória se recomeçar
+      if (audioVitoriaRef.current) audioVitoriaRef.current.pause(); 
     }
   }, [musicaAtiva, volumeMusica, vencedor, efeitosAtivos, volumeEfeitos]);
 
@@ -155,8 +182,8 @@ function App() {
       setJogoIniciado(true); setMinhaMao(dados.minhaMao); setCartaMesa(dados.cartaMesa); 
       setTurnoAtual(dados.turnoAtual); setJaComprou(dados.comprouNestaRodada);
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
-      setInfoJogadores(dados.infoJogadores || []);
-      setCartasSelecionadas([]); setVencedor(null); 
+      setInfoJogadores(dados.infoJogadores || []); setInicioTurnoServer(dados.inicioTurno);
+      setCartasSelecionadas([]); setVencedor(null); setTempoPartida(0); // Garante reset do tempo ao iniciar a partida
       tocarEfeito('carta');
     });
     
@@ -164,7 +191,7 @@ function App() {
       setMinhaMao(dados.minhaMao); setCartaMesa(dados.cartaMesa); 
       setTurnoAtual(dados.turnoAtual); setJaComprou(dados.comprouNestaRodada);
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
-      setInfoJogadores(dados.infoJogadores || []);
+      setInfoJogadores(dados.infoJogadores || []); setInicioTurnoServer(dados.inicioTurno);
       setCartasSelecionadas([]); 
       tocarEfeito('carta');
     });
@@ -172,6 +199,7 @@ function App() {
     socket.on('iniciar_evento_nove', () => { 
       setEventoNoveAtivo(true); 
       setEuJaBati(false); 
+      setPosicaoNove({ top: `${Math.floor(Math.random() * 50) + 25}%`, left: `${Math.floor(Math.random() * 50) + 25}%` }); 
       tocarEfeito('alarme'); 
     });
 
@@ -218,6 +246,7 @@ function App() {
     setInfoJogadores([]);
     setJogoIniciado(false);
     setVencedor(null);
+    setTempoPartida(0); // Limpa o tempo ao sair
   };
 
   const toggleSelecao = (cartaClicada) => {
@@ -248,7 +277,14 @@ function App() {
     setEscolhendoCorPara(null); setAlvoSelecionado(null);
   };
 
-  const oponentes = infoJogadores.filter(j => j.id !== socket.id);
+  const meuIndexNaSala = infoJogadores.findIndex(j => j.id === socket.id);
+  const oponentesOrdenados = [];
+  if (meuIndexNaSala !== -1) {
+    for (let i = 1; i < infoJogadores.length; i++) {
+      oponentesOrdenados.push(infoJogadores[(meuIndexNaSala + i) % infoJogadores.length]);
+    }
+  }
+
   const jogadorDaVez = infoJogadores.find(j => j.id === turnoAtual);
 
   return (
@@ -275,20 +311,25 @@ function App() {
             <h1 className="logo-kaos"><div className="carta-k-logo">K</div>AOS</h1>
             <h1 style={{ fontSize: '50px', color: '#f1c40f' }}>🏆 {t.vencedor} 🏆</h1>
             <h2 style={{ fontSize: '40px' }}>{vencedor} {t.acabouCartas}</h2>
-            <button className="btn btn-azul" onClick={() => { setVencedor(null); setJogoIniciado(false); }}>{t.voltarLobby}</button>
+            <button className="btn btn-azul" onClick={() => { setVencedor(null); setJogoIniciado(false); setTempoPartida(0); }}>{t.voltarLobby}</button>
           </div>
         ) : jogoIniciado ? (
           <div style={{ textAlign: 'center', marginTop: '10px' }}>
             
             <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
-              {turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}
+              <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
+              <div style={{ height: '4px', background: turnoAtual === socket.id ? '#fff' : '#e74c3c', width: `${(tempoTurnoRestante / 15) * 100}%`, transition: 'width 0.5s linear', marginTop: '3px', borderRadius: '2px' }}></div>
+            </div>
+
+            <div style={{ position: 'fixed', top: '15px', left: '50%', transform: 'translateX(-50%)', fontWeight: 'bold', color: '#2c3e50', zIndex: 100 }}>
+              ⏱️ {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
             </div>
 
             <div className="mesa-redonda">
-              {oponentes.map((op, index) => {
+              {oponentesOrdenados.map((op, index) => {
                 const ehVezDele = turnoAtual === op.id;
                 return (
-                  <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentes.length)}>
+                  <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
                     <div className="oponente-avatar" style={{ borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000' }}>
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} alt="Avatar" width="100%" height="100%" />
                     </div>
@@ -335,7 +376,7 @@ function App() {
                   </div>
                   <h3 style={{margin: '15px 0 10px 0'}}>{t.ouTrocar}</h3>
                   <div className="grid-opcoes-zero">
-                    {oponentes.map(j => (
+                    {oponentesOrdenados.map(j => (
                       <button key={j.id} className="btn btn-azul" onClick={() => confirmarAlvoZero(j.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                         <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} />
                         {j.nome} ({j.qtdCartas})
@@ -351,7 +392,12 @@ function App() {
             )}
 
             {eventoNoveAtivo && (
-              <div className="modal-overlay" style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}><div style={{ textAlign: 'center' }}><h1 style={{ color: '#ff4757', fontSize: '60px', fontFamily: 'Fredoka', WebkitTextStroke: '3px #000' }}>{t.bataMesa}</h1><button onClick={baterNaMesa} disabled={euJaBati} style={{ width: '250px', height: '250px', borderRadius: '50%', border: '10px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '8px 8px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={140} color="#000" /></button></div></div>
+              <div className="modal-overlay" style={{ backgroundColor: 'rgba(0,0,0,0.9)', position: 'relative' }}>
+                <div style={{ position: 'absolute', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                  <h1 style={{ color: '#ff4757', fontSize: '50px', fontFamily: 'Fredoka', WebkitTextStroke: '2px #000', marginBottom: '10px' }}>{t.bataMesa}</h1>
+                  <button onClick={baterNaMesa} disabled={euJaBati} style={{ width: '200px', height: '200px', borderRadius: '50%', border: '10px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '8px 8px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={120} color="#000" /></button>
+                </div>
+              </div>
             )}
 
             <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)}>KAOS!</button>
@@ -443,7 +489,6 @@ function App() {
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${jogador.avatar}`} width="50" height="50" style={{ borderRadius: '50%', backgroundColor: '#ecf0f1', border: '3px solid #000' }} />
                       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2'}}>
                         <span>{jogador.nome} {jogador.id === socket.id ? t.voce : ''} {index === 0 && t.host}</span>
-                        {/* === PLACAR DE VITÓRIAS NA SALA AQUI === */}
                         <span style={{fontSize: '16px', color: '#f39c12'}}>👑 {jogador.vitorias || 0} {t.vitorias}</span>
                       </div>
                     </li>
@@ -459,11 +504,32 @@ function App() {
               </>
             )}
 
+            {/* === LIVRO DE REGRAS RESTAURADO AQUI === */}
             {modalRegrasAberto && (
               <div className="modal-overlay" style={{ zIndex: 1200 }}>
                 <div className="modal-content" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
                   <h2 style={{ textAlign: 'center', marginTop: 0 }}>{t.regrasJogo}</h2>
-                  {/* Substituí o texto pelo fechamento simples para poupar espaço. Opcionalmente adicione suas regras aqui de novo */}
+                  
+                  <h3 style={{ color: '#2ecc71' }}>Objetivo</h3>
+                  <p style={{ marginTop: '5px' }}>Ser o primeiro jogador a ficar sem cartas na mão.</p>
+
+                  <h3 style={{ color: '#e74c3c' }}>Cartas Especiais</h3>
+                  <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
+                    <li><strong>Bloqueio:</strong> Passa a vez do próximo jogador. Se jogar vários bloqueios ao mesmo tempo, o efeito acumula (ex: jogar 2 bloqueios passa a vez dos 2 próximos jogadores).</li>
+                    <li><strong>Inverter:</strong> Inverte o sentido do jogo.</li>
+                    <li><strong>+2 e +4:</strong> O próximo compra as cartas ou joga outro +2/+4 para acumular e passar a punição para o próximo!</li>
+                    <li><strong>Coringa (Preto):</strong> Pode ser jogado a qualquer momento para escolher a cor da mesa.</li>
+                  </ul>
+
+                  <h3 style={{ color: '#3498db' }}>A Regra do Zero (0)</h3>
+                  <p style={{ marginTop: '5px' }}>Jogou um 0? Escolha trocar as suas cartas com um oponente específico ou "Rodar" todas as mãos na direção do jogo.</p>
+
+                  <h3 style={{ color: '#9b59b6' }}>A Regra do Nove (9)</h3>
+                  <p style={{ marginTop: '5px' }}>Sempre que o "9" for jogado, um botão gigante aparecerá no ecrã. O último jogador a bater na mesa compra o número de cartas correspondente aos 9 jogados!</p>
+
+                  <h3 style={{ color: '#ff4757' }}>KAOS!</h3>
+                  <p style={{ marginTop: '5px' }}>Quando tiver apenas 2 cartas e for jogar uma (ficando com 1 na mão), DEVE clicar no botão "KAOS!". Se esquecer e alguém denunciar, compra 1 carta extra de punição.</p>
+
                   <div style={{ textAlign: 'center', marginTop: '20px' }}>
                     <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>{t.fechar}</button>
                   </div>
@@ -476,7 +542,6 @@ function App() {
                 <div className="modal-content" style={{ width: '320px' }}>
                   <h2>{t.config}</h2>
                   
-                  {/* === SELETOR DE IDIOMA AQUI === */}
                   <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}>
                       <Translate size={24} /> {t.idioma}
