@@ -117,7 +117,6 @@ function App() {
   const audioAlarmeRef = useRef(null);
   const audioVitoriaRef = useRef(null); 
 
-  // === CORREÇÃO DO ERRO DO CRONÓMETRO DA PARTIDA ===
   useEffect(() => {
     let interval;
     if (jogoIniciado && !vencedor) {
@@ -183,7 +182,7 @@ function App() {
       setTurnoAtual(dados.turnoAtual); setJaComprou(dados.comprouNestaRodada);
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []); setInicioTurnoServer(dados.inicioTurno);
-      setCartasSelecionadas([]); setVencedor(null); setTempoPartida(0); // Garante reset do tempo ao iniciar a partida
+      setCartasSelecionadas([]); setVencedor(null); setTempoPartida(0); 
       tocarEfeito('carta');
     });
     
@@ -199,7 +198,11 @@ function App() {
     socket.on('iniciar_evento_nove', () => { 
       setEventoNoveAtivo(true); 
       setEuJaBati(false); 
-      setPosicaoNove({ top: `${Math.floor(Math.random() * 50) + 25}%`, left: `${Math.floor(Math.random() * 50) + 25}%` }); 
+      // Calcula posição apenas numa área central visível da tela, ignorando as bordas
+      setPosicaoNove({ 
+        top: `${Math.floor(Math.random() * 40) + 30}%`, 
+        left: `${Math.floor(Math.random() * 60) + 20}%` 
+      }); 
       tocarEfeito('alarme'); 
     });
 
@@ -246,7 +249,7 @@ function App() {
     setInfoJogadores([]);
     setJogoIniciado(false);
     setVencedor(null);
-    setTempoPartida(0); // Limpa o tempo ao sair
+    setTempoPartida(0); 
   };
 
   const toggleSelecao = (cartaClicada) => {
@@ -304,7 +307,8 @@ function App() {
 
       <div className="ocultar-no-retrato">
         
-        {erro && <div className="notificacao-topo-esquerdo">{erro}</div>}
+        {/* Adicionado estilo para empurrar o erro para baixo se o jogo estiver a decorrer, evitando colisão com o relógio */}
+        {erro && <div className="notificacao-topo-esquerdo" style={{ top: jogoIniciado ? '75px' : '20px' }}>{erro}</div>}
 
         {vencedor ? (
           <div className="container" style={{ marginTop: '100px' }}>
@@ -316,13 +320,18 @@ function App() {
         ) : jogoIniciado ? (
           <div style={{ textAlign: 'center', marginTop: '10px' }}>
             
-            <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
-              <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
-              <div style={{ height: '4px', background: turnoAtual === socket.id ? '#fff' : '#e74c3c', width: `${(tempoTurnoRestante / 15) * 100}%`, transition: 'width 0.5s linear', marginTop: '3px', borderRadius: '2px' }}></div>
+            {/* Relógio do Jogo movido para o Canto Superior Esquerdo */}
+            <div style={{ position: 'fixed', top: '20px', left: '20px', fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', zIndex: 100, fontSize: '16px', letterSpacing: '1px' }}>
+              ⏱️ {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
             </div>
 
-            <div style={{ position: 'fixed', top: '15px', left: '50%', transform: 'translateX(-50%)', fontWeight: 'bold', color: '#2c3e50', zIndex: 100 }}>
-              ⏱️ {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
+            <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
+              <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
+              
+              {/* Temporizador do Turno atualizado para mostrar em Segundos (Texto em vez de barra) */}
+              <div style={{ fontSize: '15px', marginTop: '4px', textAlign: 'center', color: turnoAtual === socket.id ? '#000' : '#ff7675' }}>
+                ⏳ {tempoTurnoRestante}s
+              </div>
             </div>
 
             <div className="mesa-redonda">
@@ -391,12 +400,11 @@ function App() {
               <div className="modal-overlay"><div className="modal-content"><h2>{t.escolhaCor}</h2><div style={{ display: 'flex', gap: '15px' }}>{['vermelho', 'azul', 'verde', 'amarelo'].map(cor => (<button key={cor} onClick={() => confirmarCorCoringa(cor)} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button>))}</div></div></div>
             )}
 
+            {/* Evento 9 Corrigido: Sem Fundo Preto (Overlay) e Sempre Sobreposto à Mesa */}
             {eventoNoveAtivo && (
-              <div className="modal-overlay" style={{ backgroundColor: 'rgba(0,0,0,0.9)', position: 'relative' }}>
-                <div style={{ position: 'absolute', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                  <h1 style={{ color: '#ff4757', fontSize: '50px', fontFamily: 'Fredoka', WebkitTextStroke: '2px #000', marginBottom: '10px' }}>{t.bataMesa}</h1>
-                  <button onClick={baterNaMesa} disabled={euJaBati} style={{ width: '200px', height: '200px', borderRadius: '50%', border: '10px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '8px 8px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={120} color="#000" /></button>
-                </div>
+              <div style={{ position: 'fixed', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 2000, pointerEvents: 'none' }}>
+                <h1 style={{ color: '#ff4757', fontSize: '50px', fontFamily: 'Fredoka', WebkitTextStroke: '2px #000', marginBottom: '10px' }}>{t.bataMesa}</h1>
+                <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '200px', height: '200px', borderRadius: '50%', border: '10px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '8px 8px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={120} color="#000" /></button>
               </div>
             )}
 
@@ -504,7 +512,6 @@ function App() {
               </>
             )}
 
-            {/* === LIVRO DE REGRAS RESTAURADO AQUI === */}
             {modalRegrasAberto && (
               <div className="modal-overlay" style={{ zIndex: 1200 }}>
                 <div className="modal-content" style={{ width: '90%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
