@@ -15,7 +15,6 @@ import livePixQRCode from './assets/livepix.png';
 
 const socket = io('https://kaos-backend-83du.onrender.com');
 
-// === DICIONÁRIO E REGRAS COMPLETAS (MEGA ATUALIZAÇÃO) ===
 const dic = {
   pt: {
     suaVez: "A SUA VEZ!", vezDe: "VEZ DE", aguarde: "Aguarde...", comprar: "COMPRAR",
@@ -30,12 +29,10 @@ const dic = {
     config: "Configurações", musica: "Música de Fundo", efeitos: "Efeitos Sonoros", fechar: "Fechar",
     vencedor: "VENCEDOR!", acabouCartas: "acabou com as cartas!", voltarLobby: "Voltar para o Lobby",
     vitorias: "Vitórias", idioma: "Idioma", tempo: "Duração",
-    // Mega Atualização UI
     espiarAlvo: "Que bisbilhoteiro! De quem queres ver a mão?",
     igualarTitulo: "Igualar as Cartas", igualarDesc: "Ajustar o tamanho das mãos de toda a gente para a:", 
     igualarMaior: "Maior Quantidade", igualarMenor: "Menor Quantidade",
     escolherNumTitulo: "Escolha o Número", escolherNumDesc: "Selecione o número que a mesa vai passar a ter:",
-    // Regras
     regrasTitulo: "Regras do Jogo",
     regrasNovasTitulo: "Mega Atualização (Novas Cartas!)",
     regrasNovasText: "• Espiar (Olho): Veja a mão de qualquer jogador.\n• +3 (Cor): Compra 3 cartas.\n• +6 (Preto): O próximo compra 6.\n• Igualar (Balança): Escolha 'Maior' ou 'Menor' para igualar o número de cartas de todos!\n• Recomeço (Fogo): Todos descartam as mãos e compram 7 novas cartas.\n• Escolher Número (#): Muda a mesa para um número específico (qualquer cor pode ser jogada).",
@@ -117,7 +114,7 @@ const getPosicaoOponente = (index, totalOponentes) => {
   return index === 0 ? { top: '50%', left: '0%' } : index === 1 ? { top: '15%', left: '15%' } : index === 2 ? { top: '10%', left: '50%' } : index === 3 ? { top: '15%', left: '85%' } : { top: '50%', left: '100%' };
 };
 
-const arrayEmojis = ['😡', '🤣', '😭', '😈', '💀', '🤫', '😎', '🤡', '💖'];
+const arrayEmojis = ['😡', '🤣', '😭', '😈', '💀', '🤫', '😎', '🖕​', '💖'];
 
 function App() {
   const [idioma, setIdioma] = useState('pt');
@@ -149,14 +146,11 @@ function App() {
   const [euJaBati, setEuJaBati] = useState(false);
   const [posicaoNove, setPosicaoNove] = useState({ top: '50%', left: '50%' }); 
   
-  // Wizards (Fila de Resolução Múltipla)
   const [filaPassos, setFilaPassos] = useState([]);
   const [payloadJogada, setPayloadJogada] = useState(null);
 
-  // Espiar Hand Modal
   const [maoEspiada, setMaoEspiada] = useState(null);
 
-  // Emotes State
   const [emotesAtivos, setEmotesAtivos] = useState({});
   const [menuEmoteAberto, setMenuEmoteAberto] = useState(false);
 
@@ -186,7 +180,6 @@ function App() {
     return () => clearInterval(interval);
   }, [jogoIniciado, vencedor]);
 
-  // Contagem do turno Sincronizada (Evita reset abusivo ao comprar carta)
   useEffect(() => {
     let interval;
     if (jogoIniciado && !vencedor && !eventoNoveAtivo && inicioTurnoServer) {
@@ -198,7 +191,6 @@ function App() {
     return () => clearInterval(interval);
   }, [jogoIniciado, vencedor, eventoNoveAtivo, inicioTurnoServer]);
 
-  // Áudio Local
   useEffect(() => {
     if (vencedor) {
       if (audioMusicaRef.current) audioMusicaRef.current.pause(); 
@@ -276,7 +268,7 @@ function App() {
       setTurnoAtual(dados.turnoAtual); setJaComprou(dados.comprouNestaRodada);
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []);
-      setInicioTurnoServer(dados.inicioTurno); // O Segredo está aqui! O tempo só reseta se o Backend mudar este Timestamp.
+      setInicioTurnoServer(dados.inicioTurno); 
       setCartasSelecionadas([]); 
       tocarEfeito('carta');
     });
@@ -361,7 +353,6 @@ function App() {
     setCartasSelecionadas((ant) => ant.find(c => c.id === cartaClicada.id) ? ant.filter(c => c.id !== cartaClicada.id) : [...ant, cartaClicada]);
   };
 
-  // WIZARD DE JOGADA
   const tentarJogarSelecionadas = () => {
     if (cartasSelecionadas.length === 0 || eventoNoveAtivo) return;
     const ultimaCarta = cartasSelecionadas[cartasSelecionadas.length - 1];
@@ -372,7 +363,6 @@ function App() {
     if (cartasSelecionadas.some(c => c.valor === 'igualar')) passosMapeados.push('igualar');
     if (cartasSelecionadas.some(c => c.valor === 'escolher_numero')) passosMapeados.push('numero');
     
-    // Cor é pedido para qualquer curinga, mas para "escolher_numero" não é estritamente necessário no UI (deixamos ser preto e escolhe apenas número).
     if (ultimaCarta.cor === 'preto' && ultimaCarta.valor !== 'escolher_numero') passosMapeados.push('cor');
 
     if (passosMapeados.length > 0) {
@@ -412,7 +402,6 @@ function App() {
 
   return (
     <div>
-      {/* INJEÇÃO DE CSS ANIMATION PARA OS EMOTES E AJUSTES DE UI */}
       <style>{`
         @keyframes flutuarCima {
           0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
@@ -481,31 +470,16 @@ function App() {
               <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
             </div>
 
-            {/* STATUS TURNO + MENU EMOTES */}
-            <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ position: 'relative' }}>
-              <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
-              <div style={{ fontSize: '15px', marginTop: '4px', textAlign: 'center', color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                {eventoNoveAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
-              </div>
-              
-              <button 
-                onClick={() => setMenuEmoteAberto(!menuEmoteAberto)} 
-                style={{ position: 'absolute', right: '-45px', top: '10px', background: 'transparent', border: 'none', cursor: 'pointer', outline: 'none' }}>
-                <Smiley size={32} weight="fill" color="#f1c40f" style={{ filter: 'drop-shadow(2px 2px 0 #000)' }} />
-              </button>
-
-              {menuEmoteAberto && (
-                <div style={{ position: 'absolute', right: '-120px', top: '50px', background: '#fff', border: '3px solid #000', borderRadius: '10px', padding: '10px', zIndex: 1100 }}>
-                  <div className="botoes-emotes-menu">
-                    {arrayEmojis.map(emo => (
-                      <button key={emo} className="btn-emote" onClick={() => enviarEmote(emo)}>{emo}</button>
-                    ))}
-                  </div>
+            {/* BARRA DE TURNO CORRIGIDA (CRIOU-SE UM CONTAINER PARA ELA NÃO ESTICAR) */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+              <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ minWidth: '220px', padding: '10px 30px' }}>
+                <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
+                <div style={{ fontSize: '15px', marginTop: '4px', textAlign: 'center', color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                  {eventoNoveAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* MESA E OPONENTES */}
             <div className="mesa-redonda">
               {oponentesOrdenados.map((op, index) => {
                 const ehVezDele = turnoAtual === op.id;
@@ -547,15 +521,41 @@ function App() {
               </div>
             </div>
 
-            {/* SEU AVATAR COM EMOTES */}
             <div style={{ position: 'fixed', bottom: '130px', left: '50px', zIndex: 900 }}>
               <div style={{ position: 'relative', width: '60px', height: '60px' }}>
                 {emotesAtivos[socket.id] && <div className="emote-anim">{emotesAtivos[socket.id]}</div>}
               </div>
             </div>
 
-            {/* ======= WIZARD DE MODAIS DE AÇÕES ======= */}
+            {/* CONTAINER LATERAL INFERIOR: EMOTES + KAOS */}
+            <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+              
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setMenuEmoteAberto(!menuEmoteAberto)}
+                  style={{ background: '#fff', border: '3px solid #000', borderRadius: '50%', width: '55px', height: '55px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000', outline: 'none', transition: 'transform 0.1s' }}
+                  onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                  onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <Smiley size={36} weight="fill" color="#f1c40f" />
+                </button>
+
+                {menuEmoteAberto && (
+                  <div style={{ position: 'absolute', bottom: '65px', right: '0', background: '#fff', border: '3px solid #000', borderRadius: '15px', padding: '10px', width: '200px', boxShadow: '4px 4px 0 #000' }}>
+                    <div className="botoes-emotes-menu">
+                      {arrayEmojis.map(emo => (
+                        <button key={emo} className="btn-emote" onClick={() => enviarEmote(emo)}>{emo}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Botão KAOS reajustado para funcionar dentro deste novo container */}
+              <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)} style={{ position: 'static' }}>KAOS!</button>
             
+            </div>
+
             {filaPassos[0] === 'zero' && (
               <div className="modal-overlay">
                 <div className="modal-content">
@@ -635,7 +635,6 @@ function App() {
               </div>
             )}
 
-            {/* MODAL DE RESULTADO DE ESPIAR */}
             {maoEspiada && (
               <div className="modal-overlay" style={{ zIndex: 1500 }}>
                 <div className="modal-content" style={{ maxWidth: '600px' }}>
@@ -652,14 +651,11 @@ function App() {
               </div>
             )}
 
-            {/* EVENTO 9 */}
             {eventoNoveAtivo && (
               <div style={{ position: 'fixed', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 2000, pointerEvents: 'none' }}>
                 <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '160px', height: '160px', borderRadius: '50%', border: '8px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '6px 6px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={96} color="#000" /></button>
               </div>
             )}
-
-            <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)}>KAOS!</button>
 
             <div className="mao-container" style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', padding: '0 10px 10px 10px', maxWidth: '1000px', margin: '15px auto' }}>
               {minhaMao.map((carta) => {
@@ -763,7 +759,6 @@ function App() {
               </>
             )}
 
-            {/* LIVRO DE REGRAS COMPLETO COM MEGA ATUALIZAÇÃO */}
             {modalRegrasAberto && (
               <div className="modal-overlay" style={{ zIndex: 1200 }}>
                 <div className="modal-content" style={{ width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
