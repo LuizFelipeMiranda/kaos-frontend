@@ -4,7 +4,7 @@ import {
   HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, 
   ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, 
   SpeakerSlash, MusicNote, BookBookmark, DeviceMobile, Hourglass, 
-  Timer, Eye, Scales, Flame, Hash, Smiley 
+  Timer, Eye, Scales, Hash, Smiley 
 } from '@phosphor-icons/react';
 
 import musicaTema from './assets/tema.mp3';
@@ -35,7 +35,7 @@ const dic = {
     escolherNumTitulo: "Escolha o Número", escolherNumDesc: "Selecione o número que a mesa vai passar a ter:",
     regrasTitulo: "Regras do Jogo",
     regrasNovasTitulo: "Mega Atualização (Novas Cartas!)",
-    regrasNovasText: "• Espiar (Olho): Veja a mão de qualquer jogador.\n• +3 (Cor): Compra 3 cartas.\n• +6 (Preto): O próximo compra 6.\n• Igualar (Balança): Escolha 'Maior' ou 'Menor' para igualar o número de cartas de todos!\n• Recomeço (Fogo): Todos descartam as mãos e compram 7 novas cartas.\n• Escolher Número (#): Muda a mesa para um número específico (qualquer cor pode ser jogada).",
+    regrasNovasText: "• Espiar (Olho): Veja a mão de qualquer jogador.\n• +3 (Cor): Compra 3 cartas.\n• +6 (Preto): O próximo compra 6.\n• Igualar (Balança): Escolha 'Maior' ou 'Menor' para igualar o número de cartas de todos!\n• Recomeço (Ampulheta): Todos descartam as mãos e compram 7 novas cartas.\n• Escolher Número (#): Muda a mesa para um número específico (qualquer cor pode ser jogada).",
     regrasBasicasTitulo: "Regras Básicas",
     regrasBasicasTexto: "Cada jogador começa com 7 cartas. O objetivo é ser o primeiro a ficar sem cartas. Deve jogar cartas que combinem com a Cor ou com o Número da mesa.",
     sequenciasTitulo: "Sequências (Múltiplas Cartas)",
@@ -66,10 +66,10 @@ const dic = {
     escolherNumTitulo: "Choose a Number", escolherNumDesc: "Select the number the table will change to:",
     regrasTitulo: "Game Rules",
     regrasNovasTitulo: "Mega Update (New Cards!)",
-    regrasNovasText: "• Peek (Eye): Look at any player's hand.\n• +3 (Color): Draw 3.\n• +6 (Black): Next player draws 6.\n• Equalizer (Scales): Match everyone's card count to the 'Largest' or 'Smallest' hand!\n• Restart (Fire): Everyone discards and draws 7 new cards.\n• Choose Number (#): Change the table to a specific number (any color matches it).",
+    regrasNovasText: "• Peek (Eye): Look at any player's hand.\n• +3 (Color): Draw 3.\n• +6 (Black): Next player draws 6.\n• Equalizer (Scales): Match everyone's card count to the 'Largest' or 'Smallest' hand!\n• Restart (Hourglass): Everyone discards and draws 7 new cards.\n• Choose Number (#): Change the table to a specific number (any color matches it).",
     regrasBasicasTitulo: "Basic Rules",
     regrasBasicasTexto: "Each player starts with 7 cards. Objective: get rid of all your cards by matching the Color or Number of the top card.",
-    sequenciasTitulo: "Sequences (Multiple Cards)",
+    sequenciasTitulo: "Sequências (Múltiplas Cartas)",
     sequenciasTexto: "Play multiple cards if they have the SAME VALUE (e.g. three '5's) OR form a SEQUENCE IN THE SAME COLOR (ascending 3, 4, 5 or descending 9, 8, 7).",
     regraZeroTitulo: "The Rule of Zero (0)",
     regraZeroTexto: "Played a 0? Swap your cards with an opponent or 'Rotate' all hands.",
@@ -99,7 +99,7 @@ const renderValorCarta = (valor) => {
   if (valor === '+6') return '+6';
   if (valor === 'espiar') return <Eye size="1em" weight="bold" />;
   if (valor === 'igualar') return <Scales size="1em" weight="bold" />;
-  if (valor === 'reinicio') return <Flame size="1em" weight="bold" />;
+  if (valor === 'reinicio') return <Hourglass size="1em" weight="bold" />; 
   if (valor === 'escolher_numero') return <Hash size="1em" weight="bold" />;
   return valor;
 };
@@ -114,14 +114,17 @@ const getPosicaoOponente = (index, totalOponentes) => {
   return index === 0 ? { top: '50%', left: '0%' } : index === 1 ? { top: '15%', left: '15%' } : index === 2 ? { top: '10%', left: '50%' } : index === 3 ? { top: '15%', left: '85%' } : { top: '50%', left: '100%' };
 };
 
-const arrayEmojis = ['😡', '🤣', '😭', '😈', '💀', '🤫', '😎', '🖕​', '💖'];
+const arrayEmojis = ['❤️', '💛', '💚', '💙', '🖕', '😴', '😎', '😂', '😡'];
 
 function App() {
   const [idioma, setIdioma] = useState('pt');
   const t = dic[idioma];
 
   const [nome, setNome] = useState('');
-  const [meuAvatarSeed, setMeuAvatarSeed] = useState(gerarSeedAleatoria());
+  
+  // CORREÇÃO: Utilizando função de inicialização preguiçosa para evitar erro do ESLint
+  const [meuAvatarSeed, setMeuAvatarSeed] = useState(() => gerarSeedAleatoria());
+  
   const [codigoSalaInput, setCodigoSalaInput] = useState('');
   const [minhaSala, setMinhaSala] = useState(null);
   
@@ -164,8 +167,11 @@ function App() {
   const [volumeEfeitos, setVolumeEfeitos] = useState(0.7);
 
   const [tempoPartida, setTempoPartida] = useState(0);
+  
   const [tempoTurnoRestante, setTempoTurnoRestante] = useState(25);
-  const [inicioTurnoServer, setInicioTurnoServer] = useState(null);
+  
+  // CORREÇÃO: Utilizando função de inicialização preguiçosa
+  const [tempoReferencia, setTempoReferencia] = useState(() => Date.now());
 
   const audioMusicaRef = useRef(null);
   const audioEfeitoRef = useRef(null);
@@ -182,14 +188,14 @@ function App() {
 
   useEffect(() => {
     let interval;
-    if (jogoIniciado && !vencedor && !eventoNoveAtivo && inicioTurnoServer) {
+    if (jogoIniciado && !vencedor && !eventoNoveAtivo) {
       interval = setInterval(() => {
-        const passado = Math.floor((Date.now() - inicioTurnoServer) / 1000);
+        const passado = Math.floor((Date.now() - tempoReferencia) / 1000);
         setTempoTurnoRestante(Math.max(25 - passado, 0));
       }, 500);
     }
     return () => clearInterval(interval);
-  }, [jogoIniciado, vencedor, eventoNoveAtivo, inicioTurnoServer]);
+  }, [jogoIniciado, vencedor, eventoNoveAtivo, tempoReferencia]);
 
   useEffect(() => {
     if (vencedor) {
@@ -258,8 +264,10 @@ function App() {
       setTurnoAtual(dados.turnoAtual); setJaComprou(dados.comprouNestaRodada);
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []);
-      setInicioTurnoServer(dados.inicioTurno);
       setCartasSelecionadas([]); setVencedor(null); setTempoPartida(0);
+      
+      setTempoReferencia(Date.now());
+      setTempoTurnoRestante(25);
       tocarEfeito('carta');
     });
     
@@ -268,8 +276,12 @@ function App() {
       setTurnoAtual(dados.turnoAtual); setJaComprou(dados.comprouNestaRodada);
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []);
-      setInicioTurnoServer(dados.inicioTurno); 
       setCartasSelecionadas([]); 
+      
+      if (dados.resetarTempo) {
+        setTempoReferencia(Date.now());
+        setTempoTurnoRestante(25);
+      }
       tocarEfeito('carta');
     });
 
@@ -470,7 +482,6 @@ function App() {
               <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
             </div>
 
-            {/* BARRA DE TURNO CORRIGIDA (CRIOU-SE UM CONTAINER PARA ELA NÃO ESTICAR) */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
               <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ minWidth: '220px', padding: '10px 30px' }}>
                 <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
@@ -527,7 +538,6 @@ function App() {
               </div>
             </div>
 
-            {/* CONTAINER LATERAL INFERIOR: EMOTES + KAOS */}
             <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
               
               <div style={{ position: 'relative' }}>
@@ -541,7 +551,7 @@ function App() {
                 </button>
 
                 {menuEmoteAberto && (
-                  <div style={{ position: 'absolute', bottom: '65px', right: '0', background: '#fff', border: '3px solid #000', borderRadius: '15px', padding: '10px', width: '200px', boxShadow: '4px 4px 0 #000' }}>
+                  <div style={{ position: 'absolute', bottom: '65px', right: '0', background: '#fff', border: '3px solid #000', borderRadius: '15px', padding: '10px', width: '160px', boxShadow: '4px 4px 0 #000' }}>
                     <div className="botoes-emotes-menu">
                       {arrayEmojis.map(emo => (
                         <button key={emo} className="btn-emote" onClick={() => enviarEmote(emo)}>{emo}</button>
@@ -551,7 +561,6 @@ function App() {
                 )}
               </div>
 
-              {/* Botão KAOS reajustado para funcionar dentro deste novo container */}
               <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)} style={{ position: 'static' }}>KAOS!</button>
             
             </div>
