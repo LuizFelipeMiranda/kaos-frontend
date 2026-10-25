@@ -8,6 +8,7 @@ import {
 } from '@phosphor-icons/react';
 
 import musicaTema from './assets/tema.mp3';
+import musicaJogo from './assets/jogo.mp3'; // NOVA MÚSICA DA PARTIDA
 import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
 import somVitoria from './assets/vitoria.mp3'; 
@@ -114,7 +115,6 @@ const getPosicaoOponente = (index, totalOponentes) => {
   return index === 0 ? { top: '50%', left: '0%' } : index === 1 ? { top: '15%', left: '15%' } : index === 2 ? { top: '10%', left: '50%' } : index === 3 ? { top: '15%', left: '85%' } : { top: '50%', left: '100%' };
 };
 
-// 3 NOVOS EMOJIS ADICIONADOS AQUI
 const arrayEmojis = ['❤️', '💛', '💚', '💙', '🖕', '😴', '😎', '😂', '😡', '👍', '👎', '🤔'];
 
 function App() {
@@ -170,6 +170,7 @@ function App() {
   const [tempoReferencia, setTempoReferencia] = useState(() => Date.now());
 
   const audioMusicaRef = useRef(null);
+  const audioJogoRef = useRef(null); // Ref para a música do Jogo
   const audioEfeitoRef = useRef(null);
   const audioAlarmeRef = useRef(null);
   const audioVitoriaRef = useRef(null); 
@@ -193,26 +194,29 @@ function App() {
     return () => clearInterval(interval);
   }, [jogoIniciado, vencedor, eventoNoveAtivo, tempoReferencia]);
 
+  // LÓGICA ATUALIZADA DA MÚSICA (Alterna entre Lobby, Jogo e Vitória)
   useEffect(() => {
+    if (audioMusicaRef.current) audioMusicaRef.current.pause();
+    if (audioJogoRef.current) audioJogoRef.current.pause();
+    if (audioVitoriaRef.current) audioVitoriaRef.current.pause();
+
     if (vencedor) {
-      if (audioMusicaRef.current) audioMusicaRef.current.pause(); 
       if (audioVitoriaRef.current && efeitosAtivos) {
         audioVitoriaRef.current.volume = volumeEfeitos;
         audioVitoriaRef.current.currentTime = 0;
         audioVitoriaRef.current.play().catch(() => {});
       }
     } else {
-      if (audioMusicaRef.current) {
-        audioMusicaRef.current.volume = volumeMusica;
+      const audioAtivo = jogoIniciado ? audioJogoRef.current : audioMusicaRef.current;
+      
+      if (audioAtivo) {
+        audioAtivo.volume = volumeMusica;
         if (musicaAtiva) {
-          audioMusicaRef.current.play().catch(() => {}); 
-        } else {
-          audioMusicaRef.current.pause();
+          audioAtivo.play().catch(() => {}); 
         }
       }
-      if (audioVitoriaRef.current) audioVitoriaRef.current.pause(); 
     }
-  }, [musicaAtiva, volumeMusica, vencedor, efeitosAtivos, volumeEfeitos]);
+  }, [musicaAtiva, volumeMusica, vencedor, jogoIniciado, efeitosAtivos, volumeEfeitos]);
 
   const tocarEfeito = useCallback((tipo = 'carta') => {
     if (!efeitosAtivos) return;
@@ -413,7 +417,6 @@ function App() {
   return (
     <div>
       <style>{`
-        /* ANIMAÇÃO E POSIÇÃO DOS EMOTES CORRIGIDAS */
         @keyframes flutuarEmote {
           0% { opacity: 0; transform: translate(-50%, -20px) scale(0.5); }
           15% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
@@ -433,7 +436,6 @@ function App() {
           text-shadow: 2px 2px 0 #000;
         }
 
-        /* GRELHA DO MENU DE EMOTES ATUALIZADA PARA 4 COLUNAS */
         .botoes-emotes-menu {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
@@ -475,7 +477,9 @@ function App() {
         <h1 style={{ fontFamily: 'Fredoka', marginTop: '20px' }}>{idioma === 'pt' ? 'Rode o seu telemóvel!' : 'Rotate your phone!'}</h1>
       </div>
 
+      {/* ADICIONADA A TAG AUDIO PARA A MÚSICA DO JOGO */}
       <audio ref={audioMusicaRef} src={musicaTema} loop />
+      <audio ref={audioJogoRef} src={musicaJogo} loop /> 
       <audio ref={audioEfeitoRef} src={somCarta} />
       <audio ref={audioAlarmeRef} src={somAlarme} />
       <audio ref={audioVitoriaRef} src={somVitoria} />
@@ -526,7 +530,6 @@ function App() {
                 return (
                   <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
                     
-                    {/* EMOTE AGORA FORA DO AVATAR PARA NÃO CORTAR NO OVERFLOW */}
                     {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
                     
                     <div className="oponente-avatar" style={{ position: 'relative', borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000' }}>
