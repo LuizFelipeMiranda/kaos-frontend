@@ -37,7 +37,7 @@ const dic = {
     regrasNovasTitulo: "Mega Atualização (Novas Cartas!)",
     regrasNovasText: "• Espiar (Olho): Veja a mão de qualquer jogador.\n• +3 (Cor): Compra 3 cartas.\n• +6 (Preto): O próximo compra 6.\n• Igualar (Balança): Escolha 'Maior' ou 'Menor' para igualar o número de cartas de todos!\n• Recomeço (Ampulheta): Todos descartam as mãos e compram 7 novas cartas.\n• Escolher Número (#): Muda a mesa para um número específico (cartas de efeito ignoram a cor e anulam esta carta).",
     regrasBasicasTitulo: "Regras Básicas",
-    regrasBasicasTexto: "Cada jogador começa com 7 cartas. O objetivo é ser o primeiro a ficar sem cartas. Deve jogar cartas que combinem com a Cor ou com o Número da mesa.",
+    regrasBasicasTexto: "Cada jogador começa com 7 cartas. O objetivo é ser o primeiro a ficar sem cartas. O baralho possui 3 cópias de cada carta numérica (1 ao 9) para criar ainda mais sequências! Deve jogar cartas que combinem com a Cor ou com o Número da mesa.",
     sequenciasTitulo: "Sequências (Múltiplas Cartas)",
     sequenciasTexto: "Pode jogar mais de uma carta ao mesmo tempo se elas tiverem o MESMO VALOR (ex: três cartas '5') OU se formarem uma SEQUÊNCIA DA MESMA COR (ex: 3, 4 e 5 vermelhos, ou 9, 8 e 7 azuis).",
     regraZeroTitulo: "A Regra do Zero (0)",
@@ -68,7 +68,7 @@ const dic = {
     regrasNovasTitulo: "Mega Update (New Cards!)",
     regrasNovasText: "• Peek (Eye): Look at any player's hand.\n• +3 (Color): Draw 3.\n• +6 (Black): Next player draws 6.\n• Equalizer (Scales): Match everyone's card count to the 'Largest' or 'Smallest' hand!\n• Restart (Hourglass): Everyone discards and draws 7 new cards.\n• Choose Number (#): Change the table to a specific number (effect cards override this rule).",
     regrasBasicasTitulo: "Basic Rules",
-    regrasBasicasTexto: "Each player starts with 7 cards. Objective: get rid of all your cards by matching the Color or Number of the top card.",
+    regrasBasicasTexto: "Each player starts with 7 cards. Objective: get rid of all your cards. The deck has 3 copies of each numbered card (1 to 9) for even more sequences! Match the Color or Number of the top card.",
     sequenciasTitulo: "Sequences (Multiple Cards)",
     sequenciasTexto: "Play multiple cards if they have the SAME VALUE (e.g. three '5's) OR form a SEQUENCE IN THE SAME COLOR (ascending 3, 4, 5 or descending 9, 8, 7).",
     regraZeroTitulo: "The Rule of Zero (0)",
@@ -114,7 +114,8 @@ const getPosicaoOponente = (index, totalOponentes) => {
   return index === 0 ? { top: '50%', left: '0%' } : index === 1 ? { top: '15%', left: '15%' } : index === 2 ? { top: '10%', left: '50%' } : index === 3 ? { top: '15%', left: '85%' } : { top: '50%', left: '100%' };
 };
 
-const arrayEmojis = ['❤️', '💛', '💚', '💙', '🖕', '😴', '😎', '😂', '😡'];
+// 3 NOVOS EMOJIS ADICIONADOS AQUI
+const arrayEmojis = ['❤️', '💛', '💚', '💙', '🖕', '😴', '😎', '😂', '😡', '👍', '👎', '🤔'];
 
 function App() {
   const [idioma, setIdioma] = useState('pt');
@@ -367,7 +368,6 @@ function App() {
     let passosMapeados = [];
     if (cartasSelecionadas.some(c => c.valor === '0')) passosMapeados.push('zero');
     
-    // A ordem importa! Queremos espiar ANTES de decidir a cor.
     if (cartasSelecionadas.some(c => c.valor === 'espiar')) passosMapeados.push('espiar');
     
     if (cartasSelecionadas.some(c => c.valor === 'igualar')) passosMapeados.push('igualar');
@@ -413,30 +413,30 @@ function App() {
   return (
     <div>
       <style>{`
-        /* CSS CORRIGIDO E APRIMORADO */
-        
+        /* ANIMAÇÃO E POSIÇÃO DOS EMOTES CORRIGIDAS */
         @keyframes flutuarEmote {
-          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-          15% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-          30% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-          80% { opacity: 1; transform: translate(-50%, -80%) scale(1); }
-          100% { opacity: 0; transform: translate(-50%, -120px) scale(1.5); }
+          0% { opacity: 0; transform: translate(-50%, -20px) scale(0.5); }
+          15% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
+          30% { opacity: 1; transform: translate(-50%, -20px) scale(1); }
+          80% { opacity: 1; transform: translate(-50%, -60px) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -100px) scale(1.5); }
         }
         
         .emote-anim {
           position: absolute;
-          top: 50%;
+          top: 0px; 
           left: 50%;
-          font-size: 60px; /* MAIOR */
+          font-size: 60px;
           animation: flutuarEmote 2.5s ease-out forwards;
           z-index: 5000;
           pointer-events: none;
           text-shadow: 2px 2px 0 #000;
         }
 
+        /* GRELHA DO MENU DE EMOTES ATUALIZADA PARA 4 COLUNAS */
         .botoes-emotes-menu {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(4, 1fr);
           gap: 10px;
           margin-top: 10px;
         }
@@ -512,15 +512,12 @@ function App() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-              
-              {/* CORREÇÃO DO RESPONSIVO NO STATUS DE TURNO */}
               <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
                 <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
                 <div className="tempo" style={{ color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                   {eventoNoveAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
                 </div>
               </div>
-
             </div>
 
             <div className="mesa-redonda">
@@ -529,11 +526,11 @@ function App() {
                 return (
                   <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
                     
+                    {/* EMOTE AGORA FORA DO AVATAR PARA NÃO CORTAR NO OVERFLOW */}
+                    {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
+                    
                     <div className="oponente-avatar" style={{ position: 'relative', borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000' }}>
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} width="100%" height="100%" />
-                      
-                      {/* EMOTE CENTRALIZADO NO OPONENTE */}
-                      {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
                     </div>
                     
                     <div className="cartas-oponente">
@@ -571,7 +568,6 @@ function App() {
               
               <div style={{ position: 'relative' }}>
                 
-                {/* O SEU PRÓPRIO EMOTE AGORA SAI DIRETAMENTE DO BOTÃO */}
                 {emotesAtivos[socket.id] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[socket.id]}</div>}
 
                 <button
@@ -584,7 +580,7 @@ function App() {
                 </button>
 
                 {menuEmoteAberto && (
-                  <div style={{ position: 'absolute', bottom: '65px', right: '0', background: '#fff', border: '3px solid #000', borderRadius: '15px', padding: '10px', width: '160px', boxShadow: '4px 4px 0 #000' }}>
+                  <div style={{ position: 'absolute', bottom: '65px', right: '0', background: '#fff', border: '3px solid #000', borderRadius: '15px', padding: '10px', width: '210px', boxShadow: '4px 4px 0 #000' }}>
                     <div className="botoes-emotes-menu">
                       {arrayEmojis.map(emo => (
                         <button key={emo} className="btn-emote" onClick={() => enviarEmote(emo)}>{emo}</button>
@@ -619,7 +615,6 @@ function App() {
               </div>
             )}
 
-            {/* ESPIAR ANTES DE DEFINIR A COR! */}
             {filaPassos[0] === 'espiar' && !maoEspiadaPrevia && (
               <div className="modal-overlay">
                 <div className="modal-content">
@@ -627,7 +622,6 @@ function App() {
                   <div className="grid-opcoes-zero">
                     {oponentesOrdenados.map(j => (
                       <button key={j.id} className="btn btn-roxo" onClick={() => {
-                        // Solicita ao servidor as cartas antes de terminar a jogada!
                         socket.emit('espiar_cartas_alvo', { codigoSala: minhaSala, alvoId: j.id });
                         setPayloadJogada(prev => ({ ...prev, alvoTroca: j.id }));
                       }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
@@ -640,7 +634,6 @@ function App() {
               </div>
             )}
 
-            {/* MODAL COM AS CARTAS ESPIADAS ANTES DA COR */}
             {maoEspiadaPrevia && (
               <div className="modal-overlay" style={{ zIndex: 1600 }}>
                 <div className="modal-content" style={{ maxWidth: '600px' }}>
@@ -654,7 +647,7 @@ function App() {
                   </div>
                   <button className="btn btn-azul" style={{ marginTop: '20px' }} onClick={() => {
                     setMaoEspiadaPrevia(null);
-                    resolverPasso({}); // Avança finalmente para a escolha de Cor!
+                    resolverPasso({}); 
                   }}>{t.fechar}</button>
                 </div>
               </div>
