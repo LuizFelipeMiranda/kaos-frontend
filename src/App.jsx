@@ -45,7 +45,7 @@ const dic = {
     regraNoveTitulo: "A Regra do Nove (9)",
     regraNoveTexto: "Sempre que o '9' for jogado, um botão gigante aparecerá. O último a bater compra as cartas de punição!",
     kaosTitulo: "KAOS!",
-    kaosTexto: "Quando for ficar com apenas 1 carta, DEVE gritar 'KAOS!'. Pode apertar o botão a qualquer momento se tiver 2 ou 1 carta para se proteger."
+    kaosTexto: "Quando for ficar com apenas 1 carta, DEVE gritar 'KAOS!'. Pode gritar a qualquer momento se tiver 1 carta, ou APENAS na sua vez se tiver 2 cartas para se proteger. Pode sempre usar o botão para denunciar quem esqueceu!"
   },
   en: {
     suaVez: "YOUR TURN!", vezDe: "TURN:", aguarde: "Wait...", comprar: "DRAW",
@@ -76,7 +76,7 @@ const dic = {
     regraNoveTitulo: "The Rule of Nine (9)",
     regraNoveTexto: "When '9' is played, a giant button appears. The last one to slap it draws the penalty!",
     kaosTitulo: "KAOS!",
-    kaosTexto: "When you are left with 1 card, you MUST shout 'KAOS!'. You can press it anytime you have 1 or 2 cards to protect yourself."
+    kaosTexto: "When you are left with 1 card, you MUST shout 'KAOS!'. You can shout anytime if you have 1 card, or ONLY on your turn if you have 2 cards to protect yourself. You can always use the button to denounce someone!"
   }
 };
 
@@ -114,7 +114,6 @@ const getPosicaoOponente = (index, totalOponentes) => {
   return index === 0 ? { top: '50%', left: '0%' } : index === 1 ? { top: '15%', left: '15%' } : index === 2 ? { top: '10%', left: '50%' } : index === 3 ? { top: '15%', left: '85%' } : { top: '50%', left: '100%' };
 };
 
-// CORREÇÃO: Novos emojis substituídos
 const arrayEmojis = ['❤️', '💛', '💚', '💙', '🖕', '😴', '😎', '😂', '😡'];
 
 function App() {
@@ -371,7 +370,6 @@ function App() {
     if (cartasSelecionadas.some(c => c.valor === 'igualar')) passosMapeados.push('igualar');
     if (cartasSelecionadas.some(c => c.valor === 'escolher_numero')) passosMapeados.push('numero');
     
-    // Check para aplicar cor caso seja coringa
     if (ultimaCarta.cor === 'preto' && ultimaCarta.valor !== 'escolher_numero') passosMapeados.push('cor');
 
     if (passosMapeados.length > 0) {
@@ -535,7 +533,6 @@ function App() {
               </div>
             </div>
 
-            {/* CORREÇÃO: Container movido para cima (bottom: 90px) para não tapar as cartas */}
             <div style={{ position: 'fixed', bottom: '90px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
               
               <div style={{ position: 'relative' }}>
