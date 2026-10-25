@@ -1,6 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, SpeakerSlash, MusicNote, BookBookmark, DeviceMobile, Hourglass, Timer } from '@phosphor-icons/react';
+import { 
+  HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, 
+  ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, 
+  SpeakerSlash, MusicNote, BookBookmark, DeviceMobile, Hourglass, 
+  Timer, Eye, Scales, Flame, Hash, Smiley 
+} from '@phosphor-icons/react';
 
 import musicaTema from './assets/tema.mp3';
 import somCarta from './assets/carta.mp3';
@@ -10,14 +15,14 @@ import livePixQRCode from './assets/livepix.png';
 
 const socket = io('https://kaos-backend-83du.onrender.com');
 
-// === DICIONÁRIO DE IDIOMAS COM NOVAS REGRAS ===
+// === DICIONÁRIO E REGRAS COMPLETAS (MEGA ATUALIZAÇÃO) ===
 const dic = {
   pt: {
     suaVez: "A SUA VEZ!", vezDe: "VEZ DE", aguarde: "Aguarde...", comprar: "COMPRAR",
     jogar: "JOGAR", cartas: "CARTAS", aceitarPunicao: "ACEITAR PUNIÇÃO", passarVez: "PASSAR A VEZ",
     regraZero: "Regra do Zero! O que deseja fazer?", nada: "NADA (Passar)", rodarTodas: "RODAR TODAS AS MÃOS",
     ouTrocar: "Ou trocar com:", escolhaCor: "Escolha a nova cor:", sorteando: "Sorteando quem começa...",
-    seuAvatar: "O seu Avatar (Clique para mudar)", seuNome: "Seu Nome", criarSala: "Criar Nova Sala",
+    seuAvatar: "O seu Avatar", seuNome: "Seu Nome", criarSala: "Criar Nova Sala",
     ou: "OU", codigo: "Código...", entrar: "Entrar", apoie: "Pague-me um Cafezinho!",
     ajude: "Ajude a manter o KAOS online e sem anúncios.", doar: "Doar via LivePix", codigoSala: "Código da Sala:",
     jogadores: "Jogadores", voce: "(Você)", host: "- Host", iniciarPartida: "INICIAR PARTIDA",
@@ -25,34 +30,32 @@ const dic = {
     config: "Configurações", musica: "Música de Fundo", efeitos: "Efeitos Sonoros", fechar: "Fechar",
     vencedor: "VENCEDOR!", acabouCartas: "acabou com as cartas!", voltarLobby: "Voltar para o Lobby",
     vitorias: "Vitórias", idioma: "Idioma", tempo: "Duração",
-    // REGRAS COMPLETAS
+    // Mega Atualização UI
+    espiarAlvo: "Que bisbilhoteiro! De quem queres ver a mão?",
+    igualarTitulo: "Igualar as Cartas", igualarDesc: "Ajustar o tamanho das mãos de toda a gente para a:", 
+    igualarMaior: "Maior Quantidade", igualarMenor: "Menor Quantidade",
+    escolherNumTitulo: "Escolha o Número", escolherNumDesc: "Selecione o número que a mesa vai passar a ter:",
+    // Regras
     regrasTitulo: "Regras do Jogo",
+    regrasNovasTitulo: "Mega Atualização (Novas Cartas!)",
+    regrasNovasText: "• Espiar (Olho): Veja a mão de qualquer jogador.\n• +3 (Cor): Compra 3 cartas.\n• +6 (Preto): O próximo compra 6.\n• Igualar (Balança): Escolha 'Maior' ou 'Menor' para igualar o número de cartas de todos!\n• Recomeço (Fogo): Todos descartam as mãos e compram 7 novas cartas.\n• Escolher Número (#): Muda a mesa para um número específico (qualquer cor pode ser jogada).",
     regrasBasicasTitulo: "Regras Básicas",
-    regrasBasicasTexto: "Cada jogador começa com 7 cartas. O seu objetivo é ser o primeiro a ficar sem cartas. Deve jogar cartas que combinem com a Cor ou com o Número da carta no topo da mesa.",
-    sequenciasTitulo: "Múltiplas Cartas e Sequências",
-    sequenciasTexto: "Pode jogar mais de uma carta ao mesmo tempo se elas tiverem o MESMO VALOR (ex: três cartas '5', ou dois 'Bloqueios') OU se formarem uma SEQUÊNCIA DA MESMA COR (ex: 3, 4 e 5 vermelhos, ou 9, 8 e 7 azuis, ou seja, em ordem crescente ou decrescente).",
-    cartasEspeciaisTitulo: "Cartas Especiais",
-    bloqueioNome: "Bloqueio:",
-    bloqueioTexto: "Passa a vez do próximo jogador. Se jogar vários bloqueios ao mesmo tempo, o efeito acumula.",
-    inverterNome: "Inverter:",
-    inverterTexto: "Inverte o sentido do jogo.",
-    maisCartasNome: "+2 e +4:",
-    maisCartasTexto: "O próximo compra as cartas ou joga outro +2/+4 para acumular e passar a punição para o próximo!",
-    coringaNome: "Coringa (Preto):",
-    coringaTexto: "Pode ser jogado a qualquer momento para escolher a cor da mesa.",
+    regrasBasicasTexto: "Cada jogador começa com 7 cartas. O objetivo é ser o primeiro a ficar sem cartas. Deve jogar cartas que combinem com a Cor ou com o Número da mesa.",
+    sequenciasTitulo: "Sequências (Múltiplas Cartas)",
+    sequenciasTexto: "Pode jogar mais de uma carta ao mesmo tempo se elas tiverem o MESMO VALOR (ex: três cartas '5') OU se formarem uma SEQUÊNCIA DA MESMA COR (ex: 3, 4 e 5 vermelhos, ou 9, 8 e 7 azuis).",
     regraZeroTitulo: "A Regra do Zero (0)",
     regraZeroTexto: "Jogou um 0? Escolha trocar as suas cartas com um oponente específico ou 'Rodar' todas as mãos.",
     regraNoveTitulo: "A Regra do Nove (9)",
     regraNoveTexto: "Sempre que o '9' for jogado, um botão gigante aparecerá. O último a bater compra as cartas de punição!",
     kaosTitulo: "KAOS!",
-    kaosTexto: "Quando tiver apenas 2 cartas e for jogar uma (ficando com 1), DEVE clicar no botão 'KAOS!'. Se esquecer e denunciarem, compra 1 carta extra."
+    kaosTexto: "Quando for ficar com apenas 1 carta, DEVE gritar 'KAOS!'. Se esquecer, qualquer um pode denuncia-lo clicando no botão para comprar 1 de punição."
   },
   en: {
     suaVez: "YOUR TURN!", vezDe: "TURN:", aguarde: "Wait...", comprar: "DRAW",
     jogar: "PLAY", cartas: "CARDS", aceitarPunicao: "ACCEPT PENALTY", passarVez: "PASS TURN",
     regraZero: "Rule of Zero! What to do?", nada: "NOTHING (Pass)", rodarTodas: "ROTATE ALL HANDS",
     ouTrocar: "Or swap with:", escolhaCor: "Choose new color:", sorteando: "Choosing who starts...",
-    seuAvatar: "Your Avatar (Click to change)", seuNome: "Your Name", criarSala: "Create New Room",
+    seuAvatar: "Your Avatar", seuNome: "Your Name", criarSala: "Create New Room",
     ou: "OR", codigo: "Room Code...", entrar: "Join", apoie: "Buy me a Coffee!",
     ajude: "Help keep KAOS online and ad-free.", doar: "Donate via LivePix", codigoSala: "Room Code:",
     jogadores: "Players", voce: "(You)", host: "- Host", iniciarPartida: "START GAME",
@@ -60,27 +63,23 @@ const dic = {
     config: "Settings", musica: "Background Music", efeitos: "Sound Effects", fechar: "Close",
     vencedor: "WINNER!", acabouCartas: "finished their cards!", voltarLobby: "Back to Lobby",
     vitorias: "Wins", idioma: "Language", tempo: "Match Time",
-    // COMPLETED RULES
+    espiarAlvo: "Peeping Tom! Whose hand do you want to see?",
+    igualarTitulo: "Equalize Cards", igualarDesc: "Adjust everyone's hand size to match the:", 
+    igualarMaior: "Largest Hand", igualarMenor: "Smallest Hand",
+    escolherNumTitulo: "Choose a Number", escolherNumDesc: "Select the number the table will change to:",
     regrasTitulo: "Game Rules",
+    regrasNovasTitulo: "Mega Update (New Cards!)",
+    regrasNovasText: "• Peek (Eye): Look at any player's hand.\n• +3 (Color): Draw 3.\n• +6 (Black): Next player draws 6.\n• Equalizer (Scales): Match everyone's card count to the 'Largest' or 'Smallest' hand!\n• Restart (Fire): Everyone discards and draws 7 new cards.\n• Choose Number (#): Change the table to a specific number (any color matches it).",
     regrasBasicasTitulo: "Basic Rules",
-    regrasBasicasTexto: "Each player starts with 7 cards. Your objective is to be the first to get rid of all your cards. You must play cards that match the Color or the Number of the top card.",
-    sequenciasTitulo: "Multiple Cards and Sequences",
-    sequenciasTexto: "You can play more than one card at the same time if they have the SAME VALUE (e.g., three '5' cards, or two 'Skips') OR if they form a SEQUENCE OF THE SAME COLOR (e.g., red 3, 4, and 5, or blue 9, 8, and 7, meaning ascending or descending order).",
-    cartasEspeciaisTitulo: "Special Cards",
-    bloqueioNome: "Skip:",
-    bloqueioTexto: "Skips the next player's turn. If you play multiple skips, the effect stacks.",
-    inverterNome: "Reverse:",
-    inverterTexto: "Reverses the direction of play.",
-    maisCartasNome: "+2 and +4:",
-    maisCartasTexto: "The next player draws cards or plays another +2/+4 to stack the penalty and pass it on!",
-    coringaNome: "Wild (Black):",
-    coringaTexto: "Can be played at any time to choose the color of the table.",
+    regrasBasicasTexto: "Each player starts with 7 cards. Objective: get rid of all your cards by matching the Color or Number of the top card.",
+    sequenciasTitulo: "Sequences (Multiple Cards)",
+    sequenciasTexto: "Play multiple cards if they have the SAME VALUE (e.g. three '5's) OR form a SEQUENCE IN THE SAME COLOR (ascending 3, 4, 5 or descending 9, 8, 7).",
     regraZeroTitulo: "The Rule of Zero (0)",
-    regraZeroTexto: "Played a 0? Swap your cards with a specific opponent or 'Rotate' all hands.",
+    regraZeroTexto: "Played a 0? Swap your cards with an opponent or 'Rotate' all hands.",
     regraNoveTitulo: "The Rule of Nine (9)",
-    regraNoveTexto: "Whenever a '9' is played, a giant button appears. The last one to slap it draws the penalty cards!",
+    regraNoveTexto: "When '9' is played, a giant button appears. The last one to slap it draws the penalty!",
     kaosTitulo: "KAOS!",
-    kaosTexto: "When you have exactly 2 cards and play one (leaving 1), you MUST click 'KAOS!'. If you forget and someone calls it, you draw 1 extra card."
+    kaosTexto: "When you are left with 1 card, you MUST shout 'KAOS!'. If you forget, anyone can denounce you by clicking the button."
   }
 };
 
@@ -99,6 +98,12 @@ const renderValorCarta = (valor) => {
   if (valor === 'coringa') return <Palette size="1em" weight="fill" />;
   if (valor === 'bloqueio') return <Prohibit size="1em" weight="bold" />;
   if (valor === 'inverter') return <ArrowsLeftRight size="1em" weight="bold" />;
+  if (valor === '+3') return '+3';
+  if (valor === '+6') return '+6';
+  if (valor === 'espiar') return <Eye size="1em" weight="bold" />;
+  if (valor === 'igualar') return <Scales size="1em" weight="bold" />;
+  if (valor === 'reinicio') return <Flame size="1em" weight="bold" />;
+  if (valor === 'escolher_numero') return <Hash size="1em" weight="bold" />;
   return valor;
 };
 
@@ -111,6 +116,8 @@ const getPosicaoOponente = (index, totalOponentes) => {
   if (totalOponentes === 4) return index === 0 ? { top: '40%', left: '0%' } : index === 1 ? { top: '12%', left: '30%' } : index === 2 ? { top: '12%', left: '70%' } : { top: '40%', left: '100%' };
   return index === 0 ? { top: '50%', left: '0%' } : index === 1 ? { top: '15%', left: '15%' } : index === 2 ? { top: '10%', left: '50%' } : index === 3 ? { top: '15%', left: '85%' } : { top: '50%', left: '100%' };
 };
+
+const arrayEmojis = ['😡', '🤣', '😭', '😈', '💀', '🤫', '😎', '🤡', '💖'];
 
 function App() {
   const [idioma, setIdioma] = useState('pt');
@@ -142,9 +149,17 @@ function App() {
   const [euJaBati, setEuJaBati] = useState(false);
   const [posicaoNove, setPosicaoNove] = useState({ top: '50%', left: '50%' }); 
   
-  const [escolhendoCorPara, setEscolhendoCorPara] = useState(null);
-  const [escolhendoAlvoZero, setEscolhendoAlvoZero] = useState(null);
-  const [alvoSelecionado, setAlvoSelecionado] = useState(null);
+  // Wizards (Fila de Resolução Múltipla)
+  const [filaPassos, setFilaPassos] = useState([]);
+  const [payloadJogada, setPayloadJogada] = useState(null);
+
+  // Espiar Hand Modal
+  const [maoEspiada, setMaoEspiada] = useState(null);
+
+  // Emotes State
+  const [emotesAtivos, setEmotesAtivos] = useState({});
+  const [menuEmoteAberto, setMenuEmoteAberto] = useState(false);
+
   const [vencedor, setVencedor] = useState(null);
 
   const [modalConfigAberto, setModalConfigAberto] = useState(false);
@@ -155,7 +170,8 @@ function App() {
   const [volumeEfeitos, setVolumeEfeitos] = useState(0.7);
 
   const [tempoPartida, setTempoPartida] = useState(0);
-  const [tempoTurnoRestante, setTempoTurnoRestante] = useState(20); // Atualizado para 20s
+  const [tempoTurnoRestante, setTempoTurnoRestante] = useState(25);
+  const [inicioTurnoServer, setInicioTurnoServer] = useState(null);
 
   const audioMusicaRef = useRef(null);
   const audioEfeitoRef = useRef(null);
@@ -167,22 +183,22 @@ function App() {
     if (jogoIniciado && !vencedor) {
       interval = setInterval(() => setTempoPartida(prev => prev + 1), 1000);
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [jogoIniciado, vencedor]);
 
-  // Contagem do turno (agora congela se o eventoNoveAtivo for true)
+  // Contagem do turno Sincronizada (Evita reset abusivo ao comprar carta)
   useEffect(() => {
     let interval;
-    if (jogoIniciado && !vencedor && !eventoNoveAtivo) {
+    if (jogoIniciado && !vencedor && !eventoNoveAtivo && inicioTurnoServer) {
       interval = setInterval(() => {
-        setTempoTurnoRestante(prev => Math.max(prev - 1, 0));
-      }, 1000);
+        const passado = Math.floor((Date.now() - inicioTurnoServer) / 1000);
+        setTempoTurnoRestante(Math.max(25 - passado, 0));
+      }, 500);
     }
     return () => clearInterval(interval);
-  }, [jogoIniciado, vencedor, turnoAtual, eventoNoveAtivo]);
+  }, [jogoIniciado, vencedor, eventoNoveAtivo, inicioTurnoServer]);
 
+  // Áudio Local
   useEffect(() => {
     if (vencedor) {
       if (audioMusicaRef.current) audioMusicaRef.current.pause(); 
@@ -250,8 +266,8 @@ function App() {
       setTurnoAtual(dados.turnoAtual); setJaComprou(dados.comprouNestaRodada);
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []);
+      setInicioTurnoServer(dados.inicioTurno);
       setCartasSelecionadas([]); setVencedor(null); setTempoPartida(0);
-      setTempoTurnoRestante(20); // Volta para 20s
       tocarEfeito('carta');
     });
     
@@ -260,9 +276,24 @@ function App() {
       setTurnoAtual(dados.turnoAtual); setJaComprou(dados.comprouNestaRodada);
       setComprasAcumuladas(dados.comprasAcumuladas); setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []);
+      setInicioTurnoServer(dados.inicioTurno); // O Segredo está aqui! O tempo só reseta se o Backend mudar este Timestamp.
       setCartasSelecionadas([]); 
-      setTempoTurnoRestante(20); // Volta para 20s
       tocarEfeito('carta');
+    });
+
+    socket.on('mao_espiao', (dados) => {
+      setMaoEspiada(dados);
+    });
+
+    socket.on('emote_recebido', ({ id, emote }) => {
+      setEmotesAtivos(prev => ({ ...prev, [id]: emote }));
+      setTimeout(() => {
+        setEmotesAtivos(prev => {
+          const next = {...prev};
+          delete next[id];
+          return next;
+        });
+      }, 2500);
     });
 
     socket.on('iniciar_evento_nove', () => { 
@@ -289,14 +320,13 @@ function App() {
 
     socket.on('disconnect', () => {
       setErro('Aviso: Conexão perdida! O ecrã será atualizado em instantes...');
-      setTimeout(() => {
-        window.location.reload();
-      }, 5000);
+      setTimeout(() => window.location.reload(), 5000);
     });
 
     return () => {
       socket.off('sala_criada'); socket.off('entrou_na_sala'); socket.off('atualizar_jogadores');
-      socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); socket.off('erro');
+      socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); 
+      socket.off('mao_espiao'); socket.off('emote_recebido'); socket.off('erro');
       socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo');
       socket.off('disconnect');
     };
@@ -313,14 +343,15 @@ function App() {
   
   const baterNaMesa = () => { if (euJaBati) return; setEuJaBati(true); socket.emit('bater_mesa', minhaSala); };
 
+  const enviarEmote = (emote) => {
+    socket.emit('enviar_emote', { codigoSala: minhaSala, emote });
+    setMenuEmoteAberto(false);
+  };
+
   const sairDaSala = () => {
     socket.emit('sair_sala', minhaSala);
-    setMinhaSala(null);
-    setJogadores([]);
-    setInfoJogadores([]);
-    setJogoIniciado(false);
-    setVencedor(null);
-    setTempoPartida(0); 
+    setMinhaSala(null); setJogadores([]); setInfoJogadores([]);
+    setJogoIniciado(false); setVencedor(null); setTempoPartida(0); 
     setMostrandoSorteio(false);
   };
 
@@ -330,26 +361,43 @@ function App() {
     setCartasSelecionadas((ant) => ant.find(c => c.id === cartaClicada.id) ? ant.filter(c => c.id !== cartaClicada.id) : [...ant, cartaClicada]);
   };
 
+  // WIZARD DE JOGADA
   const tentarJogarSelecionadas = () => {
     if (cartasSelecionadas.length === 0 || eventoNoveAtivo) return;
     const ultimaCarta = cartasSelecionadas[cartasSelecionadas.length - 1];
-    const temZero = cartasSelecionadas.some(c => c.valor === '0');
+
+    let passosMapeados = [];
+    if (cartasSelecionadas.some(c => c.valor === '0')) passosMapeados.push('zero');
+    if (cartasSelecionadas.some(c => c.valor === 'espiar')) passosMapeados.push('espiar');
+    if (cartasSelecionadas.some(c => c.valor === 'igualar')) passosMapeados.push('igualar');
+    if (cartasSelecionadas.some(c => c.valor === 'escolher_numero')) passosMapeados.push('numero');
     
-    if (temZero) return setEscolhendoAlvoZero(cartasSelecionadas); 
-    if (ultimaCarta.cor === 'preto') return setEscolhendoCorPara(cartasSelecionadas); 
-    socket.emit('jogar_cartas', { codigoSala: minhaSala, cartas: cartasSelecionadas });
+    // Cor é pedido para qualquer curinga, mas para "escolher_numero" não é estritamente necessário no UI (deixamos ser preto e escolhe apenas número).
+    if (ultimaCarta.cor === 'preto' && ultimaCarta.valor !== 'escolher_numero') passosMapeados.push('cor');
+
+    if (passosMapeados.length > 0) {
+      setFilaPassos(passosMapeados);
+      setPayloadJogada({ codigoSala: minhaSala, cartas: cartasSelecionadas });
+    } else {
+      socket.emit('jogar_cartas', { codigoSala: minhaSala, cartas: cartasSelecionadas });
+      setCartasSelecionadas([]);
+    }
   };
 
-  const confirmarAlvoZero = (idAlvo) => {
-    const ultimaCarta = escolhendoAlvoZero[escolhendoAlvoZero.length - 1];
-    if (ultimaCarta.cor === 'preto') { setAlvoSelecionado(idAlvo); setEscolhendoCorPara(escolhendoAlvoZero); } 
-    else { socket.emit('jogar_cartas', { codigoSala: minhaSala, cartas: escolhendoAlvoZero, alvoTroca: idAlvo }); }
-    setEscolhendoAlvoZero(null);
-  };
+  const resolverPasso = (dadosExtras) => {
+    const payloadAtualizado = { ...payloadJogada, ...dadosExtras };
+    const novaFila = [...filaPassos];
+    novaFila.shift(); 
 
-  const confirmarCorCoringa = (corEscolhida) => {
-    socket.emit('jogar_cartas', { codigoSala: minhaSala, cartas: escolhendoCorPara, novaCor: corEscolhida, alvoTroca: alvoSelecionado });
-    setEscolhendoCorPara(null); setAlvoSelecionado(null);
+    if (novaFila.length === 0) {
+      socket.emit('jogar_cartas', payloadAtualizado);
+      setPayloadJogada(null);
+      setCartasSelecionadas([]);
+      setFilaPassos([]);
+    } else {
+      setPayloadJogada(payloadAtualizado);
+      setFilaPassos(novaFila);
+    }
   };
 
   const meuIndexNaSala = infoJogadores.findIndex(j => j.id === socket.id);
@@ -364,12 +412,37 @@ function App() {
 
   return (
     <div>
+      {/* INJEÇÃO DE CSS ANIMATION PARA OS EMOTES E AJUSTES DE UI */}
+      <style>{`
+        @keyframes flutuarCima {
+          0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -60px) scale(1.8); }
+        }
+        .emote-anim {
+          position: absolute;
+          top: -30px;
+          left: 50%;
+          font-size: 35px;
+          animation: flutuarCima 2s ease-out forwards;
+          z-index: 5000;
+          pointer-events: none;
+          text-shadow: 2px 2px 0 #000;
+        }
+        .botoes-emotes-menu {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          margin-top: 10px;
+        }
+        .btn-emote {
+          font-size: 24px; background: transparent; border: none; cursor: pointer; transition: 0.1s;
+        }
+        .btn-emote:hover { transform: scale(1.3); }
+      `}</style>
+
       <div className="aviso-rotacao">
         <DeviceMobile size={100} color="#f1c40f" />
         <h1 style={{ fontFamily: 'Fredoka', marginTop: '20px' }}>{idioma === 'pt' ? 'Rode o seu telemóvel!' : 'Rotate your phone!'}</h1>
-        <p style={{ fontSize: '18px', maxWidth: '300px', lineHeight: '1.5' }}>
-          {idioma === 'pt' ? 'O KAOS foi desenhado para ser jogado na horizontal.' : 'KAOS was designed to be played in landscape mode.'}
-        </p>
       </div>
 
       <audio ref={audioMusicaRef} src={musicaTema} loop />
@@ -404,24 +477,43 @@ function App() {
         ) : jogoIniciado ? (
           <div style={{ textAlign: 'center', marginTop: '10px' }}>
             
-            <div style={{ position: 'fixed', top: '20px', left: '20px', fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', zIndex: 100, fontSize: '16px', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ position: 'fixed', top: '20px', left: '20px', fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', zIndex: 100, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
             </div>
 
-            <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
+            {/* STATUS TURNO + MENU EMOTES */}
+            <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ position: 'relative' }}>
               <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
               <div style={{ fontSize: '15px', marginTop: '4px', textAlign: 'center', color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                 {eventoNoveAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
               </div>
+              
+              <button 
+                onClick={() => setMenuEmoteAberto(!menuEmoteAberto)} 
+                style={{ position: 'absolute', right: '-45px', top: '10px', background: 'transparent', border: 'none', cursor: 'pointer', outline: 'none' }}>
+                <Smiley size={32} weight="fill" color="#f1c40f" style={{ filter: 'drop-shadow(2px 2px 0 #000)' }} />
+              </button>
+
+              {menuEmoteAberto && (
+                <div style={{ position: 'absolute', right: '-120px', top: '50px', background: '#fff', border: '3px solid #000', borderRadius: '10px', padding: '10px', zIndex: 1100 }}>
+                  <div className="botoes-emotes-menu">
+                    {arrayEmojis.map(emo => (
+                      <button key={emo} className="btn-emote" onClick={() => enviarEmote(emo)}>{emo}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* MESA E OPONENTES */}
             <div className="mesa-redonda">
               {oponentesOrdenados.map((op, index) => {
                 const ehVezDele = turnoAtual === op.id;
                 return (
                   <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
-                    <div className="oponente-avatar" style={{ borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000' }}>
-                      <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} alt="Avatar" width="100%" height="100%" />
+                    <div className="oponente-avatar" style={{ position: 'relative', borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000' }}>
+                      <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} width="100%" height="100%" />
+                      {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
                     </div>
                     
                     <div className="cartas-oponente">
@@ -430,7 +522,6 @@ function App() {
                       ))}
                       {op.qtdCartas > 15 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px'}}>+{op.qtdCartas - 15}</span>}
                     </div>
-
                     <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#000' }}>{op.nome}</div>
                   </div>
                 );
@@ -456,18 +547,27 @@ function App() {
               </div>
             </div>
 
-            {escolhendoAlvoZero && (
+            {/* SEU AVATAR COM EMOTES */}
+            <div style={{ position: 'fixed', bottom: '130px', left: '50px', zIndex: 900 }}>
+              <div style={{ position: 'relative', width: '60px', height: '60px' }}>
+                {emotesAtivos[socket.id] && <div className="emote-anim">{emotesAtivos[socket.id]}</div>}
+              </div>
+            </div>
+
+            {/* ======= WIZARD DE MODAIS DE AÇÕES ======= */}
+            
+            {filaPassos[0] === 'zero' && (
               <div className="modal-overlay">
                 <div className="modal-content">
                   <h2 style={{margin: '0 0 15px 0'}}>{t.regraZero}</h2>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                    <button className="btn btn-cinza" onClick={() => confirmarAlvoZero('ninguem')}>{t.nada}</button>
-                    <button className="btn btn-verde" onClick={() => confirmarAlvoZero('todos')}>{t.rodarTodas}</button>
+                    <button className="btn btn-cinza" onClick={() => resolverPasso({ alvoTroca: 'ninguem' })}>{t.nada}</button>
+                    <button className="btn btn-verde" onClick={() => resolverPasso({ alvoTroca: 'todos' })}>{t.rodarTodas}</button>
                   </div>
                   <h3 style={{margin: '15px 0 10px 0'}}>{t.ouTrocar}</h3>
                   <div className="grid-opcoes-zero">
                     {oponentesOrdenados.map(j => (
-                      <button key={j.id} className="btn btn-azul" onClick={() => confirmarAlvoZero(j.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                      <button key={j.id} className="btn btn-azul" onClick={() => resolverPasso({ alvoTroca: j.id })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                         <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} />
                         {j.nome} ({j.qtdCartas})
                       </button>
@@ -477,10 +577,82 @@ function App() {
               </div>
             )}
 
-            {escolhendoCorPara && (
-              <div className="modal-overlay"><div className="modal-content"><h2>{t.escolhaCor}</h2><div style={{ display: 'flex', gap: '15px' }}>{['vermelho', 'azul', 'verde', 'amarelo'].map(cor => (<button key={cor} onClick={() => confirmarCorCoringa(cor)} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button>))}</div></div></div>
+            {filaPassos[0] === 'espiar' && (
+              <div className="modal-overlay">
+                <div className="modal-content">
+                  <h2 style={{margin: '0 0 15px 0'}}><Eye size={32} style={{verticalAlign:'middle'}}/> {t.espiarAlvo}</h2>
+                  <div className="grid-opcoes-zero">
+                    {oponentesOrdenados.map(j => (
+                      <button key={j.id} className="btn btn-roxo" onClick={() => resolverPasso({ alvoTroca: j.id })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                        <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} />
+                        {j.nome} ({j.qtdCartas})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
 
+            {filaPassos[0] === 'igualar' && (
+              <div className="modal-overlay">
+                <div className="modal-content">
+                  <h2 style={{margin: '0 0 5px 0'}}><Scales size={32} style={{verticalAlign:'middle'}}/> {t.igualarTitulo}</h2>
+                  <p style={{marginBottom: '20px'}}>{t.igualarDesc}</p>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                    <button className="btn btn-verde" onClick={() => resolverPasso({ alvoOpcao: 'maior' })}>{t.igualarMaior}</button>
+                    <button className="btn btn-vermelho" onClick={() => resolverPasso({ alvoOpcao: 'menor' })}>{t.igualarMenor}</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {filaPassos[0] === 'numero' && (
+              <div className="modal-overlay">
+                <div className="modal-content">
+                  <h2 style={{margin: '0 0 5px 0'}}><Hash size={32} style={{verticalAlign:'middle'}}/> {t.escolherNumTitulo}</h2>
+                  <p style={{marginBottom: '15px'}}>{t.escolherNumDesc}</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px', maxWidth: '300px', margin: '0 auto' }}>
+                    {['0','1','2','3','4','5','6','7','8','9'].map(num => (
+                      <button key={num} onClick={() => resolverPasso({ alvoNumero: num })} style={{ width: '50px', height: '50px', fontSize: '24px', fontWeight: 'bold', backgroundColor: '#ecf0f1', border: '3px solid #000', borderRadius: '10px', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}>
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {filaPassos[0] === 'cor' && (
+              <div className="modal-overlay">
+                <div className="modal-content">
+                  <h2>{t.escolhaCor}</h2>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                    {['vermelho', 'azul', 'verde', 'amarelo'].map(cor => (
+                      <button key={cor} onClick={() => resolverPasso({ novaCor: cor })} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MODAL DE RESULTADO DE ESPIAR */}
+            {maoEspiada && (
+              <div className="modal-overlay" style={{ zIndex: 1500 }}>
+                <div className="modal-content" style={{ maxWidth: '600px' }}>
+                  <h2 style={{ marginBottom: '15px' }}>Cartas de {maoEspiada.nome}:</h2>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
+                    {maoEspiada.cartas.map(c => (
+                      <div key={c.id} className="carta" style={{ backgroundColor: getCorCss(c.cor), color: c.cor === 'amarelo' ? '#000' : '#fff', transform: 'scale(0.8)', margin: '-10px' }}>
+                        {renderValorCarta(c.valor)}
+                      </div>
+                    ))}
+                  </div>
+                  <button className="btn btn-azul" style={{ marginTop: '20px' }} onClick={() => setMaoEspiada(null)}>{t.fechar}</button>
+                </div>
+              </div>
+            )}
+
+            {/* EVENTO 9 */}
             {eventoNoveAtivo && (
               <div style={{ position: 'fixed', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 2000, pointerEvents: 'none' }}>
                 <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '160px', height: '160px', borderRadius: '50%', border: '8px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '6px 6px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}><HandPalm weight="fill" size={96} color="#000" /></button>
@@ -543,7 +715,7 @@ function App() {
                 <div className="avatar-seletor-container">
                   <h3>{t.seuAvatar}</h3>
                   <div className="avatar-display" onClick={roletarAvatar}>
-                    <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${meuAvatarSeed}`} alt="Avatar" width="100%" height="100%" />
+                    <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${meuAvatarSeed}`} width="100%" height="100%" />
                   </div>
                 </div>
                 <div>
@@ -591,30 +763,25 @@ function App() {
               </>
             )}
 
-            {/* LIVRO DE REGRAS COMPLETO */}
+            {/* LIVRO DE REGRAS COMPLETO COM MEGA ATUALIZAÇÃO */}
             {modalRegrasAberto && (
               <div className="modal-overlay" style={{ zIndex: 1200 }}>
-                <div className="modal-content" style={{ width: '90%', maxWidth: '550px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
+                <div className="modal-content" style={{ width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
                   <h2 style={{ textAlign: 'center', marginTop: 0 }}>{t.regrasTitulo}</h2>
                   
+                  <h3 style={{ color: '#9b59b6', margin: '15px 0 5px 0' }}>🚀 {t.regrasNovasTitulo}</h3>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '15px', whiteSpace: 'pre-line' }}>{t.regrasNovasText}</p>
+
                   <h3 style={{ color: '#2ecc71', margin: '15px 0 5px 0' }}>{t.regrasBasicasTitulo}</h3>
                   <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regrasBasicasTexto}</p>
 
                   <h3 style={{ color: '#f39c12', margin: '15px 0 5px 0' }}>{t.sequenciasTitulo}</h3>
                   <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.sequenciasTexto}</p>
 
-                  <h3 style={{ color: '#e74c3c', margin: '15px 0 5px 0' }}>{t.cartasEspeciaisTitulo}</h3>
-                  <ul style={{ paddingLeft: '20px', margin: '0 0 10px 0', fontSize: '15px' }}>
-                    <li><strong>{t.bloqueioNome}</strong> {t.bloqueioTexto}</li>
-                    <li><strong>{t.inverterNome}</strong> {t.inverterTexto}</li>
-                    <li><strong>{t.maisCartasNome}</strong> {t.maisCartasTexto}</li>
-                    <li><strong>{t.coringaNome}</strong> {t.coringaTexto}</li>
-                  </ul>
-
                   <h3 style={{ color: '#3498db', margin: '15px 0 5px 0' }}>{t.regraZeroTitulo}</h3>
                   <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regraZeroTexto}</p>
 
-                  <h3 style={{ color: '#9b59b6', margin: '15px 0 5px 0' }}>{t.regraNoveTitulo}</h3>
+                  <h3 style={{ color: '#e74c3c', margin: '15px 0 5px 0' }}>{t.regraNoveTitulo}</h3>
                   <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regraNoveTexto}</p>
 
                   <h3 style={{ color: '#ff4757', margin: '15px 0 5px 0' }}>{t.kaosTitulo}</h3>
