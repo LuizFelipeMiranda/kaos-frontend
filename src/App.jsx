@@ -150,7 +150,7 @@ function App() {
   const [filaPassos, setFilaPassos] = useState([]);
   const [payloadJogada, setPayloadJogada] = useState(null);
 
-  const [maoEspiada, setMaoEspiada] = useState(null);
+  const [maoEspiadaPrevia, setMaoEspiadaPrevia] = useState(null);
 
   const [emotesAtivos, setEmotesAtivos] = useState({});
   const [menuEmoteAberto, setMenuEmoteAberto] = useState(false);
@@ -280,8 +280,8 @@ function App() {
       tocarEfeito('carta');
     });
 
-    socket.on('mao_espiao', (dados) => {
-      setMaoEspiada(dados);
+    socket.on('mao_espiao_previa', (dados) => {
+      setMaoEspiadaPrevia(dados);
     });
 
     socket.on('emote_recebido', ({ id, emote }) => {
@@ -325,7 +325,7 @@ function App() {
     return () => {
       socket.off('sala_criada'); socket.off('entrou_na_sala'); socket.off('atualizar_jogadores');
       socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); 
-      socket.off('mao_espiao'); socket.off('emote_recebido'); socket.off('erro');
+      socket.off('mao_espiao_previa'); socket.off('emote_recebido'); socket.off('erro');
       socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo');
       socket.off('disconnect');
     };
@@ -366,7 +366,10 @@ function App() {
 
     let passosMapeados = [];
     if (cartasSelecionadas.some(c => c.valor === '0')) passosMapeados.push('zero');
+    
+    // A ordem importa! Queremos espiar ANTES de decidir a cor.
     if (cartasSelecionadas.some(c => c.valor === 'espiar')) passosMapeados.push('espiar');
+    
     if (cartasSelecionadas.some(c => c.valor === 'igualar')) passosMapeados.push('igualar');
     if (cartasSelecionadas.some(c => c.valor === 'escolher_numero')) passosMapeados.push('numero');
     
@@ -410,30 +413,61 @@ function App() {
   return (
     <div>
       <style>{`
-        @keyframes flutuarCima {
-          0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-          100% { opacity: 0; transform: translate(-50%, -60px) scale(1.8); }
+        /* CSS CORRIGIDO E APRIMORADO */
+        
+        @keyframes flutuarEmote {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+          15% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+          30% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          80% { opacity: 1; transform: translate(-50%, -80%) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -120px) scale(1.5); }
         }
+        
         .emote-anim {
           position: absolute;
-          top: -30px;
+          top: 50%;
           left: 50%;
-          font-size: 35px;
-          animation: flutuarCima 2s ease-out forwards;
+          font-size: 60px; /* MAIOR */
+          animation: flutuarEmote 2.5s ease-out forwards;
           z-index: 5000;
           pointer-events: none;
           text-shadow: 2px 2px 0 #000;
         }
+
         .botoes-emotes-menu {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 10px;
           margin-top: 10px;
         }
+        
         .btn-emote {
           font-size: 24px; background: transparent; border: none; cursor: pointer; transition: 0.1s;
         }
         .btn-emote:hover { transform: scale(1.3); }
+
+        .status-turno-box {
+          min-width: 220px;
+          padding: 10px 30px;
+          border-radius: 20px;
+          font-size: 16px;
+        }
+        .status-turno-box .tempo {
+          font-size: 15px;
+          margin-top: 4px;
+        }
+
+        @media (max-width: 600px) {
+          .status-turno-box {
+            min-width: 140px !important;
+            padding: 5px 15px !important;
+            font-size: 13px !important;
+          }
+          .status-turno-box .tempo {
+            font-size: 12px !important;
+            margin-top: 2px !important;
+          }
+        }
       `}</style>
 
       <div className="aviso-rotacao">
@@ -478,12 +512,15 @@ function App() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-              <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ minWidth: '220px', padding: '10px 30px' }}>
+              
+              {/* CORREÇÃO DO RESPONSIVO NO STATUS DE TURNO */}
+              <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
                 <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
-                <div style={{ fontSize: '15px', marginTop: '4px', textAlign: 'center', color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                <div className="tempo" style={{ color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                   {eventoNoveAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
                 </div>
               </div>
+
             </div>
 
             <div className="mesa-redonda">
@@ -491,8 +528,11 @@ function App() {
                 const ehVezDele = turnoAtual === op.id;
                 return (
                   <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
+                    
                     <div className="oponente-avatar" style={{ position: 'relative', borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000' }}>
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} width="100%" height="100%" />
+                      
+                      {/* EMOTE CENTRALIZADO NO OPONENTE */}
                       {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
                     </div>
                     
@@ -527,15 +567,13 @@ function App() {
               </div>
             </div>
 
-            <div style={{ position: 'fixed', bottom: '130px', left: '50px', zIndex: 900 }}>
-              <div style={{ position: 'relative', width: '60px', height: '60px' }}>
-                {emotesAtivos[socket.id] && <div className="emote-anim">{emotesAtivos[socket.id]}</div>}
-              </div>
-            </div>
-
             <div style={{ position: 'fixed', bottom: '90px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
               
               <div style={{ position: 'relative' }}>
+                
+                {/* O SEU PRÓPRIO EMOTE AGORA SAI DIRETAMENTE DO BOTÃO */}
+                {emotesAtivos[socket.id] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[socket.id]}</div>}
+
                 <button
                   onClick={() => setMenuEmoteAberto(!menuEmoteAberto)}
                   style={{ background: '#fff', border: '3px solid #000', borderRadius: '50%', width: '55px', height: '55px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000', outline: 'none', transition: 'transform 0.1s' }}
@@ -581,18 +619,43 @@ function App() {
               </div>
             )}
 
-            {filaPassos[0] === 'espiar' && (
+            {/* ESPIAR ANTES DE DEFINIR A COR! */}
+            {filaPassos[0] === 'espiar' && !maoEspiadaPrevia && (
               <div className="modal-overlay">
                 <div className="modal-content">
                   <h2 style={{margin: '0 0 15px 0'}}><Eye size={32} style={{verticalAlign:'middle'}}/> {t.espiarAlvo}</h2>
                   <div className="grid-opcoes-zero">
                     {oponentesOrdenados.map(j => (
-                      <button key={j.id} className="btn btn-roxo" onClick={() => resolverPasso({ alvoTroca: j.id })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                      <button key={j.id} className="btn btn-roxo" onClick={() => {
+                        // Solicita ao servidor as cartas antes de terminar a jogada!
+                        socket.emit('espiar_cartas_alvo', { codigoSala: minhaSala, alvoId: j.id });
+                        setPayloadJogada(prev => ({ ...prev, alvoTroca: j.id }));
+                      }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                         <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} />
                         {j.nome} ({j.qtdCartas})
                       </button>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* MODAL COM AS CARTAS ESPIADAS ANTES DA COR */}
+            {maoEspiadaPrevia && (
+              <div className="modal-overlay" style={{ zIndex: 1600 }}>
+                <div className="modal-content" style={{ maxWidth: '600px' }}>
+                  <h2 style={{ marginBottom: '15px' }}>Cartas de {maoEspiadaPrevia.nome}:</h2>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
+                    {maoEspiadaPrevia.cartas.map(c => (
+                      <div key={c.id} className="carta" style={{ backgroundColor: getCorCss(c.originalCor || c.cor), color: c.cor === 'amarelo' ? '#000' : '#fff', transform: 'scale(0.8)', margin: '-10px' }}>
+                        {renderValorCarta(c.originalValor || c.valor)}
+                      </div>
+                    ))}
+                  </div>
+                  <button className="btn btn-azul" style={{ marginTop: '20px' }} onClick={() => {
+                    setMaoEspiadaPrevia(null);
+                    resolverPasso({}); // Avança finalmente para a escolha de Cor!
+                  }}>{t.fechar}</button>
                 </div>
               </div>
             )}
@@ -635,22 +698,6 @@ function App() {
                       <button key={cor} onClick={() => resolverPasso({ novaCor: cor })} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button>
                     ))}
                   </div>
-                </div>
-              </div>
-            )}
-
-            {maoEspiada && (
-              <div className="modal-overlay" style={{ zIndex: 1500 }}>
-                <div className="modal-content" style={{ maxWidth: '600px' }}>
-                  <h2 style={{ marginBottom: '15px' }}>Cartas de {maoEspiada.nome}:</h2>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
-                    {maoEspiada.cartas.map(c => (
-                      <div key={c.id} className="carta" style={{ backgroundColor: getCorCss(c.originalCor || c.cor), color: c.cor === 'amarelo' ? '#000' : '#fff', transform: 'scale(0.8)', margin: '-10px' }}>
-                        {renderValorCarta(c.originalValor || c.valor)}
-                      </div>
-                    ))}
-                  </div>
-                  <button className="btn btn-azul" style={{ marginTop: '20px' }} onClick={() => setMaoEspiada(null)}>{t.fechar}</button>
                 </div>
               </div>
             )}
