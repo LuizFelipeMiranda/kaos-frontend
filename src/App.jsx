@@ -35,7 +35,7 @@ const dic = {
     escolherNumTitulo: "Escolha o Número", escolherNumDesc: "Selecione o número que a mesa vai passar a ter:",
     regrasTitulo: "Regras do Jogo",
     regrasNovasTitulo: "Mega Atualização (Novas Cartas!)",
-    regrasNovasText: "• Espiar (Olho): Veja a mão de qualquer jogador.\n• +3 (Cor): Compra 3 cartas.\n• +6 (Preto): O próximo compra 6.\n• Igualar (Balança): Escolha 'Maior' ou 'Menor' para igualar o número de cartas de todos!\n• Recomeço (Ampulheta): Todos descartam as mãos e compram 7 novas cartas.\n• Escolher Número (#): Muda a mesa para um número específico (qualquer cor pode ser jogada).",
+    regrasNovasText: "• Espiar (Olho): Veja a mão de qualquer jogador.\n• +3 (Cor): Compra 3 cartas.\n• +6 (Preto): O próximo compra 6.\n• Igualar (Balança): Escolha 'Maior' ou 'Menor' para igualar o número de cartas de todos!\n• Recomeço (Ampulheta): Todos descartam as mãos e compram 7 novas cartas.\n• Escolher Número (#): Muda a mesa para um número específico (cartas de efeito ignoram a cor e anulam esta carta).",
     regrasBasicasTitulo: "Regras Básicas",
     regrasBasicasTexto: "Cada jogador começa com 7 cartas. O objetivo é ser o primeiro a ficar sem cartas. Deve jogar cartas que combinem com a Cor ou com o Número da mesa.",
     sequenciasTitulo: "Sequências (Múltiplas Cartas)",
@@ -45,7 +45,7 @@ const dic = {
     regraNoveTitulo: "A Regra do Nove (9)",
     regraNoveTexto: "Sempre que o '9' for jogado, um botão gigante aparecerá. O último a bater compra as cartas de punição!",
     kaosTitulo: "KAOS!",
-    kaosTexto: "Quando for ficar com apenas 1 carta, DEVE gritar 'KAOS!'. Se esquecer, qualquer um pode denuncia-lo clicando no botão para comprar 1 de punição."
+    kaosTexto: "Quando for ficar com apenas 1 carta, DEVE gritar 'KAOS!'. Pode apertar o botão a qualquer momento se tiver 2 ou 1 carta para se proteger."
   },
   en: {
     suaVez: "YOUR TURN!", vezDe: "TURN:", aguarde: "Wait...", comprar: "DRAW",
@@ -66,17 +66,17 @@ const dic = {
     escolherNumTitulo: "Choose a Number", escolherNumDesc: "Select the number the table will change to:",
     regrasTitulo: "Game Rules",
     regrasNovasTitulo: "Mega Update (New Cards!)",
-    regrasNovasText: "• Peek (Eye): Look at any player's hand.\n• +3 (Color): Draw 3.\n• +6 (Black): Next player draws 6.\n• Equalizer (Scales): Match everyone's card count to the 'Largest' or 'Smallest' hand!\n• Restart (Hourglass): Everyone discards and draws 7 new cards.\n• Choose Number (#): Change the table to a specific number (any color matches it).",
+    regrasNovasText: "• Peek (Eye): Look at any player's hand.\n• +3 (Color): Draw 3.\n• +6 (Black): Next player draws 6.\n• Equalizer (Scales): Match everyone's card count to the 'Largest' or 'Smallest' hand!\n• Restart (Hourglass): Everyone discards and draws 7 new cards.\n• Choose Number (#): Change the table to a specific number (effect cards override this rule).",
     regrasBasicasTitulo: "Basic Rules",
     regrasBasicasTexto: "Each player starts with 7 cards. Objective: get rid of all your cards by matching the Color or Number of the top card.",
-    sequenciasTitulo: "Sequências (Múltiplas Cartas)",
+    sequenciasTitulo: "Sequences (Multiple Cards)",
     sequenciasTexto: "Play multiple cards if they have the SAME VALUE (e.g. three '5's) OR form a SEQUENCE IN THE SAME COLOR (ascending 3, 4, 5 or descending 9, 8, 7).",
     regraZeroTitulo: "The Rule of Zero (0)",
     regraZeroTexto: "Played a 0? Swap your cards with an opponent or 'Rotate' all hands.",
     regraNoveTitulo: "The Rule of Nine (9)",
     regraNoveTexto: "When '9' is played, a giant button appears. The last one to slap it draws the penalty!",
     kaosTitulo: "KAOS!",
-    kaosTexto: "When you are left with 1 card, you MUST shout 'KAOS!'. If you forget, anyone can denounce you by clicking the button."
+    kaosTexto: "When you are left with 1 card, you MUST shout 'KAOS!'. You can press it anytime you have 1 or 2 cards to protect yourself."
   }
 };
 
@@ -114,6 +114,7 @@ const getPosicaoOponente = (index, totalOponentes) => {
   return index === 0 ? { top: '50%', left: '0%' } : index === 1 ? { top: '15%', left: '15%' } : index === 2 ? { top: '10%', left: '50%' } : index === 3 ? { top: '15%', left: '85%' } : { top: '50%', left: '100%' };
 };
 
+// CORREÇÃO: Novos emojis substituídos
 const arrayEmojis = ['❤️', '💛', '💚', '💙', '🖕', '😴', '😎', '😂', '😡'];
 
 function App() {
@@ -121,8 +122,6 @@ function App() {
   const t = dic[idioma];
 
   const [nome, setNome] = useState('');
-  
-  // CORREÇÃO: Utilizando função de inicialização preguiçosa para evitar erro do ESLint
   const [meuAvatarSeed, setMeuAvatarSeed] = useState(() => gerarSeedAleatoria());
   
   const [codigoSalaInput, setCodigoSalaInput] = useState('');
@@ -167,10 +166,7 @@ function App() {
   const [volumeEfeitos, setVolumeEfeitos] = useState(0.7);
 
   const [tempoPartida, setTempoPartida] = useState(0);
-  
   const [tempoTurnoRestante, setTempoTurnoRestante] = useState(25);
-  
-  // CORREÇÃO: Utilizando função de inicialização preguiçosa
   const [tempoReferencia, setTempoReferencia] = useState(() => Date.now());
 
   const audioMusicaRef = useRef(null);
@@ -312,7 +308,7 @@ function App() {
 
     socket.on('fim_evento_nove', (dados) => { 
       setEventoNoveAtivo(false); 
-      setErro(`Aviso: ${dados.perdedor} comprou ${dados.cartasCompradas} cartas no evento do 9!`); 
+      setErro(`${dados.perdedor} comprou ${dados.cartasCompradas} cartas no evento do 9!`); 
       setTimeout(() => setErro(''), 6000); 
     });
 
@@ -375,6 +371,7 @@ function App() {
     if (cartasSelecionadas.some(c => c.valor === 'igualar')) passosMapeados.push('igualar');
     if (cartasSelecionadas.some(c => c.valor === 'escolher_numero')) passosMapeados.push('numero');
     
+    // Check para aplicar cor caso seja coringa
     if (ultimaCarta.cor === 'preto' && ultimaCarta.valor !== 'escolher_numero') passosMapeados.push('cor');
 
     if (passosMapeados.length > 0) {
@@ -538,7 +535,8 @@ function App() {
               </div>
             </div>
 
-            <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+            {/* CORREÇÃO: Container movido para cima (bottom: 90px) para não tapar as cartas */}
+            <div style={{ position: 'fixed', bottom: '90px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
               
               <div style={{ position: 'relative' }}>
                 <button
@@ -650,8 +648,8 @@ function App() {
                   <h2 style={{ marginBottom: '15px' }}>Cartas de {maoEspiada.nome}:</h2>
                   <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
                     {maoEspiada.cartas.map(c => (
-                      <div key={c.id} className="carta" style={{ backgroundColor: getCorCss(c.cor), color: c.cor === 'amarelo' ? '#000' : '#fff', transform: 'scale(0.8)', margin: '-10px' }}>
-                        {renderValorCarta(c.valor)}
+                      <div key={c.id} className="carta" style={{ backgroundColor: getCorCss(c.originalCor || c.cor), color: c.cor === 'amarelo' ? '#000' : '#fff', transform: 'scale(0.8)', margin: '-10px' }}>
+                        {renderValorCarta(c.originalValor || c.valor)}
                       </div>
                     ))}
                   </div>
