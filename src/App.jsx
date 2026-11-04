@@ -4,11 +4,11 @@ import {
   HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, 
   ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, 
   SpeakerSlash, MusicNote, BookBookmark, DeviceMobile, Hourglass, 
-  Timer, Eye, Scales, Hash, Smiley 
+  Timer, Eye, Scales, Hash, Smiley, WifiSlash
 } from '@phosphor-icons/react';
 
 import musicaTema from './assets/tema.mp3';
-import musicaJogo from './assets/jogo.mp3'; // NOVA MÚSICA DA PARTIDA
+import musicaJogo from './assets/jogo.mp3';
 import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
 import somVitoria from './assets/vitoria.mp3'; 
@@ -121,8 +121,15 @@ function App() {
   const [idioma, setIdioma] = useState('pt');
   const t = dic[idioma];
 
-  const [nome, setNome] = useState('');
-  const [meuAvatarSeed, setMeuAvatarSeed] = useState(() => gerarSeedAleatoria());
+  // SISTEMA DE USER ID (Para garantir reconexões perfeitas mesmo ao dar F5)
+  const [meuUserId] = useState(() => {
+    let id = localStorage.getItem('kaos_userId');
+    if (!id) { id = 'usr_' + Math.random().toString(36).substring(2, 15); localStorage.setItem('kaos_userId', id); }
+    return id;
+  });
+
+  const [nome, setNome] = useState(() => localStorage.getItem('kaos_nome') || '');
+  const [meuAvatarSeed, setMeuAvatarSeed] = useState(() => localStorage.getItem('kaos_avatar') || gerarSeedAleatoria());
   
   const [codigoSalaInput, setCodigoSalaInput] = useState('');
   const [minhaSala, setMinhaSala] = useState(null);
@@ -135,6 +142,7 @@ function App() {
   const [roletaIndex, setRoletaIndex] = useState(0);
 
   const [erro, setErro] = useState('');
+  const [conectadoAoServidor, setConectadoAoServidor] = useState(true);
   const [jogoIniciado, setJogoIniciado] = useState(false);
   const [minhaMao, setMinhaMao] = useState([]);
   const [cartaMesa, setCartaMesa] = useState(null);
@@ -170,7 +178,7 @@ function App() {
   const [tempoReferencia, setTempoReferencia] = useState(() => Date.now());
 
   const audioMusicaRef = useRef(null);
-  const audioJogoRef = useRef(null); // Ref para a música do Jogo
+  const audioJogoRef = useRef(null);
   const audioEfeitoRef = useRef(null);
   const audioAlarmeRef = useRef(null);
   const audioVitoriaRef = useRef(null); 
@@ -194,7 +202,6 @@ function App() {
     return () => clearInterval(interval);
   }, [jogoIniciado, vencedor, eventoNoveAtivo, tempoReferencia]);
 
-  // LÓGICA ATUALIZADA DA MÚSICA (Alterna entre Lobby, Jogo e Vitória)
   useEffect(() => {
     if (audioMusicaRef.current) audioMusicaRef.current.pause();
     if (audioJogoRef.current) audioJogoRef.current.pause();
@@ -248,8 +255,36 @@ function App() {
   }, [mostrandoSorteio, jogadorSorteado, jogadores]);
 
   useEffect(() => {
-    socket.on('sala_criada', (codigo) => { setMinhaSala(codigo); setJogadores([{ id: socket.id, nome: nome, avatar: meuAvatarSeed, vitorias: 0 }]); });
-    socket.on('entrou_na_sala', (codigo) => { setMinhaSala(codigo); });
+    // TENTATIVA DE AUTO-RECONEXÃO SILENCIOSA
+    socket.on('connect', () => {
+      setConectadoAoServidor(true);
+      const salaSalva = localStorage.getItem('kaos_salaAtiva');
+      if (salaSalva) {
+        socket.emit('reconectar', { codigoSala: salaSalva, userId: meuUserId });
+      }
+    });
+
+    socket.on('reconectado_sucesso', (codigo) => {
+      setMinhaSala(codigo);
+    });
+
+    socket.on('falha_reconexao', () => {
+      localStorage.removeItem('kaos_salaAtiva');
+      setMinhaSala(null);
+      setJogoIniciado(false);
+    });
+
+    socket.on('sala_criada', (codigo) => { 
+      setMinhaSala(codigo); 
+      localStorage.setItem('kaos_salaAtiva', codigo);
+      setJogadores([{ id: meuUserId, nome: nome, avatar: meuAvatarSeed, vitorias: 0 }]); 
+    });
+
+    socket.on('entrou_na_sala', (codigo) => { 
+      setMinhaSala(codigo); 
+      localStorage.setItem('kaos_salaAtiva', codigo);
+    });
+
     socket.on('atualizar_jogadores', (lista) => { setJogadores(lista); setInfoJogadores(lista); });
     
     socket.on('sorteando_primeiro_jogador', (idSorteado) => {
@@ -266,8 +301,10 @@ function App() {
       setInfoJogadores(dados.infoJogadores || []);
       setCartasSelecionadas([]); setVencedor(null); setTempoPartida(0);
       
-      setTempoReferencia(Date.now());
-      setTempoTurnoRestante(25);
+      if (dados.resetarTempo) {
+        setTempoReferencia(Date.now());
+        setTempoTurnoRestante(25);
+      }
       tocarEfeito('carta');
     });
     
@@ -318,49 +355,70 @@ function App() {
 
     socket.on('fim_de_jogo', (nomeGanhador) => { 
       setVencedor(nomeGanhador); 
+      localStorage.removeItem('kaos_salaAtiva'); // Limpa ao acabar normal
     });
     
     socket.on('erro', (mensagem) => { setErro(mensagem); setTimeout(() => setErro(''), 4000); });
 
     socket.on('disconnect', () => {
-      setErro('Aviso: Conexão perdida! O ecrã será atualizado em instantes...');
-      setTimeout(() => window.location.reload(), 5000);
+      setConectadoAoServidor(false);
+      setErro('Aviso: Conexão perdida! A tentar reconectar à mesa...');
     });
 
     return () => {
+      socket.off('connect'); socket.off('reconectado_sucesso'); socket.off('falha_reconexao');
       socket.off('sala_criada'); socket.off('entrou_na_sala'); socket.off('atualizar_jogadores');
       socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); 
       socket.off('mao_espiao_previa'); socket.off('emote_recebido'); socket.off('erro');
       socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo');
       socket.off('disconnect');
     };
-  }, [nome, meuAvatarSeed, tocarEfeito]);
+  }, [nome, meuAvatarSeed, tocarEfeito, meuUserId]);
 
-  const roletarAvatar = () => { setMeuAvatarSeed(gerarSeedAleatoria()); };
+  const guardarDadosLocais = (n, a) => {
+    localStorage.setItem('kaos_nome', n);
+    localStorage.setItem('kaos_avatar', a);
+  };
+
+  const roletarAvatar = () => { 
+    const novo = gerarSeedAleatoria();
+    setMeuAvatarSeed(novo); 
+    guardarDadosLocais(nome, novo);
+  };
   
-  const criarSala = () => { if (!nome) return setErro('Digite o seu nome!'); socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed }); };
-  const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
+  const criarSala = () => { 
+    if (!nome) return setErro('Digite o seu nome!'); 
+    guardarDadosLocais(nome, meuAvatarSeed);
+    socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed, userId: meuUserId }); 
+  };
+  
+  const entrarSala = () => { 
+    if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); 
+    guardarDadosLocais(nome, meuAvatarSeed);
+    socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed, userId: meuUserId }); 
+  };
+
   const iniciarPartida = () => { socket.emit('iniciar_partida', minhaSala); };
   
-  const comprarCarta = () => { if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('comprar_carta', minhaSala); };
-  const passarVez = () => { if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('passar_vez', minhaSala); };
-  
-  const baterNaMesa = () => { if (euJaBati) return; setEuJaBati(true); socket.emit('bater_mesa', minhaSala); };
+  const comprarCarta = () => { if (turnoAtual === meuUserId && !eventoNoveAtivo) socket.emit('comprar_carta', { codigoSala: minhaSala, userId: meuUserId }); };
+  const passarVez = () => { if (turnoAtual === meuUserId && !eventoNoveAtivo) socket.emit('passar_vez', { codigoSala: minhaSala, userId: meuUserId }); };
+  const baterNaMesa = () => { if (euJaBati) return; setEuJaBati(true); socket.emit('bater_mesa', { codigoSala: minhaSala, userId: meuUserId }); };
 
   const enviarEmote = (emote) => {
-    socket.emit('enviar_emote', { codigoSala: minhaSala, emote });
+    socket.emit('enviar_emote', { codigoSala: minhaSala, emote, userId: meuUserId });
     setMenuEmoteAberto(false);
   };
 
   const sairDaSala = () => {
-    socket.emit('sair_sala', minhaSala);
+    socket.emit('sair_sala', { codigoSala: minhaSala, userId: meuUserId });
+    localStorage.removeItem('kaos_salaAtiva');
     setMinhaSala(null); setJogadores([]); setInfoJogadores([]);
     setJogoIniciado(false); setVencedor(null); setTempoPartida(0); 
     setMostrandoSorteio(false);
   };
 
   const toggleSelecao = (cartaClicada) => {
-    if (turnoAtual !== socket.id || eventoNoveAtivo) return;
+    if (turnoAtual !== meuUserId || eventoNoveAtivo) return;
     tocarEfeito('carta');
     setCartasSelecionadas((ant) => ant.find(c => c.id === cartaClicada.id) ? ant.filter(c => c.id !== cartaClicada.id) : [...ant, cartaClicada]);
   };
@@ -371,19 +429,16 @@ function App() {
 
     let passosMapeados = [];
     if (cartasSelecionadas.some(c => c.valor === '0')) passosMapeados.push('zero');
-    
     if (cartasSelecionadas.some(c => c.valor === 'espiar')) passosMapeados.push('espiar');
-    
     if (cartasSelecionadas.some(c => c.valor === 'igualar')) passosMapeados.push('igualar');
     if (cartasSelecionadas.some(c => c.valor === 'escolher_numero')) passosMapeados.push('numero');
-    
     if (ultimaCarta.cor === 'preto' && ultimaCarta.valor !== 'escolher_numero') passosMapeados.push('cor');
 
     if (passosMapeados.length > 0) {
       setFilaPassos(passosMapeados);
-      setPayloadJogada({ codigoSala: minhaSala, cartas: cartasSelecionadas });
+      setPayloadJogada({ codigoSala: minhaSala, cartas: cartasSelecionadas, userId: meuUserId });
     } else {
-      socket.emit('jogar_cartas', { codigoSala: minhaSala, cartas: cartasSelecionadas });
+      socket.emit('jogar_cartas', { codigoSala: minhaSala, cartas: cartasSelecionadas, userId: meuUserId });
       setCartasSelecionadas([]);
     }
   };
@@ -404,7 +459,7 @@ function App() {
     }
   };
 
-  const meuIndexNaSala = infoJogadores.findIndex(j => j.id === socket.id);
+  const meuIndexNaSala = infoJogadores.findIndex(j => j.id === meuUserId);
   const oponentesOrdenados = [];
   if (meuIndexNaSala !== -1) {
     for (let i = 1; i < infoJogadores.length; i++) {
@@ -443,32 +498,19 @@ function App() {
           margin-top: 10px;
         }
         
-        .btn-emote {
-          font-size: 24px; background: transparent; border: none; cursor: pointer; transition: 0.1s;
-        }
+        .btn-emote { font-size: 24px; background: transparent; border: none; cursor: pointer; transition: 0.1s; }
         .btn-emote:hover { transform: scale(1.3); }
 
         .status-turno-box {
-          min-width: 220px;
-          padding: 10px 30px;
-          border-radius: 20px;
-          font-size: 16px;
+          min-width: 220px; padding: 10px 30px; border-radius: 20px; font-size: 16px;
         }
-        .status-turno-box .tempo {
-          font-size: 15px;
-          margin-top: 4px;
-        }
+        .status-turno-box .tempo { font-size: 15px; margin-top: 4px; }
+
+        .jogador-desconectado { filter: grayscale(100%) opacity(0.6); }
 
         @media (max-width: 600px) {
-          .status-turno-box {
-            min-width: 140px !important;
-            padding: 5px 15px !important;
-            font-size: 13px !important;
-          }
-          .status-turno-box .tempo {
-            font-size: 12px !important;
-            margin-top: 2px !important;
-          }
+          .status-turno-box { min-width: 140px !important; padding: 5px 15px !important; font-size: 13px !important; }
+          .status-turno-box .tempo { font-size: 12px !important; margin-top: 2px !important; }
         }
       `}</style>
 
@@ -477,7 +519,12 @@ function App() {
         <h1 style={{ fontFamily: 'Fredoka', marginTop: '20px' }}>{idioma === 'pt' ? 'Rode o seu telemóvel!' : 'Rotate your phone!'}</h1>
       </div>
 
-      {/* ADICIONADA A TAG AUDIO PARA A MÚSICA DO JOGO */}
+      {!conectadoAoServidor && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', backgroundColor: '#e74c3c', color: 'white', textAlign: 'center', padding: '10px', zIndex: 9999, fontWeight: 'bold' }}>
+          <WifiSlash size={20} style={{verticalAlign: 'middle'}}/> Reconectando ao servidor...
+        </div>
+      )}
+
       <audio ref={audioMusicaRef} src={musicaTema} loop />
       <audio ref={audioJogoRef} src={musicaJogo} loop /> 
       <audio ref={audioEfeitoRef} src={somCarta} />
@@ -516,9 +563,9 @@ function App() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-              <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
-                <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
-                <div className="tempo" style={{ color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+              <div className={`status-turno status-turno-box ${turnoAtual === meuUserId ? 'minha-vez' : ''}`}>
+                <div>{turnoAtual === meuUserId ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
+                <div className="tempo" style={{ color: turnoAtual === meuUserId ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                   {eventoNoveAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
                 </div>
               </div>
@@ -528,10 +575,11 @@ function App() {
               {oponentesOrdenados.map((op, index) => {
                 const ehVezDele = turnoAtual === op.id;
                 return (
-                  <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
+                  <div key={op.id} className={`oponente-container ${!op.conectado ? 'jogador-desconectado' : ''}`} style={getPosicaoOponente(index, oponentesOrdenados.length)}>
                     
                     {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
-                    
+                    {!op.conectado && <div style={{position:'absolute', top:'-20px', background:'red', color:'white', padding:'2px 5px', borderRadius:'5px', fontSize:'12px', zIndex:20}}>Offline</div>}
+
                     <div className="oponente-avatar" style={{ position: 'relative', borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000' }}>
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} width="100%" height="100%" />
                     </div>
@@ -549,10 +597,10 @@ function App() {
 
               <div className="centro-mesa">
                 <div className="coluna-baralho">
-                  <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default' }}>
+                  <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === meuUserId && !eventoNoveAtivo ? 'pointer' : 'default' }}>
                     <Cards size={48} weight="duotone" color="#ecf0f1" />
                   </div>
-                  {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
+                  {turnoAtual === meuUserId && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
                     <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0}}>{t.comprar}</button>
                   )}
                 </div>
@@ -571,7 +619,7 @@ function App() {
               
               <div style={{ position: 'relative' }}>
                 
-                {emotesAtivos[socket.id] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[socket.id]}</div>}
+                {emotesAtivos[meuUserId] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[meuUserId]}</div>}
 
                 <button
                   onClick={() => setMenuEmoteAberto(!menuEmoteAberto)}
@@ -593,7 +641,7 @@ function App() {
                 )}
               </div>
 
-              <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)} style={{ position: 'static' }}>KAOS!</button>
+              <button className="btn-uno" onClick={() => socket.emit('apertar_uno', { codigoSala: minhaSala, userId: meuUserId })} style={{ position: 'static' }}>KAOS!</button>
             
             </div>
 
@@ -608,9 +656,9 @@ function App() {
                   <h3 style={{margin: '15px 0 10px 0'}}>{t.ouTrocar}</h3>
                   <div className="grid-opcoes-zero">
                     {oponentesOrdenados.map(j => (
-                      <button key={j.id} className="btn btn-azul" onClick={() => resolverPasso({ alvoTroca: j.id })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                      <button key={j.id} disabled={!j.conectado} className="btn btn-azul" onClick={() => resolverPasso({ alvoTroca: j.id })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', opacity: j.conectado ? 1 : 0.5 }}>
                         <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} />
-                        {j.nome} ({j.qtdCartas})
+                        {j.nome} ({j.qtdCartas}) {j.conectado ? '' : '(OFF)'}
                       </button>
                     ))}
                   </div>
@@ -624,10 +672,10 @@ function App() {
                   <h2 style={{margin: '0 0 15px 0'}}><Eye size={32} style={{verticalAlign:'middle'}}/> {t.espiarAlvo}</h2>
                   <div className="grid-opcoes-zero">
                     {oponentesOrdenados.map(j => (
-                      <button key={j.id} className="btn btn-roxo" onClick={() => {
+                      <button key={j.id} disabled={!j.conectado} className="btn btn-roxo" onClick={() => {
                         socket.emit('espiar_cartas_alvo', { codigoSala: minhaSala, alvoId: j.id });
                         setPayloadJogada(prev => ({ ...prev, alvoTroca: j.id }));
-                      }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                      }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', opacity: j.conectado ? 1 : 0.5 }}>
                         <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} />
                         {j.nome} ({j.qtdCartas})
                       </button>
@@ -709,7 +757,7 @@ function App() {
                 const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
                 let classes = "carta";
                 if (taSelecionada) classes += " selecionada";
-                if (turnoAtual !== socket.id || eventoNoveAtivo) classes += " desabilitada";
+                if (turnoAtual !== meuUserId || eventoNoveAtivo) classes += " desabilitada";
 
                 return (
                   <div key={carta.id} onClick={() => toggleSelecao(carta)} className={classes} style={{ backgroundColor: getCorCss(carta.cor), color: carta.cor === 'amarelo' ? '#000' : '#fff' }}>
@@ -720,13 +768,13 @@ function App() {
             </div>
 
             <div className="painel-acoes" style={{ marginBottom: '20px' }}>
-              {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && (
+              {turnoAtual === meuUserId && cartasSelecionadas.length > 0 && !eventoNoveAtivo && (
                 <button className="btn btn-verde" onClick={tentarJogarSelecionadas}>{t.jogar} ({cartasSelecionadas.length}) {t.cartas}</button>
               )}
-              {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && (
+              {turnoAtual === meuUserId && comprasAcumuladas > 0 && !eventoNoveAtivo && (
                 <button className="btn btn-vermelho" onClick={comprarCarta}>{t.aceitarPunicao} (+{comprasAcumuladas})</button>
               )}
-              {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && (
+              {turnoAtual === meuUserId && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && (
                 <button className="btn btn-cinza" onClick={passarVez}>{t.passarVez}</button>
               )}
             </div>
@@ -787,16 +835,16 @@ function App() {
                 <h3>{t.jogadores} ({jogadores.length}/6):</h3>
                 <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                   {jogadores.map((jogador, index) => (
-                    <li key={index} style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <li key={index} style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px', opacity: jogador.conectado ? 1 : 0.4 }}>
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${jogador.avatar}`} width="50" height="50" style={{ borderRadius: '50%', backgroundColor: '#ecf0f1', border: '3px solid #000' }} />
                       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2'}}>
-                        <span>{jogador.nome} {jogador.id === socket.id ? t.voce : ''} {index === 0 && t.host}</span>
+                        <span>{jogador.nome} {jogador.id === meuUserId ? t.voce : ''} {index === 0 && t.host} {!jogador.conectado && '(OFFLINE)'}</span>
                         <span style={{fontSize: '16px', color: '#f39c12'}}>{t.vitorias}: {jogador.vitorias || 0}</span>
                       </div>
                     </li>
                   ))}
                 </ul>
-                {jogadores[0]?.id === socket.id ? (
+                {jogadores[0]?.id === meuUserId ? (
                   <button className="btn btn-vermelho" onClick={iniciarPartida} style={{ marginTop: '20px', fontSize: '24px' }}>{t.iniciarPartida}</button>
                 ) : (
                   <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>{t.aguardandoHost}</p>
