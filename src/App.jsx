@@ -1,11 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, 
   ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, 
   SpeakerSlash, MusicNote, BookBookmark, DeviceMobile, Hourglass, 
-  Timer, Eye, Scales, Hash, Smiley, WifiSlash
+  Timer, Eye, Scales, Hash, Smiley, WifiSlash, Plug
 } from '@phosphor-icons/react';
 
 import musicaTema from './assets/tema.mp3';
@@ -47,7 +46,11 @@ const dic = {
     regraNoveTitulo: "A Regra do Nove (9)",
     regraNoveTexto: "Sempre que o '9' for jogado, um botão gigante aparecerá. O último a bater compra as cartas de punição!",
     kaosTitulo: "KAOS!",
-    kaosTexto: "Quando for ficar com apenas 1 carta, DEVE gritar 'KAOS!'. Pode gritar a qualquer momento se tiver 1 carta, ou APENAS na sua vez se tiver 2 cartas para se proteger. Pode sempre usar o botão para denunciar quem esqueceu!"
+    kaosTexto: "Quando for ficar com apenas 1 carta, DEVE gritar 'KAOS!'. Pode gritar a qualquer momento se tiver 1 carta, ou APENAS na sua vez se tiver 2 cartas para se proteger. Pode sempre usar o botão para denunciar quem esqueceu!",
+    // Novas traduções para Reconexão
+    partidaPendente: "Tens uma partida em andamento!",
+    reconectar: "RECONECTAR À SALA",
+    abandonar: "ABANDONAR PARTIDA"
   },
   en: {
     suaVez: "YOUR TURN!", vezDe: "TURN:", aguarde: "Wait...", comprar: "DRAW",
@@ -78,7 +81,11 @@ const dic = {
     regraNoveTitulo: "The Rule of Nine (9)",
     regraNoveTexto: "When '9' is played, a giant button appears. The last one to slap it draws the penalty!",
     kaosTitulo: "KAOS!",
-    kaosTexto: "When you are left with 1 card, you MUST shout 'KAOS!'. You can shout anytime if you have 1 card, or ONLY on your turn if you have 2 cards to protect yourself. You can always use the button to denounce someone!"
+    kaosTexto: "When you are left with 1 card, you MUST shout 'KAOS!'. You can shout anytime if you have 1 card, or ONLY on your turn if you have 2 cards to protect yourself. You can always use the button to denounce someone!",
+    // Novas traduções para Reconexão
+    partidaPendente: "You have a match in progress!",
+    reconectar: "RECONNECT TO ROOM",
+    abandonar: "ABANDON MATCH"
   }
 };
 
@@ -133,6 +140,9 @@ function App() {
   
   const [codigoSalaInput, setCodigoSalaInput] = useState('');
   const [minhaSala, setMinhaSala] = useState(null);
+  
+  // ESTADO NOVO: Guarda o ID da sala se o jogador recarregar a página
+  const [salaPendente, setSalaPendente] = useState(() => localStorage.getItem('kaos_salaAtiva') || null);
   
   const [jogadores, setJogadores] = useState([]);
   const [infoJogadores, setInfoJogadores] = useState([]); 
@@ -257,20 +267,20 @@ function App() {
   useEffect(() => {
     socket.on('connect', () => {
       setConectadoAoServidor(true);
-      const salaSalva = localStorage.getItem('kaos_salaAtiva');
-      if (salaSalva) {
-        socket.emit('reconectar', { codigoSala: salaSalva, userId: meuUserId });
-      }
+      // Removida a reconexão automática daqui. Agora é manual.
     });
 
     socket.on('reconectado_sucesso', (codigo) => {
       setMinhaSala(codigo);
+      setSalaPendente(null); // Limpa a pendência
     });
 
     socket.on('falha_reconexao', () => {
       localStorage.removeItem('kaos_salaAtiva');
+      setSalaPendente(null);
       setMinhaSala(null);
       setJogoIniciado(false);
+      setErro('A sala já não existe ou foi encerrada.');
     });
 
     socket.on('sala_criada', (codigo) => { 
@@ -355,13 +365,14 @@ function App() {
     socket.on('fim_de_jogo', (nomeGanhador) => { 
       setVencedor(nomeGanhador); 
       localStorage.removeItem('kaos_salaAtiva'); 
+      setSalaPendente(null);
     });
     
     socket.on('erro', (mensagem) => { setErro(mensagem); setTimeout(() => setErro(''), 4000); });
 
     socket.on('disconnect', () => {
       setConectadoAoServidor(false);
-      setErro('Aviso: Conexão perdida! A tentar reconectar à mesa...');
+      setErro('Aviso: Conexão perdida! Tente reconectar...');
     });
 
     return () => {
@@ -397,6 +408,16 @@ function App() {
     socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed, userId: meuUserId }); 
   };
 
+  // Funções Novas de Reconexão Manual
+  const acionarReconectar = () => {
+    socket.emit('reconectar', { codigoSala: salaPendente, userId: meuUserId });
+  };
+
+  const esquecerSalaPendente = () => {
+    localStorage.removeItem('kaos_salaAtiva');
+    setSalaPendente(null);
+  };
+
   const iniciarPartida = () => { socket.emit('iniciar_partida', minhaSala); };
   
   const comprarCarta = () => { if (turnoAtual === meuUserId && !eventoNoveAtivo) socket.emit('comprar_carta', { codigoSala: minhaSala, userId: meuUserId }); };
@@ -411,7 +432,7 @@ function App() {
   const sairDaSala = () => {
     socket.emit('sair_sala', { codigoSala: minhaSala, userId: meuUserId });
     localStorage.removeItem('kaos_salaAtiva');
-    setMinhaSala(null); setJogadores([]); setInfoJogadores([]);
+    setMinhaSala(null); setSalaPendente(null); setJogadores([]); setInfoJogadores([]);
     setJogoIniciado(false); setVencedor(null); setTempoPartida(0); 
     setMostrandoSorteio(false);
   };
@@ -471,52 +492,56 @@ function App() {
   return (
     <div>
       <style>{`
-        /* ESTRUTURA BEUI: SOBREPOSIÇÃO LINEAR COM FRAMER MOTION */
-        .mao-container-leque {
+        /* LAYOUT FLUIDO E SIMPLES COM CSS PURO (Sem sobreposição pesada do BEUI) */
+        .mao-container-simples {
           display: flex;
           justify-content: center;
           align-items: flex-end;
-          height: 150px;
+          flex-wrap: wrap;
+          gap: 10px;
           margin-top: 20px;
-          padding: 0 20px;
+          padding: 10px;
+          min-height: 140px;
         }
 
-        .carta-leque {
-          position: relative;
-          box-shadow: -4px 0px 15px rgba(0,0,0,0.3);
-          margin-left: -50px; /* Sobreposição mágica do BEUI */
+        .carta-simples {
+          transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.2s ease, border 0.2s ease;
           cursor: pointer;
+          position: relative;
         }
 
-        /* A primeira carta não pode ter margem negativa */
-        .carta-leque:first-child {
-          margin-left: 0;
+        .carta-simples:not(.desabilitada):hover {
+          transform: translateY(-15px);
+          z-index: 100 !important;
+          box-shadow: 0px 10px 20px rgba(0,0,0,0.4);
         }
 
-        /* Carta Selecionada para jogar */
-        .carta-leque.selecionada {
-          box-shadow: 0 0 20px #f1c40f, -4px 0px 15px rgba(0,0,0,0.3);
-          z-index: 500;
+        .carta-simples.selecionada {
+          transform: translateY(-25px);
+          box-shadow: 0 0 20px #f1c40f, 0px 10px 20px rgba(0,0,0,0.4);
+          border: 3px solid #f1c40f;
+          z-index: 500 !important;
         }
 
-        /* Oponentes: Leque linear elegante */
-        .cartas-oponente-leque {
+        /* Oponentes: Leque linear simples */
+        .cartas-oponente-simples {
           display: flex;
           justify-content: center;
           margin-top: 15px;
+          gap: -15px;
         }
         
-        .carta-verso-leque {
-          width: 30px;
-          height: 45px;
+        .carta-verso-simples {
+          width: 25px;
+          height: 40px;
           background-color: #2f3542;
           border: 2px solid #fff;
           border-radius: 5px;
           box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
-          margin-left: -20px;
+          margin-left: -15px;
         }
 
-        .carta-verso-leque:first-child {
+        .carta-verso-simples:first-child {
           margin-left: 0;
         }
 
@@ -545,7 +570,7 @@ function App() {
         @media (max-width: 600px) {
           .status-turno-box { min-width: 140px !important; padding: 5px 15px !important; font-size: 13px !important; }
           .status-turno-box .tempo { font-size: 12px !important; margin-top: 2px !important; }
-          .carta-leque { margin-left: -35px; }
+          .mao-container-simples { gap: 5px; }
         }
       `}</style>
 
@@ -619,20 +644,11 @@ function App() {
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} width="100%" height="100%" />
                     </div>
                     
-                    {/* LEQUE LINEAR DO OPONENTE COM FRAMER MOTION */}
-                    <div className="cartas-oponente-leque">
-                      <AnimatePresence>
-                        {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => (
-                          <motion.div 
-                            key={`${op.id}-verso-${i}`} 
-                            className="carta-verso-leque" 
-                            style={{ zIndex: i }}
-                            initial={{ opacity: 0, y: -50, scale: 0.5 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 20, delay: i * 0.05 }}
-                          />
-                        ))}
-                      </AnimatePresence>
+                    {/* LEQUE DOS OPONENTES (SIMPLIFICADO) */}
+                    <div className="cartas-oponente-simples">
+                      {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => (
+                        <div key={i} className="carta-verso-simples" style={{ zIndex: i }}></div>
+                      ))}
                       {op.qtdCartas > 15 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px'}}>+{op.qtdCartas - 15}</span>}
                     </div>
                     <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#000', marginTop: '8px' }}>{op.nome}</div>
@@ -650,16 +666,9 @@ function App() {
                   )}
                 </div>
 
-                <motion.div 
-                  key={cartaMesa.id} 
-                  className="carta carta-mesa" 
-                  style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff' }}
-                  initial={{ scale: 0.2, rotate: -180, opacity: 0 }}
-                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                >
+                <div key={cartaMesa.id} className="carta carta-mesa" style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff' }}>
                   {renderValorCarta(cartaMesa.valor)}
-                </motion.div>
+                </div>
 
                 <div className="direcao-indicador">
                   {sentido === 1 ? <ArrowsClockwise size={50} className="spin-horario" /> : <ArrowsCounterClockwise size={50} className="spin-anti" />}
@@ -803,43 +812,30 @@ function App() {
               </div>
             )}
 
-            {/* LEQUE LINEAR - A SUA MÃO COM FRAMER MOTION */}
-            <div className="mao-container-leque">
-              <AnimatePresence>
-                {minhaMao.map((carta, index) => {
-                  const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
-                  
-                  let classes = "carta carta-leque";
-                  if (taSelecionada) classes += " selecionada";
-                  if (turnoAtual !== meuUserId || eventoNoveAtivo) classes += " desabilitada";
+            {/* LEQUE DA MÃO - CSS PURO E FLUÍDO */}
+            <div className="mao-container-simples">
+              {minhaMao.map((carta, index) => {
+                const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
+                
+                let classes = "carta carta-simples";
+                if (taSelecionada) classes += " selecionada";
+                if (turnoAtual !== meuUserId || eventoNoveAtivo) classes += " desabilitada";
 
-                  return (
-                    <motion.div 
-                      key={carta.id}
-                      layoutId={`card-${carta.id}`} // Suaviza a reordenação quando se joga
-                      initial={{ opacity: 0, y: 150, scale: 0.5 }}
-                      animate={{ opacity: 1, y: taSelecionada ? -20 : 0, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.5, y: -200 }}
-                      whileHover={{ y: -30, marginRight: 15, zIndex: 1000 }}
-                      transition={{ 
-                        type: "spring", 
-                        stiffness: 300, 
-                        damping: 20, 
-                        delay: index * 0.05 // Efeito Cascata BEUI
-                      }}
-                      onClick={() => toggleSelecao(carta)} 
-                      className={classes} 
-                      style={{ 
-                        backgroundColor: getCorCss(carta.cor), 
-                        color: carta.cor === 'amarelo' ? '#000' : '#fff',
-                        zIndex: taSelecionada ? 100 : index
-                      }}
-                    >
-                      {renderValorCarta(carta.valor)}
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+                return (
+                  <div 
+                    key={carta.id} 
+                    onClick={() => toggleSelecao(carta)} 
+                    className={classes} 
+                    style={{ 
+                      backgroundColor: getCorCss(carta.cor), 
+                      color: carta.cor === 'amarelo' ? '#000' : '#fff',
+                      zIndex: taSelecionada ? 100 : index
+                    }}
+                  >
+                    {renderValorCarta(carta.valor)}
+                  </div>
+                );
+              })}
             </div>
 
             <div className="painel-acoes" style={{ marginBottom: '20px' }}>
@@ -876,34 +872,50 @@ function App() {
 
             <div className="logo-kaos"><div className="carta-k-logo">K</div>AOS</div>
             
+            {/* LÓGICA DE RECONEXÃO MANUAL AQUI */}
             {!minhaSala ? (
-              <>
-                <div className="avatar-seletor-container">
-                  <h3>{t.seuAvatar}</h3>
-                  <div className="avatar-display" onClick={roletarAvatar}>
-                    <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${meuAvatarSeed}`} width="100%" height="100%" />
+              salaPendente ? (
+                <div style={{ marginTop: '30px', padding: '20px', border: '3px dashed #f1c40f', borderRadius: '15px', backgroundColor: '#fffdf0', maxWidth: '400px', margin: '30px auto' }}>
+                  <Plug size={48} color="#e67e22" weight="duotone" style={{ marginBottom: '10px' }} />
+                  <h2 style={{ margin: '0 0 15px 0', color: '#d35400' }}>{t.partidaPendente}</h2>
+                  <p style={{ fontWeight: 'bold' }}>Sala: {salaPendente}</p>
+                  
+                  <button className="btn btn-verde" onClick={acionarReconectar} style={{ width: '100%', marginBottom: '10px' }}>
+                    {t.reconectar}
+                  </button>
+                  <button className="btn btn-cinza" onClick={esquecerSalaPendente} style={{ width: '100%' }}>
+                    {t.abandonar}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="avatar-seletor-container">
+                    <h3>{t.seuAvatar}</h3>
+                    <div className="avatar-display" onClick={roletarAvatar}>
+                      <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${meuAvatarSeed}`} width="100%" height="100%" />
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <input type="text" placeholder={t.seuNome} maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} />
-                </div>
-                <div style={{ marginTop: '20px' }}>
-                  <button className="btn btn-verde" onClick={criarSala}>{t.criarSala}</button>
-                  <h3 style={{ margin: '15px 0' }}>{t.ou}</h3>
-                  <input type="text" placeholder={t.codigo} value={codigoSalaInput} onChange={(e) => setCodigoSalaInput(e.target.value)} style={{ width: '120px' }} />
-                  <button className="btn btn-azul" onClick={entrarSala}>{t.entrar}</button>
-                </div>
+                  <div>
+                    <input type="text" placeholder={t.seuNome} maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} />
+                  </div>
+                  <div style={{ marginTop: '20px' }}>
+                    <button className="btn btn-verde" onClick={criarSala}>{t.criarSala}</button>
+                    <h3 style={{ margin: '15px 0' }}>{t.ou}</h3>
+                    <input type="text" placeholder={t.codigo} value={codigoSalaInput} onChange={(e) => setCodigoSalaInput(e.target.value)} style={{ width: '120px' }} />
+                    <button className="btn btn-azul" onClick={entrarSala}>{t.entrar}</button>
+                  </div>
 
-                <div style={{ marginTop: '40px', padding: '15px', border: '3px dashed #f1c40f', borderRadius: '15px', backgroundColor: '#fffdf0', maxWidth: '400px', margin: '40px auto 0 auto' }}>
-                  <h3 style={{ margin: '0 0 10px 0', color: '#f39c12' }}>{t.apoie}</h3>
-                  <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>{t.ajude}</p>
-                  <img src={livePixQRCode} alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
-                  <br/>
-                  <a href="https://livepix.gg/" target="_blank" rel="noreferrer" className="btn btn-roxo btn-pequeno" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
-                    {t.doar}
-                  </a>
-                </div>
-              </>
+                  <div style={{ marginTop: '40px', padding: '15px', border: '3px dashed #f1c40f', borderRadius: '15px', backgroundColor: '#fffdf0', maxWidth: '400px', margin: '40px auto 0 auto' }}>
+                    <h3 style={{ margin: '0 0 10px 0', color: '#f39c12' }}>{t.apoie}</h3>
+                    <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>{t.ajude}</p>
+                    <img src={livePixQRCode} alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
+                    <br/>
+                    <a href="https://livepix.gg/" target="_blank" rel="noreferrer" className="btn btn-roxo btn-pequeno" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>
+                      {t.doar}
+                    </a>
+                  </div>
+                </>
+              )
             ) : (
               <>
                 <h2>{t.codigoSala} <span style={{fontSize: '40px', color: '#ff4757'}}>{minhaSala}</span></h2>
