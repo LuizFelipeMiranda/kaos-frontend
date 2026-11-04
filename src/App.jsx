@@ -47,7 +47,6 @@ const dic = {
     regraNoveTexto: "Sempre que o '9' for jogado, um botão gigante aparecerá. O último a bater compra as cartas de punição!",
     kaosTitulo: "KAOS!",
     kaosTexto: "Quando for ficar com apenas 1 carta, DEVE gritar 'KAOS!'. Pode gritar a qualquer momento se tiver 1 carta, ou APENAS na sua vez se tiver 2 cartas para se proteger. Pode sempre usar o botão para denunciar quem esqueceu!",
-    // Novas traduções para Reconexão
     partidaPendente: "Tens uma partida em andamento!",
     reconectar: "RECONECTAR À SALA",
     abandonar: "ABANDONAR PARTIDA"
@@ -82,7 +81,6 @@ const dic = {
     regraNoveTexto: "When '9' is played, a giant button appears. The last one to slap it draws the penalty!",
     kaosTitulo: "KAOS!",
     kaosTexto: "When you are left with 1 card, you MUST shout 'KAOS!'. You can shout anytime if you have 1 card, or ONLY on your turn if you have 2 cards to protect yourself. You can always use the button to denounce someone!",
-    // Novas traduções para Reconexão
     partidaPendente: "You have a match in progress!",
     reconectar: "RECONNECT TO ROOM",
     abandonar: "ABANDON MATCH"
@@ -140,8 +138,6 @@ function App() {
   
   const [codigoSalaInput, setCodigoSalaInput] = useState('');
   const [minhaSala, setMinhaSala] = useState(null);
-  
-  // ESTADO NOVO: Guarda o ID da sala se o jogador recarregar a página
   const [salaPendente, setSalaPendente] = useState(() => localStorage.getItem('kaos_salaAtiva') || null);
   
   const [jogadores, setJogadores] = useState([]);
@@ -225,7 +221,6 @@ function App() {
       }
     } else {
       const audioAtivo = jogoIniciado ? audioJogoRef.current : audioMusicaRef.current;
-      
       if (audioAtivo) {
         audioAtivo.volume = volumeMusica;
         if (musicaAtiva) {
@@ -267,12 +262,11 @@ function App() {
   useEffect(() => {
     socket.on('connect', () => {
       setConectadoAoServidor(true);
-      // Removida a reconexão automática daqui. Agora é manual.
     });
 
     socket.on('reconectado_sucesso', (codigo) => {
       setMinhaSala(codigo);
-      setSalaPendente(null); // Limpa a pendência
+      setSalaPendente(null);
     });
 
     socket.on('falha_reconexao', () => {
@@ -408,7 +402,6 @@ function App() {
     socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed, userId: meuUserId }); 
   };
 
-  // Funções Novas de Reconexão Manual
   const acionarReconectar = () => {
     socket.emit('reconectar', { codigoSala: salaPendente, userId: meuUserId });
   };
@@ -492,56 +485,33 @@ function App() {
   return (
     <div>
       <style>{`
-        /* LAYOUT FLUIDO E SIMPLES COM CSS PURO (Sem sobreposição pesada do BEUI) */
-        .mao-container-simples {
+        /* ESTILO ORIGINAL CLÁSSICO: VERSO CINZENTO COM O 'K' E POSICIONAMENTO ABAIXO DO AVATAR */
+        .cartas-oponente-original {
           display: flex;
           justify-content: center;
-          align-items: flex-end;
-          flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 20px;
-          padding: 10px;
-          min-height: 140px;
-        }
-
-        .carta-simples {
-          transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.2s ease, border 0.2s ease;
-          cursor: pointer;
+          margin-top: -12px; /* Posicionado logo abaixo/sobrepondo a metade inferior do avatar do oponente */
+          z-index: 10;
           position: relative;
         }
 
-        .carta-simples:not(.desabilitada):hover {
-          transform: translateY(-15px);
-          z-index: 100 !important;
-          box-shadow: 0px 10px 20px rgba(0,0,0,0.4);
-        }
-
-        .carta-simples.selecionada {
-          transform: translateY(-25px);
-          box-shadow: 0 0 20px #f1c40f, 0px 10px 20px rgba(0,0,0,0.4);
-          border: 3px solid #f1c40f;
-          z-index: 500 !important;
-        }
-
-        /* Oponentes: Leque linear simples */
-        .cartas-oponente-simples {
-          display: flex;
-          justify-content: center;
-          margin-top: 15px;
-          gap: -15px;
-        }
-        
-        .carta-verso-simples {
-          width: 25px;
-          height: 40px;
+        .carta-verso-original {
+          width: 28px;
+          height: 42px;
           background-color: #2f3542;
           border: 2px solid #fff;
-          border-radius: 5px;
-          box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
-          margin-left: -15px;
+          border-radius: 6px;
+          box-shadow: -2px 2px 5px rgba(0,0,0,0.4);
+          margin-left: -14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #f1c40f;
+          font-family: 'Fredoka', sans-serif;
+          font-size: 14px;
+          font-weight: bold;
         }
 
-        .carta-verso-simples:first-child {
+        .carta-verso-original:first-child {
           margin-left: 0;
         }
 
@@ -570,7 +540,6 @@ function App() {
         @media (max-width: 600px) {
           .status-turno-box { min-width: 140px !important; padding: 5px 15px !important; font-size: 13px !important; }
           .status-turno-box .tempo { font-size: 12px !important; margin-top: 2px !important; }
-          .mao-container-simples { gap: 5px; }
         }
       `}</style>
 
@@ -644,14 +613,15 @@ function App() {
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} width="100%" height="100%" />
                     </div>
                     
-                    {/* LEQUE DOS OPONENTES (SIMPLIFICADO) */}
-                    <div className="cartas-oponente-simples">
-                      {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => (
-                        <div key={i} className="carta-verso-simples" style={{ zIndex: i }}></div>
+                    {/* CARTAS DO OPONENTE COM O ESTILO ORIGINAL (VERSO CINZA COM K) */}
+                    <div className="cartas-oponente-original">
+                      {Array.from({ length: Math.min(op.qtdCartas, 12) }).map((_, i) => (
+                        <div key={i} className="carta-verso-original" style={{ zIndex: i }}>K</div>
                       ))}
-                      {op.qtdCartas > 15 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px'}}>+{op.qtdCartas - 15}</span>}
+                      {op.qtdCartas > 12 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px', textShadow: '1px 1px 0 #000'}}>+{op.qtdCartas - 12}</span>}
                     </div>
-                    <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#000', marginTop: '8px' }}>{op.nome}</div>
+                    
+                    <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#000', marginTop: '4px' }}>{op.nome}</div>
                   </div>
                 );
               })}
@@ -812,12 +782,11 @@ function App() {
               </div>
             )}
 
-            {/* LEQUE DA MÃO - CSS PURO E FLUÍDO */}
-            <div className="mao-container-simples">
-              {minhaMao.map((carta, index) => {
+            <div className="mao-container">
+              {minhaMao.map((carta) => {
                 const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
                 
-                let classes = "carta carta-simples";
+                let classes = "carta";
                 if (taSelecionada) classes += " selecionada";
                 if (turnoAtual !== meuUserId || eventoNoveAtivo) classes += " desabilitada";
 
@@ -826,11 +795,7 @@ function App() {
                     key={carta.id} 
                     onClick={() => toggleSelecao(carta)} 
                     className={classes} 
-                    style={{ 
-                      backgroundColor: getCorCss(carta.cor), 
-                      color: carta.cor === 'amarelo' ? '#000' : '#fff',
-                      zIndex: taSelecionada ? 100 : index
-                    }}
+                    style={{ backgroundColor: getCorCss(carta.cor), color: carta.cor === 'amarelo' ? '#000' : '#fff' }}
                   >
                     {renderValorCarta(carta.valor)}
                   </div>
@@ -872,7 +837,6 @@ function App() {
 
             <div className="logo-kaos"><div className="carta-k-logo">K</div>AOS</div>
             
-            {/* LÓGICA DE RECONEXÃO MANUAL AQUI */}
             {!minhaSala ? (
               salaPendente ? (
                 <div style={{ marginTop: '30px', padding: '20px', border: '3px dashed #f1c40f', borderRadius: '15px', backgroundColor: '#fffdf0', maxWidth: '400px', margin: '30px auto' }}>
