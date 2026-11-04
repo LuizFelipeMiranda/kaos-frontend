@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, 
   ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, 
@@ -275,7 +276,7 @@ function App() {
     socket.on('sala_criada', (codigo) => { 
       setMinhaSala(codigo); 
       localStorage.setItem('kaos_salaAtiva', codigo);
-      setJogadores([{ id: meuUserId, nome: nome, avatar: meuAvatarSeed, vitorias: 0 }]); 
+      setJogadores([{ id: meuUserId, nome: nome, avatar: meuAvatarSeed, vitorias: 0, conectado: true }]); 
     });
 
     socket.on('entrou_na_sala', (codigo) => { 
@@ -470,51 +471,35 @@ function App() {
   return (
     <div>
       <style>{`
-        /* NOVA ANIMAÇÃO ESTILO BEUI: DEALER (Distribuição) */
-        @keyframes dealCards {
-          0% { opacity: 0; transform: translate(0, -250px) scale(0.3); }
-          60% { opacity: 1; transform: translate(0, 20px) scale(1.05); }
-          100% { opacity: 1; transform: translate(0, 0) scale(1); }
-        }
-
-        .animate-deal {
-          animation: dealCards 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        /* ESTILO RADIAL (LEQUE) DAS CARTAS DA MÃO */
+        /* ESTRUTURA BEUI: SOBREPOSIÇÃO LINEAR COM FRAMER MOTION */
         .mao-container-leque {
           display: flex;
           justify-content: center;
           align-items: flex-end;
-          height: 180px;
+          height: 150px;
           margin-top: 20px;
-          perspective: 1000px;
+          padding: 0 20px;
         }
 
         .carta-leque {
           position: relative;
-          transform-origin: bottom center;
-          transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
-          box-shadow: -3px 3px 10px rgba(0,0,0,0.4);
-          /* As variáveis --rot e --y são passadas inline no React */
-          transform: rotate(var(--rot)) translateY(var(--y));
+          box-shadow: -4px 0px 15px rgba(0,0,0,0.3);
+          margin-left: -50px; /* Sobreposição mágica do BEUI */
+          cursor: pointer;
         }
 
-        /* Hover das cartas coladas: levanta a carta e sobrepõe às outras */
-        .carta-leque:not(.desabilitada):hover {
-          transform: rotate(var(--rot)) translateY(calc(var(--y) - 30px)) scale(1.15) !important;
-          z-index: 1000 !important;
-          box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
+        /* A primeira carta não pode ter margem negativa */
+        .carta-leque:first-child {
+          margin-left: 0;
         }
 
-        /* Selecionada: Fica ligeiramente subida e com brilho */
+        /* Carta Selecionada para jogar */
         .carta-leque.selecionada {
-          transform: rotate(var(--rot)) translateY(calc(var(--y) - 20px)) scale(1.05);
-          box-shadow: 0 0 15px #f1c40f, -3px 3px 10px rgba(0,0,0,0.4);
+          box-shadow: 0 0 20px #f1c40f, -4px 0px 15px rgba(0,0,0,0.3);
           z-index: 500;
         }
 
-        /* Oponentes: Mini leque elegante */
+        /* Oponentes: Leque linear elegante */
         .cartas-oponente-leque {
           display: flex;
           justify-content: center;
@@ -528,7 +513,11 @@ function App() {
           border: 2px solid #fff;
           border-radius: 5px;
           box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
-          transform-origin: bottom center;
+          margin-left: -20px;
+        }
+
+        .carta-verso-leque:first-child {
+          margin-left: 0;
         }
 
         @keyframes flutuarEmote {
@@ -556,6 +545,7 @@ function App() {
         @media (max-width: 600px) {
           .status-turno-box { min-width: 140px !important; padding: 5px 15px !important; font-size: 13px !important; }
           .status-turno-box .tempo { font-size: 12px !important; margin-top: 2px !important; }
+          .carta-leque { margin-left: -35px; }
         }
       `}</style>
 
@@ -629,20 +619,20 @@ function App() {
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} width="100%" height="100%" />
                     </div>
                     
-                    {/* LEQUE DE CARTAS DO OPONENTE */}
+                    {/* LEQUE LINEAR DO OPONENTE COM FRAMER MOTION */}
                     <div className="cartas-oponente-leque">
-                      {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => {
-                        // Calcula o arco para o oponente
-                        const total = Math.min(op.qtdCartas, 15);
-                        const angle = total === 1 ? 0 : (i / (total - 1)) * 40 - 20; 
-                        return (
-                          <div key={i} className="carta-verso-leque animate-deal" style={{
-                            transform: `rotate(${angle}deg)`,
-                            marginLeft: i === 0 ? '0px' : '-20px', // Sobreposição forte
-                            zIndex: i
-                          }}></div>
-                        )
-                      })}
+                      <AnimatePresence>
+                        {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => (
+                          <motion.div 
+                            key={`${op.id}-verso-${i}`} 
+                            className="carta-verso-leque" 
+                            style={{ zIndex: i }}
+                            initial={{ opacity: 0, y: -50, scale: 0.5 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 20, delay: i * 0.05 }}
+                          />
+                        ))}
+                      </AnimatePresence>
                       {op.qtdCartas > 15 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px'}}>+{op.qtdCartas - 15}</span>}
                     </div>
                     <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#000', marginTop: '8px' }}>{op.nome}</div>
@@ -660,9 +650,16 @@ function App() {
                   )}
                 </div>
 
-                <div key={cartaMesa.id} className="carta carta-mesa animate-drop" style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff' }}>
+                <motion.div 
+                  key={cartaMesa.id} 
+                  className="carta carta-mesa" 
+                  style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff' }}
+                  initial={{ scale: 0.2, rotate: -180, opacity: 0 }}
+                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                >
                   {renderValorCarta(cartaMesa.valor)}
-                </div>
+                </motion.div>
 
                 <div className="direcao-indicador">
                   {sentido === 1 ? <ArrowsClockwise size={50} className="spin-horario" /> : <ArrowsCounterClockwise size={50} className="spin-anti" />}
@@ -806,42 +803,43 @@ function App() {
               </div>
             )}
 
-            {/* LEQUE RADIAL - A SUA MÃO */}
+            {/* LEQUE LINEAR - A SUA MÃO COM FRAMER MOTION */}
             <div className="mao-container-leque">
-              {minhaMao.map((carta, index) => {
-                const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
-                
-                // Matemática de Distribuição do Leque (Radial Math)
-                const total = minhaMao.length;
-                // Quanto mais cartas, mais o leque tem de abrir (até 45 graus)
-                const maxAngle = total > 12 ? 45 : 30; 
-                // Distribui os ângulos de -maxAngle até +maxAngle
-                const angle = total === 1 ? 0 : (index / (total - 1)) * maxAngle * 2 - maxAngle;
-                // As cartas das pontas descem no eixo Y para criar a curva do arco
-                const yOffset = Math.abs(angle) * 0.7; 
+              <AnimatePresence>
+                {minhaMao.map((carta, index) => {
+                  const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
+                  
+                  let classes = "carta carta-leque";
+                  if (taSelecionada) classes += " selecionada";
+                  if (turnoAtual !== meuUserId || eventoNoveAtivo) classes += " desabilitada";
 
-                let classes = "carta carta-leque animate-deal";
-                if (taSelecionada) classes += " selecionada";
-                if (turnoAtual !== meuUserId || eventoNoveAtivo) classes += " desabilitada";
-
-                return (
-                  <div 
-                    key={carta.id} 
-                    onClick={() => toggleSelecao(carta)} 
-                    className={classes} 
-                    style={{ 
-                      backgroundColor: getCorCss(carta.cor), 
-                      color: carta.cor === 'amarelo' ? '#000' : '#fff',
-                      '--rot': `${angle}deg`,
-                      '--y': `${yOffset}px`,
-                      zIndex: taSelecionada ? 100 : index,
-                      marginLeft: index === 0 ? '0px' : '-45px' // Sobreposição extrema estilo BEUI
-                    }}
-                  >
-                    {renderValorCarta(carta.valor)}
-                  </div>
-                );
-              })}
+                  return (
+                    <motion.div 
+                      key={carta.id}
+                      layoutId={`card-${carta.id}`} // Suaviza a reordenação quando se joga
+                      initial={{ opacity: 0, y: 150, scale: 0.5 }}
+                      animate={{ opacity: 1, y: taSelecionada ? -20 : 0, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.5, y: -200 }}
+                      whileHover={{ y: -30, marginRight: 15, zIndex: 1000 }}
+                      transition={{ 
+                        type: "spring", 
+                        stiffness: 300, 
+                        damping: 20, 
+                        delay: index * 0.05 // Efeito Cascata BEUI
+                      }}
+                      onClick={() => toggleSelecao(carta)} 
+                      className={classes} 
+                      style={{ 
+                        backgroundColor: getCorCss(carta.cor), 
+                        color: carta.cor === 'amarelo' ? '#000' : '#fff',
+                        zIndex: taSelecionada ? 100 : index
+                      }}
+                    >
+                      {renderValorCarta(carta.valor)}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             </div>
 
             <div className="painel-acoes" style={{ marginBottom: '20px' }}>
