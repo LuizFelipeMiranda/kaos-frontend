@@ -121,7 +121,6 @@ function App() {
   const [idioma, setIdioma] = useState('pt');
   const t = dic[idioma];
 
-  // SISTEMA DE USER ID (Para garantir reconexões perfeitas mesmo ao dar F5)
   const [meuUserId] = useState(() => {
     let id = localStorage.getItem('kaos_userId');
     if (!id) { id = 'usr_' + Math.random().toString(36).substring(2, 15); localStorage.setItem('kaos_userId', id); }
@@ -255,7 +254,6 @@ function App() {
   }, [mostrandoSorteio, jogadorSorteado, jogadores]);
 
   useEffect(() => {
-    // TENTATIVA DE AUTO-RECONEXÃO SILENCIOSA
     socket.on('connect', () => {
       setConectadoAoServidor(true);
       const salaSalva = localStorage.getItem('kaos_salaAtiva');
@@ -355,7 +353,7 @@ function App() {
 
     socket.on('fim_de_jogo', (nomeGanhador) => { 
       setVencedor(nomeGanhador); 
-      localStorage.removeItem('kaos_salaAtiva'); // Limpa ao acabar normal
+      localStorage.removeItem('kaos_salaAtiva'); 
     });
     
     socket.on('erro', (mensagem) => { setErro(mensagem); setTimeout(() => setErro(''), 4000); });
@@ -472,6 +470,67 @@ function App() {
   return (
     <div>
       <style>{`
+        /* NOVA ANIMAÇÃO ESTILO BEUI: DEALER (Distribuição) */
+        @keyframes dealCards {
+          0% { opacity: 0; transform: translate(0, -250px) scale(0.3); }
+          60% { opacity: 1; transform: translate(0, 20px) scale(1.05); }
+          100% { opacity: 1; transform: translate(0, 0) scale(1); }
+        }
+
+        .animate-deal {
+          animation: dealCards 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* ESTILO RADIAL (LEQUE) DAS CARTAS DA MÃO */
+        .mao-container-leque {
+          display: flex;
+          justify-content: center;
+          align-items: flex-end;
+          height: 180px;
+          margin-top: 20px;
+          perspective: 1000px;
+        }
+
+        .carta-leque {
+          position: relative;
+          transform-origin: bottom center;
+          transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+          box-shadow: -3px 3px 10px rgba(0,0,0,0.4);
+          /* As variáveis --rot e --y são passadas inline no React */
+          transform: rotate(var(--rot)) translateY(var(--y));
+        }
+
+        /* Hover das cartas coladas: levanta a carta e sobrepõe às outras */
+        .carta-leque:not(.desabilitada):hover {
+          transform: rotate(var(--rot)) translateY(calc(var(--y) - 30px)) scale(1.15) !important;
+          z-index: 1000 !important;
+          box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
+        }
+
+        /* Selecionada: Fica ligeiramente subida e com brilho */
+        .carta-leque.selecionada {
+          transform: rotate(var(--rot)) translateY(calc(var(--y) - 20px)) scale(1.05);
+          box-shadow: 0 0 15px #f1c40f, -3px 3px 10px rgba(0,0,0,0.4);
+          z-index: 500;
+        }
+
+        /* Oponentes: Mini leque elegante */
+        .cartas-oponente-leque {
+          display: flex;
+          justify-content: center;
+          margin-top: 15px;
+        }
+        
+        .carta-verso-leque {
+          width: 30px;
+          height: 45px;
+          background-color: #2f3542;
+          border: 2px solid #fff;
+          border-radius: 5px;
+          box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
+          transform-origin: bottom center;
+        }
+
         @keyframes flutuarEmote {
           0% { opacity: 0; transform: translate(-50%, -20px) scale(0.5); }
           15% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
@@ -481,31 +540,17 @@ function App() {
         }
         
         .emote-anim {
-          position: absolute;
-          top: 0px; 
-          left: 50%;
-          font-size: 60px;
-          animation: flutuarEmote 2.5s ease-out forwards;
-          z-index: 5000;
-          pointer-events: none;
-          text-shadow: 2px 2px 0 #000;
+          position: absolute; top: 0px; left: 50%; font-size: 60px;
+          animation: flutuarEmote 2.5s ease-out forwards; z-index: 5000;
+          pointer-events: none; text-shadow: 2px 2px 0 #000;
         }
 
-        .botoes-emotes-menu {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 10px;
-          margin-top: 10px;
-        }
-        
+        .botoes-emotes-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
         .btn-emote { font-size: 24px; background: transparent; border: none; cursor: pointer; transition: 0.1s; }
         .btn-emote:hover { transform: scale(1.3); }
 
-        .status-turno-box {
-          min-width: 220px; padding: 10px 30px; border-radius: 20px; font-size: 16px;
-        }
+        .status-turno-box { min-width: 220px; padding: 10px 30px; border-radius: 20px; font-size: 16px; }
         .status-turno-box .tempo { font-size: 15px; margin-top: 4px; }
-
         .jogador-desconectado { filter: grayscale(100%) opacity(0.6); }
 
         @media (max-width: 600px) {
@@ -584,13 +629,23 @@ function App() {
                       <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} width="100%" height="100%" />
                     </div>
                     
-                    <div className="cartas-oponente">
-                      {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => (
-                        <div key={i} className="carta-verso">K</div>
-                      ))}
+                    {/* LEQUE DE CARTAS DO OPONENTE */}
+                    <div className="cartas-oponente-leque">
+                      {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => {
+                        // Calcula o arco para o oponente
+                        const total = Math.min(op.qtdCartas, 15);
+                        const angle = total === 1 ? 0 : (i / (total - 1)) * 40 - 20; 
+                        return (
+                          <div key={i} className="carta-verso-leque animate-deal" style={{
+                            transform: `rotate(${angle}deg)`,
+                            marginLeft: i === 0 ? '0px' : '-20px', // Sobreposição forte
+                            zIndex: i
+                          }}></div>
+                        )
+                      })}
                       {op.qtdCartas > 15 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px'}}>+{op.qtdCartas - 15}</span>}
                     </div>
-                    <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#000' }}>{op.nome}</div>
+                    <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#000', marginTop: '8px' }}>{op.nome}</div>
                   </div>
                 );
               })}
@@ -618,7 +673,6 @@ function App() {
             <div style={{ position: 'fixed', bottom: '90px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
               
               <div style={{ position: 'relative' }}>
-                
                 {emotesAtivos[meuUserId] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[meuUserId]}</div>}
 
                 <button
@@ -752,15 +806,38 @@ function App() {
               </div>
             )}
 
-            <div className="mao-container" style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', padding: '0 10px 10px 10px', maxWidth: '1000px', margin: '15px auto' }}>
-              {minhaMao.map((carta) => {
+            {/* LEQUE RADIAL - A SUA MÃO */}
+            <div className="mao-container-leque">
+              {minhaMao.map((carta, index) => {
                 const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
-                let classes = "carta";
+                
+                // Matemática de Distribuição do Leque (Radial Math)
+                const total = minhaMao.length;
+                // Quanto mais cartas, mais o leque tem de abrir (até 45 graus)
+                const maxAngle = total > 12 ? 45 : 30; 
+                // Distribui os ângulos de -maxAngle até +maxAngle
+                const angle = total === 1 ? 0 : (index / (total - 1)) * maxAngle * 2 - maxAngle;
+                // As cartas das pontas descem no eixo Y para criar a curva do arco
+                const yOffset = Math.abs(angle) * 0.7; 
+
+                let classes = "carta carta-leque animate-deal";
                 if (taSelecionada) classes += " selecionada";
                 if (turnoAtual !== meuUserId || eventoNoveAtivo) classes += " desabilitada";
 
                 return (
-                  <div key={carta.id} onClick={() => toggleSelecao(carta)} className={classes} style={{ backgroundColor: getCorCss(carta.cor), color: carta.cor === 'amarelo' ? '#000' : '#fff' }}>
+                  <div 
+                    key={carta.id} 
+                    onClick={() => toggleSelecao(carta)} 
+                    className={classes} 
+                    style={{ 
+                      backgroundColor: getCorCss(carta.cor), 
+                      color: carta.cor === 'amarelo' ? '#000' : '#fff',
+                      '--rot': `${angle}deg`,
+                      '--y': `${yOffset}px`,
+                      zIndex: taSelecionada ? 100 : index,
+                      marginLeft: index === 0 ? '0px' : '-45px' // Sobreposição extrema estilo BEUI
+                    }}
+                  >
                     {renderValorCarta(carta.valor)}
                   </div>
                 );
