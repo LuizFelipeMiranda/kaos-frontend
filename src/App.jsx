@@ -27,12 +27,16 @@ const dic = {
     jogadores: "Jogadores", voce: "(Você)", host: "- Host", iniciarPartida: "INICIAR PARTIDA",
     aguardandoHost: "A aguardar que o anfitrião inicie...", sairSala: "SAIR DA SALA", 
     config: "Configurações", musica: "Música de Fundo", efeitos: "Efeitos Sonoros", fechar: "Fechar",
-    vencedor: "VENCEDOR!", acabouCartas: "acabou com as cartas!", voltarLobby: "Voltar para o Lobby",
+    vencedor: "VENCEU A PARTIDA!", acabouCartas: "acabou com as cartas!", voltarLobby: "Voltar para o Lobby",
     vitorias: "Vitórias", idioma: "Idioma", tempo: "Duração",
     espiarAlvo: "Que bisbilhoteiro! De quem queres ver a mão?",
     igualarTitulo: "Igualar as Cartas", igualarDesc: "Ajustar o tamanho das mãos de toda a gente para a:", 
     igualarMaior: "Maior Quantidade", igualarMenor: "Menor Quantidade",
     escolherNumTitulo: "Escolha o Número", escolherNumDesc: "Selecione o número que a mesa vai passar a ter:",
+    modoJogo: "Modo de Jogo:", casual: "Casual", kaos: "KAOS!", duplas: "Duplas 2v2",
+    descCasual: "Modo Clássico! Sem cartas da Mega Atualização (+3, +6, Espiar...).",
+    descKaos: "Modo Completo! Todas as cartas especiais e caos total.",
+    descDuplas: "Cooperativo! Jogador 1 & 3 vs Jogador 2 & 4. Requer 4 jogadores.",
     regrasTitulo: "Regras do Jogo",
     regrasNovasTitulo: "Mega Atualização (Novas Cartas!)",
     regrasNovasText: "• Espiar (Olho): Veja a mão de qualquer jogador.\n• +3 (Cor): Compra 3 cartas.\n• +6 (Preto): O próximo compra 6.\n• Igualar (Balança): Escolha 'Maior' ou 'Menor' para igualar o número de cartas de todos!\n• Recomeço (Ampulheta): Todos descartam as mãos e compram 7 novas cartas.\n• Escolher Número (#): Muda a mesa para um número específico (cartas de efeito ignoram a cor e anulam esta carta).",
@@ -58,12 +62,16 @@ const dic = {
     jogadores: "Players", voce: "(You)", host: "- Host", iniciarPartida: "START GAME",
     aguardandoHost: "Waiting for host to start...", sairSala: "LEAVE ROOM", 
     config: "Settings", musica: "Background Music", efeitos: "Sound Effects", fechar: "Close",
-    vencedor: "WINNER!", acabouCartas: "finished their cards!", voltarLobby: "Back to Lobby",
+    vencedor: "WON THE MATCH!", acabouCartas: "finished their cards!", voltarLobby: "Back to Lobby",
     vitorias: "Wins", idioma: "Language", tempo: "Match Time",
     espiarAlvo: "Peeping Tom! Whose hand do you want to see?",
     igualarTitulo: "Equalize Cards", igualarDesc: "Adjust everyone's hand size to match the:", 
     igualarMaior: "Largest Hand", igualarMenor: "Smallest Hand",
     escolherNumTitulo: "Choose a Number", escolherNumDesc: "Select the number the table will change to:",
+    modoJogo: "Game Mode:", casual: "Casual", kaos: "KAOS!", duplas: "2v2 Teams",
+    descCasual: "Classic Mode! No Mega Update cards (+3, +6, Peek...).",
+    descKaos: "Full Mode! All special cards and total chaos.",
+    descDuplas: "Co-op! Player 1 & 3 vs Player 2 & 4. Requires exactly 4 players.",
     regrasTitulo: "Game Rules",
     regrasNovasTitulo: "Mega Update (New Cards!)",
     regrasNovasText: "• Peek (Eye): Look at any player's hand.\n• +3 (Color): Draw 3.\n• +6 (Black): Next player draws 6.\n• Equalizer (Scales): Match everyone's card count to the 'Largest' or 'Smallest' hand!\n• Restart (Hourglass): Everyone discards and draws 7 new cards.\n• Choose Number (#): Change the table to a specific number (effect cards override this rule).",
@@ -129,6 +137,8 @@ function App() {
   const [jogadores, setJogadores] = useState([]);
   const [infoJogadores, setInfoJogadores] = useState([]); 
   
+  const [modoJogoSelecionado, setModoJogoSelecionado] = useState('kaos'); 
+
   const [mostrandoSorteio, setMostrandoSorteio] = useState(false);
   const [jogadorSorteado, setJogadorSorteado] = useState(null);
   const [roletaIndex, setRoletaIndex] = useState(0);
@@ -347,10 +357,18 @@ function App() {
   
   const criarSala = () => { if (!nome) return setErro('Digite o seu nome!'); socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed }); };
   const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
-  const iniciarPartida = () => { socket.emit('iniciar_partida', minhaSala); };
+  
+  const iniciarPartida = () => { 
+    if (modoJogoSelecionado === 'duplas' && jogadores.length !== 4) {
+      setErro(idioma === 'pt' ? 'O modo Duplas requer exatamente 4 jogadores!' : '2v2 Mode requires exactly 4 players!');
+      setTimeout(() => setErro(''), 4000);
+      return;
+    }
+    // Envia agora o objeto com o código e o modo
+    socket.emit('iniciar_partida', { codigoSala: minhaSala, modo: modoJogoSelecionado }); 
+  };
   
   const adicionarBot = () => {
-    // NOMES DOS BOTS ATUALIZADOS AQUI
     const nomesDeBots = ['ASA', 'BOTAS', 'CAIM', 'LUNA', 'RYSER'];
     const nomesDisponiveis = nomesDeBots.filter(
       (nomeBot) => !jogadores.some((jogador) => jogador.nome === `[BOT] ${nomeBot}`)
@@ -506,6 +524,19 @@ function App() {
             font-size: 12px !important;
             margin-top: 2px !important;
           }
+        }
+
+        .modo-seletor-botoes {
+          display: flex;
+          gap: 10px;
+          justify-content: center;
+          margin-top: 10px;
+        }
+
+        .btn-modo {
+          flex: 1;
+          padding: 8px !important;
+          font-size: 14px !important;
         }
       `}</style>
 
@@ -826,6 +857,23 @@ function App() {
             ) : (
               <>
                 <h2>{t.codigoSala} <span style={{fontSize: '40px', color: '#ff4757'}}>{minhaSala}</span></h2>
+                
+                {jogadores[0]?.id === socket.id && (
+                  <div style={{ padding: '15px', border: '3px dashed #000', borderRadius: '15px', maxWidth: '350px', margin: '0 auto 20px auto', backgroundColor: '#f9f9f9' }}>
+                    <h3 style={{ margin: '0 0 10px 0' }}>{t.modoJogo}</h3>
+                    <div className="modo-seletor-botoes">
+                      <button className={`btn btn-modo ${modoJogoSelecionado === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setModoJogoSelecionado('casual')}>{t.casual}</button>
+                      <button className={`btn btn-modo ${modoJogoSelecionado === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setModoJogoSelecionado('kaos')}>{t.kaos}</button>
+                      <button className={`btn btn-modo ${modoJogoSelecionado === 'duplas' ? 'btn-verde' : 'btn-cinza'}`} onClick={() => setModoJogoSelecionado('duplas')}>{t.duplas}</button>
+                    </div>
+                    <p style={{ fontSize: '13px', margin: '10px 0 0 0', fontWeight: 'bold', color: '#7f8c8d' }}>
+                      {modoJogoSelecionado === 'casual' && t.descCasual}
+                      {modoJogoSelecionado === 'kaos' && t.descKaos}
+                      {modoJogoSelecionado === 'duplas' && t.descDuplas}
+                    </p>
+                  </div>
+                )}
+
                 <h3>{t.jogadores} ({jogadores.length}/6):</h3>
                 <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                   {jogadores.map((jogador, index) => (
@@ -840,7 +888,6 @@ function App() {
                 </ul>
                 
                 {jogadores[0]?.id === socket.id ? (
-                  // CONTÊINER ATUALIZADO PARA LIMITAR A LARGURA DOS BOTÕES NO LOBBY
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', maxWidth: '300px', margin: '20px auto 0 auto' }}>
                     <button className="btn btn-vermelho" onClick={iniciarPartida} style={{ fontSize: '24px' }}>{t.iniciarPartida}</button>
                     <button className="btn btn-roxo" onClick={adicionarBot}>+ Adicionar Bot</button>
