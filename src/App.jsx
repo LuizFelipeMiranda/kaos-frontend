@@ -33,10 +33,10 @@ const dic = {
     igualarTitulo: "Igualar as Cartas", igualarDesc: "Ajustar o tamanho das mãos de toda a gente para a:", 
     igualarMaior: "Maior Quantidade", igualarMenor: "Menor Quantidade",
     escolherNumTitulo: "Escolha o Número", escolherNumDesc: "Selecione o número que a mesa vai passar a ter:",
-    modoJogo: "Modo de Jogo:", casual: "Casual", kaos: "KAOS!", duplas: "Duplas 2v2",
-    descCasual: "Modo Clássico! Sem cartas da Mega Atualização (+3, +6, Espiar...).",
-    descKaos: "Modo Completo! Todas as cartas especiais e caos total.",
-    descDuplas: "Cooperativo! Jogador 1 & 3 vs Jogador 2 & 4. Requer 4 jogadores.",
+    casual: "Casual", kaos: "KAOS!", pvp: "Cada um por si", duplas: "Duplas / Equipes",
+    descCasual: "modo de jogo clássico",
+    descKaos: "modo de jogo para fazer o kaos!",
+    descDuplasReq: "Requer 4 ou 6 jogadores (Equipes opostas na mesa).",
     regrasTitulo: "Regras do Jogo",
     regrasNovasTitulo: "Mega Atualização (Novas Cartas!)",
     regrasNovasText: "• Espiar (Olho): Veja a mão de qualquer jogador.\n• +3 (Cor): Compra 3 cartas.\n• +6 (Preto): O próximo compra 6.\n• Igualar (Balança): Escolha 'Maior' ou 'Menor' para igualar o número de cartas de todos!\n• Recomeço (Ampulheta): Todos descartam as mãos e compram 7 novas cartas.\n• Escolher Número (#): Muda a mesa para um número específico (cartas de efeito ignoram a cor e anulam esta carta).",
@@ -68,10 +68,10 @@ const dic = {
     igualarTitulo: "Equalize Cards", igualarDesc: "Adjust everyone's hand size to match the:", 
     igualarMaior: "Largest Hand", igualarMenor: "Smallest Hand",
     escolherNumTitulo: "Choose a Number", escolherNumDesc: "Select the number the table will change to:",
-    modoJogo: "Game Mode:", casual: "Casual", kaos: "KAOS!", duplas: "2v2 Teams",
-    descCasual: "Classic Mode! No Mega Update cards (+3, +6, Peek...).",
-    descKaos: "Full Mode! All special cards and total chaos.",
-    descDuplas: "Co-op! Player 1 & 3 vs Player 2 & 4. Requires exactly 4 players.",
+    casual: "Casual", kaos: "KAOS!", pvp: "Free for All", duplas: "2v2/3v3 Teams",
+    descCasual: "modo de jogo clássico",
+    descKaos: "modo de jogo para fazer o kaos!",
+    descDuplasReq: "Requires 4 or 6 players (Opposite teams on the table).",
     regrasTitulo: "Game Rules",
     regrasNovasTitulo: "Mega Update (New Cards!)",
     regrasNovasText: "• Peek (Eye): Look at any player's hand.\n• +3 (Color): Draw 3.\n• +6 (Black): Next player draws 6.\n• Equalizer (Scales): Match everyone's card count to the 'Largest' or 'Smallest' hand!\n• Restart (Hourglass): Everyone discards and draws 7 new cards.\n• Choose Number (#): Change the table to a specific number (effect cards override this rule).",
@@ -137,7 +137,8 @@ function App() {
   const [jogadores, setJogadores] = useState([]);
   const [infoJogadores, setInfoJogadores] = useState([]); 
   
-  const [modoJogoSelecionado, setModoJogoSelecionado] = useState('kaos'); 
+  const [regrasSelecionadas, setRegrasSelecionadas] = useState('kaos'); 
+  const [formatoSelecionado, setFormatoSelecionado] = useState('pvp'); 
 
   const [mostrandoSorteio, setMostrandoSorteio] = useState(false);
   const [jogadorSorteado, setJogadorSorteado] = useState(null);
@@ -336,6 +337,23 @@ function App() {
     socket.on('fim_de_jogo', (nomeGanhador) => { 
       setVencedor(nomeGanhador); 
     });
+
+    // Se você for expulso pelo host
+    socket.on('voce_foi_removido', () => {
+      setErro(idioma === 'pt' ? 'Você foi expulso da sala pelo anfitrião.' : 'You were kicked from the room.');
+      setTimeout(() => setErro(''), 4000);
+      
+      // O conteúdo direto de sairDaSala para evitar o erro de dependência:
+      socket.emit('sair_sala', minhaSala);
+      setMinhaSala(null); 
+      setJogadores([]); 
+      setInfoJogadores([]);
+      setJogoIniciado(false); 
+      setVencedor(null); 
+      setTempoPartida(0); 
+      setMostrandoSorteio(false);
+      localStorage.removeItem('kaos_sala_ativa');
+    });
     
     socket.on('erro', (mensagem) => { setErro(mensagem); setTimeout(() => setErro(''), 4000); });
 
@@ -349,9 +367,9 @@ function App() {
       socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); 
       socket.off('mao_espiao_previa'); socket.off('emote_recebido'); socket.off('erro');
       socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo');
-      socket.off('disconnect');
+      socket.off('voce_foi_removido'); socket.off('disconnect');
     };
-  }, [nome, meuAvatarSeed, tocarEfeito]);
+  }, [nome, meuAvatarSeed, tocarEfeito, idioma, minhaSala]);
 
   const roletarAvatar = () => { setMeuAvatarSeed(gerarSeedAleatoria()); };
   
@@ -359,13 +377,12 @@ function App() {
   const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
   
   const iniciarPartida = () => { 
-    if (modoJogoSelecionado === 'duplas' && jogadores.length !== 4) {
-      setErro(idioma === 'pt' ? 'O modo Duplas requer exatamente 4 jogadores!' : '2v2 Mode requires exactly 4 players!');
+    if (formatoSelecionado === 'duplas' && (jogadores.length !== 4 && jogadores.length !== 6)) {
+      setErro(idioma === 'pt' ? 'O modo Duplas requer exatamente 4 ou 6 jogadores!' : '2v2 Mode requires exactly 4 or 6 players!');
       setTimeout(() => setErro(''), 4000);
       return;
     }
-    // Envia agora o objeto com o código e o modo
-    socket.emit('iniciar_partida', { codigoSala: minhaSala, modo: modoJogoSelecionado }); 
+    socket.emit('iniciar_partida', { codigoSala: minhaSala, regras: regrasSelecionadas, formato: formatoSelecionado }); 
   };
   
   const adicionarBot = () => {
@@ -381,6 +398,10 @@ function App() {
       setErro('Limite de bots únicos atingido!');
       setTimeout(() => setErro(''), 3000);
     }
+  };
+
+  const expulsarJogador = (idAlvo) => {
+    socket.emit('remover_jogador', { codigoSala: minhaSala, alvoId: idAlvo });
   };
 
   const handleReconectar = () => {
@@ -860,29 +881,53 @@ function App() {
                 
                 {jogadores[0]?.id === socket.id && (
                   <div style={{ padding: '15px', border: '3px dashed #000', borderRadius: '15px', maxWidth: '350px', margin: '0 auto 20px auto', backgroundColor: '#f9f9f9' }}>
-                    <h3 style={{ margin: '0 0 10px 0' }}>{t.modoJogo}</h3>
-                    <div className="modo-seletor-botoes">
-                      <button className={`btn btn-modo ${modoJogoSelecionado === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setModoJogoSelecionado('casual')}>{t.casual}</button>
-                      <button className={`btn btn-modo ${modoJogoSelecionado === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setModoJogoSelecionado('kaos')}>{t.kaos}</button>
-                      <button className={`btn btn-modo ${modoJogoSelecionado === 'duplas' ? 'btn-verde' : 'btn-cinza'}`} onClick={() => setModoJogoSelecionado('duplas')}>{t.duplas}</button>
+                    
+                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px' }}>Regras:</h3>
+                    <div className="modo-seletor-botoes" style={{ marginBottom: '15px' }}>
+                      <button className={`btn btn-modo ${regrasSelecionadas === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
+                      <button className={`btn btn-modo ${regrasSelecionadas === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
                     </div>
-                    <p style={{ fontSize: '13px', margin: '10px 0 0 0', fontWeight: 'bold', color: '#7f8c8d' }}>
-                      {modoJogoSelecionado === 'casual' && t.descCasual}
-                      {modoJogoSelecionado === 'kaos' && t.descKaos}
-                      {modoJogoSelecionado === 'duplas' && t.descDuplas}
+                    <p style={{ fontSize: '13px', margin: '-5px 0 15px 0', fontWeight: 'bold', color: '#7f8c8d' }}>
+                      {regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos}
                     </p>
+
+                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px' }}>Formato:</h3>
+                    <div className="modo-seletor-botoes">
+                      <button className={`btn btn-modo ${formatoSelecionado === 'pvp' ? 'btn-amarelo' : 'btn-cinza'}`} style={{ backgroundColor: formatoSelecionado === 'pvp' ? '#f39c12' : ''}} onClick={() => setFormatoSelecionado('pvp')}>{t.pvp}</button>
+                      <button className={`btn btn-modo ${formatoSelecionado === 'duplas' ? 'btn-verde' : 'btn-cinza'}`} onClick={() => setFormatoSelecionado('duplas')}>{t.duplas}</button>
+                    </div>
+                    {formatoSelecionado === 'duplas' && (
+                        <p style={{ fontSize: '13px', margin: '10px 0 0 0', fontWeight: 'bold', color: '#e74c3c' }}>
+                          {t.descDuplasReq}
+                        </p>
+                    )}
                   </div>
                 )}
 
                 <h3>{t.jogadores} ({jogadores.length}/6):</h3>
                 <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                   {jogadores.map((jogador, index) => (
-                    <li key={index} style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                      <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${jogador.avatar}`} width="50" height="50" style={{ borderRadius: '50%', backgroundColor: '#ecf0f1', border: '3px solid #000' }} />
-                      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2'}}>
-                        <span>{jogador.nome} {jogador.id === socket.id ? t.voce : ''} {index === 0 && t.host}</span>
-                        <span style={{fontSize: '16px', color: '#f39c12'}}>{t.vitorias}: {jogador.vitorias || 0}</span>
+                    <li key={index} style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '15px', width: '100%', maxWidth: '350px' }}>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${jogador.avatar}`} width="50" height="50" style={{ borderRadius: '50%', backgroundColor: '#ecf0f1', border: '3px solid #000' }} />
+                        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2'}}>
+                          <span>{jogador.nome} {jogador.id === socket.id ? t.voce : ''} {index === 0 && t.host}</span>
+                          <span style={{fontSize: '16px', color: '#f39c12'}}>{t.vitorias}: {jogador.vitorias || 0}</span>
+                        </div>
                       </div>
+
+                      {/* Botão Remover (X) - Só aparece para o host (index 0) e não para ele mesmo */}
+                      {jogadores[0]?.id === socket.id && index !== 0 && (
+                        <button 
+                          onClick={() => expulsarJogador(jogador.id)} 
+                          style={{ background: '#e74c3c', border: '3px solid #000', borderRadius: '8px', color: '#fff', padding: '5px 12px', cursor: 'pointer', fontWeight: '900', boxShadow: '2px 2px 0 #000' }}
+                          title="Expulsar da Sala"
+                        >
+                          X
+                        </button>
+                      )}
+
                     </li>
                   ))}
                 </ul>
