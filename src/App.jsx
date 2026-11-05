@@ -349,9 +349,9 @@ function App() {
   const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
   const iniciarPartida = () => { socket.emit('iniciar_partida', minhaSala); };
   
-  // Função para Adicionar Bot Filtrando Nomes Repetidos
   const adicionarBot = () => {
-    const nomesDeBots = ['ECHO', 'BOTAS', 'ASA', 'REX', 'ZIGGY', 'MAX', 'LUNA', 'NOVA'];
+    // NOMES DOS BOTS ATUALIZADOS AQUI
+    const nomesDeBots = ['ASA', 'BOTAS', 'CAIM', 'LUNA', 'RYSER'];
     const nomesDisponiveis = nomesDeBots.filter(
       (nomeBot) => !jogadores.some((jogador) => jogador.nome === `[BOT] ${nomeBot}`)
     );
@@ -365,7 +365,6 @@ function App() {
     }
   };
 
-  // Função para Reconectar a uma Sessão Ativa
   const handleReconectar = () => {
     const salaSalva = localStorage.getItem('kaos_sala_ativa');
     if (salaSalva && nome) {
@@ -841,7 +840,8 @@ function App() {
                 </ul>
                 
                 {jogadores[0]?.id === socket.id ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+                  // CONTÊINER ATUALIZADO PARA LIMITAR A LARGURA DOS BOTÕES NO LOBBY
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', maxWidth: '300px', margin: '20px auto 0 auto' }}>
                     <button className="btn btn-vermelho" onClick={iniciarPartida} style={{ fontSize: '24px' }}>{t.iniciarPartida}</button>
                     <button className="btn btn-roxo" onClick={adicionarBot}>+ Adicionar Bot</button>
                   </div>
