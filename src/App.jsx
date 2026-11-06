@@ -652,18 +652,27 @@ function App() {
                       borderColor: ehVezDele ? '#2ecc71' : '#000', 
                       boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000',
                       borderWidth: '3px',
-                      borderStyle: 'solid'
+                      borderStyle: 'solid',
+                      borderRadius: '50%',
+                      backgroundColor: op.corEquipe || 'transparent',
+                      padding: op.corEquipe ? '4px' : '0px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}>
-                      {op.corEquipe && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '-8px', left: '-8px', right: '-8px', bottom: '-8px',
+                      
+                      <img 
+                        src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} 
+                        style={{
+                          width: '100%', 
+                          height: '100%', 
                           borderRadius: '50%',
-                          border: `5px solid ${op.corEquipe}`,
-                          zIndex: -1
-                        }} />
-                      )}
-                      <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} width="100%" height="100%" style={{borderRadius: '50%'}} />
+                          backgroundColor: '#fff',
+                          border: op.corEquipe ? '2px solid #000' : 'none',
+                          boxSizing: 'border-box',
+                          display: 'block'
+                        }} 
+                      />
                     </div>
                     
                     <div className="cartas-oponente">
