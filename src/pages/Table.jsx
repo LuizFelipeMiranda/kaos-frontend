@@ -49,16 +49,20 @@ export default function Table(props) {
         )}
       </div>
 
-      {/* Top Bar DIREITA (Indicador de Turno) */}
+      {/* Top Bar DIREITA (Indicador de Turno - Atualizado para Verde e Vermelho) */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100 }}>
         <div className="status-turno-box" style={{ 
-          backgroundColor: turnoAtual === socket.id ? '#2ecc71' : '#fff', 
-          color: turnoAtual === socket.id ? '#000' : '#7f8c8d',
+          backgroundColor: '#2ecc71', /* Fixo em Verde */
+          color: '#fff', /* Nome em Branco */
           border: '4px solid #000', borderRadius: '20px', padding: '10px 20px', fontWeight: '900',
-          boxShadow: turnoAtual === socket.id ? '4px 4px 0 #000' : 'none'
+          boxShadow: '4px 4px 0 #000'
         }}>
-          <div style={{ fontSize: '16px' }}>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
-          <div style={{ color: turnoAtual === socket.id ? '#000' : '#e74c3c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '5px' }}>
+          <div style={{ fontSize: '16px', textShadow: '1px 1px 0 #000' }}>
+            {turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}
+          </div>
+          
+          {/* Pílula branca para o temporizador vermelho se destacar */}
+          <div style={{ backgroundColor: '#fff', color: '#e74c3c', border: '2px solid #000', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '6px', padding: '2px 10px' }}>
             {eventoNoveAtivo ? <span>PAUSA (BATA!)</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
           </div>
         </div>
@@ -86,27 +90,32 @@ export default function Table(props) {
                 <div className="player-body" style={{ backgroundColor: op.corEquipe || '#34495e' }}></div>
               </div>
               
-              <div className="cartas-oponente" style={{ marginTop: '5px', zIndex: 3 }}>
+              {/* Cartas subidas pela metade do corpo (-20px) */}
+              <div className="cartas-oponente" style={{ marginTop: '-20px', zIndex: 3 }}>
                 {Array.from({ length: Math.min(op.qtdCartas, 8) }).map((_, i) => (
                   <div key={i} className="carta-verso" style={{ width: '20px', height: '30px', fontSize: '12px', marginLeft: i > 0 ? '-10px' : '0' }}>K</div>
                 ))}
                 {op.qtdCartas > 8 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px', textShadow: '1px 1px 0 #000'}}>+{op.qtdCartas - 8}</span>}
               </div>
-              <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#fff', textShadow: '2px 2px 0 #000', fontSize: '14px', marginTop: '5px', zIndex: 3 }}>{op.nome}</div>
+              
+              {/* Nomes legíveis: Fundo branco e Letra preta */}
+              <div className="oponente-nome" style={{ backgroundColor: '#fff', color: '#000', border: '2px solid #000', borderRadius: '10px', padding: '2px 10px', fontSize: '13px', fontWeight: '900', marginTop: '5px', zIndex: 3, boxShadow: ehVezDele ? '0 0 10px #2ecc71' : '2px 2px 0 #000' }}>
+                {op.nome}
+              </div>
             </div>
           );
         })}
 
-        {/* CENTRO DA MESA REORGANIZADO */}
+        {/* CENTRO DA MESA */}
         <div className="centro-mesa" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '200px', height: '200px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           
-          {/* SETAS (Ao redor, centralizadas) */}
+          {/* SETAS MAIORES */}
           <div style={{ position: 'absolute', opacity: 0.25, pointerEvents: 'none', zIndex: 1 }}>
-            {sentido === 1 ? <ArrowsClockwise size={180} color="#fff" className="spin-horario" /> : <ArrowsCounterClockwise size={180} color="#fff" className="spin-anti" />}
+            {sentido === 1 ? <ArrowsClockwise size={260} color="#fff" className="spin-horario" /> : <ArrowsCounterClockwise size={260} color="#fff" className="spin-anti" />}
           </div>
 
-          {/* BARALHO (Deslocado para o canto inferior esquerdo e ligeiramente reduzido) */}
-          <div className="coluna-baralho" style={{ position: 'absolute', bottom: '15px', left: '-15px', zIndex: 3 }}>
+          {/* BARALHO (Afastado do centro, indo para o canto inferior esquerdo) */}
+          <div className="coluna-baralho" style={{ position: 'absolute', bottom: '-20px', left: '-45px', zIndex: 3 }}>
             <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default', filter: 'drop-shadow(4px 4px 0px rgba(0,0,0,0.5))', transform: 'scale(0.85)', transition: 'transform 0.1s' }} onMouseOver={(e) => { if(turnoAtual === socket.id) e.currentTarget.style.transform = 'scale(0.95)' }} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(0.85)'}>
               <Cards size={64} weight="duotone" color="#ecf0f1" />
             </div>
@@ -115,11 +124,10 @@ export default function Table(props) {
             )}
           </div>
 
-          {/* CARTA DA MESA (Centralizada e ligeiramente reduzida) */}
+          {/* CARTA DA MESA */}
           <div key={cartaMesa?.id || 'mesa'} className="carta carta-mesa anim-play" style={{ zIndex: 2, transform: 'scale(0.85)', backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff', boxShadow: '6px 6px 15px rgba(0,0,0,0.5)', margin: 0 }}>
             {renderValorCarta(cartaMesa.valor)}
           </div>
-
         </div>
       </div>
 
@@ -164,8 +172,8 @@ export default function Table(props) {
         {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && ( <button className="btn btn-cinza" onClick={passarVez} style={{ fontSize: '20px', padding: '12px 30px' }}>{t.passarVez}</button> )}
       </div>
 
-      {/* MENU DE EMOTES E UNO (Corrigido para texto centrado) */}
-      <div style={{ position: 'fixed', bottom: '90px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+      {/* MENU DE EMOTES E UNO (Reposicionado e Botão Maior) */}
+      <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
         <div style={{ position: 'relative' }}>
           {emotesAtivos[socket.id] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[socket.id]}</div>}
           <button
@@ -186,17 +194,17 @@ export default function Table(props) {
         <button 
           onClick={() => socket.emit('apertar_uno', props.minhaSala)} 
           style={{ 
-            background: '#e74c3c', color: '#fff', fontWeight: '900', fontSize: '18px',
-            border: '4px solid #000', borderRadius: '50%', width: '80px', height: '80px', 
+            background: '#e74c3c', color: '#fff', fontWeight: '900', fontSize: '24px',
+            border: '4px solid #000', borderRadius: '50%', width: '110px', height: '110px', 
             cursor: 'pointer', boxShadow: '4px 4px 0 #000',
-            display: 'flex', justifyContent: 'center', alignItems: 'center'
+            display: 'flex', justifyContent: 'center', alignItems: 'center', textShadow: '2px 2px 0 #000'
           }}
         >
           KAOS!
         </button>
       </div>
 
-      {/* MODAIS DE EFEITO (Regra Zero, Espiar, Igualar, Escolher Número, Cor) */}
+      {/* --- MODAIS MANTIDOS INTACTOS A PARTIR DAQUI --- */}
       {filaPassos[0] === 'zero' && (
         <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }}>
           <div className="modal-content" style={{ border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
@@ -291,7 +299,6 @@ export default function Table(props) {
           </div>
         </div>
       )}
-
     </div>
   );
 }
