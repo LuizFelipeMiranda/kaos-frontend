@@ -1,20 +1,17 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { dic } from './utils/dictionary';
-import { getCorCss, renderValorCarta, gerarSeedAleatoria, getPosicaoOponente, arrayEmojis } from './utils/gameUtils';
-import { 
-  HandPalm, Cards, 
-  ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, 
-  SpeakerSlash, MusicNote, BookBookmark, DeviceMobile, Hourglass, 
-  Timer, Eye, Scales, Hash, Smiley, List 
-} from '@phosphor-icons/react';
+import { gerarSeedAleatoria } from './utils/gameUtils';
+import { DeviceMobile } from '@phosphor-icons/react';
+
+import Lobby from './pages/Lobby';
+import Table from './pages/Table';
 
 import musicaTema from './assets/tema.mp3';
 import musicaJogo from './assets/jogo.mp3'; 
 import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
 import somVitoria from './assets/vitoria.mp3'; 
-import livePixQRCode from './assets/livepix.png';
 
 const socket = io('https://kaos-backend-83du.onrender.com');
 
@@ -290,19 +287,9 @@ function App() {
     };
   }, [nome, meuAvatarSeed, tocarEfeito, idioma, minhaSala]);
 
-  const roletarAvatar = () => { 
-    setMeuAvatarSeed(gerarSeedAleatoria()); 
-  };
-
-  const criarSala = () => { 
-    if (!nome) return setErro('Digite o seu nome!'); 
-    socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed }); 
-  };
-
-  const entrarSala = () => { 
-    if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); 
-    socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); 
-  };
+  const roletarAvatar = () => { setMeuAvatarSeed(gerarSeedAleatoria()); };
+  const criarSala = () => { if (!nome) return setErro('Digite o seu nome!'); socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed }); };
+  const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
   
   const iniciarPartida = () => { 
     if (formatoSelecionado === 'duplas' && (jogadores.length !== 4 && jogadores.length !== 6)) {
@@ -310,40 +297,28 @@ function App() {
       setTimeout(() => setErro(''), 4000); 
       return;
     }
-    socket.emit('iniciar_partida', { 
-      codigoSala: minhaSala, 
-      regras: regrasSelecionadas, 
-      formato: formatoSelecionado 
-    }); 
+    socket.emit('iniciar_partida', { codigoSala: minhaSala, regras: regrasSelecionadas, formato: formatoSelecionado }); 
   };
   
   const adicionarBot = () => {
     const nomesDeBots = ['ASA', 'BOTAS', 'CAIM', 'LUNA', 'RYSER'];
-    const nomesDisponiveis = nomesDeBots.filter(
-      (nomeBot) => !jogadores.some((jogador) => jogador.nome === `[BOT] ${nomeBot}`)
-    );
-    
+    const nomesDisponiveis = nomesDeBots.filter((nomeBot) => !jogadores.some((jogador) => jogador.nome === `[BOT] ${nomeBot}`));
     if (nomesDisponiveis.length > 0) { 
       const nomeSorteado = nomesDisponiveis[Math.floor(Math.random() * nomesDisponiveis.length)]; 
       socket.emit('adicionar_bot', { codigoSala: minhaSala, nomeBot: `[BOT] ${nomeSorteado}` }); 
     } else { 
-      setErro('Limite de bots únicos atingido!'); 
-      setTimeout(() => setErro(''), 3000); 
+      setErro('Limite de bots únicos atingido!'); setTimeout(() => setErro(''), 3000); 
     }
   };
 
-  const expulsarJogador = (idAlvo) => { 
-    socket.emit('remover_jogador', { codigoSala: minhaSala, alvoId: idAlvo }); 
-  };
+  const expulsarJogador = (idAlvo) => { socket.emit('remover_jogador', { codigoSala: minhaSala, alvoId: idAlvo }); };
 
   const handleSort = () => {
     let _jogadores = [...jogadores];
     const draggedItemContent = _jogadores.splice(dragItem.current, 1)[0];
     _jogadores.splice(dragOverItem.current, 0, draggedItemContent);
-    
     dragItem.current = null;
     dragOverItem.current = null;
-    
     setJogadores(_jogadores);
     socket.emit('reordenar_jogadores', { codigoSala: minhaSala, novaOrdem: _jogadores.map(j => j.id) });
   };
@@ -353,43 +328,20 @@ function App() {
     if (salaSalva && nome) {
       socket.emit('entrar_sala', { codigoSala: salaSalva, nomeJogador: nome, avatar: meuAvatarSeed });
     } else if (!nome) { 
-      setErro('Digite o seu nome antes de reconectar!'); 
-      setTimeout(() => setErro(''), 3000); 
+      setErro('Digite o seu nome antes de reconectar!'); setTimeout(() => setErro(''), 3000); 
     } else { 
-      setErro('Nenhuma sessão anterior encontrada!'); 
-      setTimeout(() => setErro(''), 3000); 
+      setErro('Nenhuma sessão anterior encontrada!'); setTimeout(() => setErro(''), 3000); 
     }
   };
 
-  const comprarCarta = () => { 
-    if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('comprar_carta', minhaSala); 
-  };
-  
-  const passarVez = () => { 
-    if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('passar_vez', minhaSala); 
-  };
-  
-  const baterNaMesa = () => { 
-    if (euJaBati) return; 
-    setEuJaBati(true); 
-    socket.emit('bater_mesa', minhaSala); 
-  };
-  
-  const enviarEmote = (emote) => { 
-    socket.emit('enviar_emote', { codigoSala: minhaSala, emote }); 
-    setMenuEmoteAberto(false); 
-  };
+  const comprarCarta = () => { if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('comprar_carta', minhaSala); };
+  const passarVez = () => { if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('passar_vez', minhaSala); };
+  const baterNaMesa = () => { if (euJaBati) return; setEuJaBati(true); socket.emit('bater_mesa', minhaSala); };
+  const enviarEmote = (emote) => { socket.emit('enviar_emote', { codigoSala: minhaSala, emote }); setMenuEmoteAberto(false); };
   
   const sairDaSala = () => { 
-    socket.emit('sair_sala', minhaSala); 
-    setMinhaSala(null); 
-    setJogadores([]); 
-    setInfoJogadores([]); 
-    setJogoIniciado(false); 
-    setVencedor(null); 
-    setTempoPartida(0); 
-    setMostrandoSorteio(false); 
-    localStorage.removeItem('kaos_sala_ativa'); 
+    socket.emit('sair_sala', minhaSala); setMinhaSala(null); setJogadores([]); setInfoJogadores([]); 
+    setJogoIniciado(false); setVencedor(null); setTempoPartida(0); setMostrandoSorteio(false); localStorage.removeItem('kaos_sala_ativa'); 
   };
   
   const toggleSelecao = (cartaClicada) => { 
@@ -400,10 +352,8 @@ function App() {
 
   const tentarJogarSelecionadas = () => {
     if (cartasSelecionadas.length === 0 || eventoNoveAtivo) return;
-    
     const ultimaCarta = cartasSelecionadas[cartasSelecionadas.length - 1];
     let passosMapeados = [];
-    
     if (cartasSelecionadas.some(c => c.valor === '0')) passosMapeados.push('zero');
     if (cartasSelecionadas.some(c => c.valor === 'espiar')) passosMapeados.push('espiar');
     if (cartasSelecionadas.some(c => c.valor === 'igualar')) passosMapeados.push('igualar');
@@ -411,11 +361,9 @@ function App() {
     if (ultimaCarta.cor === 'preto' && ultimaCarta.valor !== 'escolher_numero') passosMapeados.push('cor');
 
     if (passosMapeados.length > 0) { 
-      setFilaPassos(passosMapeados); 
-      setPayloadJogada({ codigoSala: minhaSala, cartas: cartasSelecionadas }); 
+      setFilaPassos(passosMapeados); setPayloadJogada({ codigoSala: minhaSala, cartas: cartasSelecionadas }); 
     } else { 
-      socket.emit('jogar_cartas', { codigoSala: minhaSala, cartas: cartasSelecionadas }); 
-      setCartasSelecionadas([]); 
+      socket.emit('jogar_cartas', { codigoSala: minhaSala, cartas: cartasSelecionadas }); setCartasSelecionadas([]); 
     }
   };
 
@@ -423,15 +371,10 @@ function App() {
     const payloadAtualizado = { ...payloadJogada, ...dadosExtras };
     const novaFila = [...filaPassos]; 
     novaFila.shift(); 
-    
     if (novaFila.length === 0) { 
-      socket.emit('jogar_cartas', payloadAtualizado); 
-      setPayloadJogada(null); 
-      setCartasSelecionadas([]); 
-      setFilaPassos([]); 
+      socket.emit('jogar_cartas', payloadAtualizado); setPayloadJogada(null); setCartasSelecionadas([]); setFilaPassos([]); 
     } else { 
-      setPayloadJogada(payloadAtualizado); 
-      setFilaPassos(novaFila); 
+      setPayloadJogada(payloadAtualizado); setFilaPassos(novaFila); 
     }
   };
 
@@ -447,6 +390,20 @@ function App() {
 
   const jogadorDaVez = infoJogadores.find(j => j.id === turnoAtual);
 
+  const lobbyProps = {
+    t, idioma, setIdioma, nome, setNome, meuAvatarSeed, roletarAvatar, codigoSalaInput, setCodigoSalaInput, minhaSala, criarSala, entrarSala,
+    handleReconectar, jogadores, socket, regrasSelecionadas, setRegrasSelecionadas, formatoSelecionado, setFormatoSelecionado, iniciarPartida,
+    adicionarBot, sairDaSala, expulsarJogador, handleSort, dragItem, dragOverItem, modalRegrasAberto, setModalRegrasAberto, modalConfigAberto,
+    setModalConfigAberto, musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos, setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos
+  };
+
+  const tableProps = {
+    t, idioma, socket, tempoPartida, meuJogadorInfo, turnoAtual, eventoNoveAtivo, tempoTurnoRestante, oponentesOrdenados, emotesAtivos, menuEmoteAberto,
+    setMenuEmoteAberto, enviarEmote, minhaSala, baterNaMesa, euJaBati, posicaoNove, minhaMao, cartasSelecionadas, toggleSelecao, tentarJogarSelecionadas,
+    comprasAcumuladas, comprarCarta, jaComprou, passarVez, cartaMesa, sentido, filaPassos, resolverPasso, maoEspiadaPrevia, setMaoEspiadaPrevia,
+    setPayloadJogada, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez
+  };
+
   return (
     <div>
       <style>{`
@@ -457,10 +414,7 @@ function App() {
           80% { opacity: 1; transform: translate(-50%, -60px) scale(1); } 
           100% { opacity: 0; transform: translate(-50%, -100px) scale(1.5); } 
         }
-        .emote-anim { 
-          position: absolute; top: 0px; left: 50%; font-size: 60px; 
-          animation: flutuarEmote 2.5s ease-out forwards; z-index: 5000; pointer-events: none; text-shadow: 2px 2px 0 #000; 
-        }
+        .emote-anim { position: absolute; top: 0px; left: 50%; font-size: 60px; animation: flutuarEmote 2.5s ease-out forwards; z-index: 5000; pointer-events: none; text-shadow: 2px 2px 0 #000; }
         .botoes-emotes-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
         .btn-emote { font-size: 24px; background: transparent; border: none; cursor: pointer; transition: 0.1s; }
         .btn-emote:hover { transform: scale(1.3); }
@@ -491,7 +445,7 @@ function App() {
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
             {jogadores.map((j, i) => (
               <div key={j.id} style={{ transform: roletaIndex === i ? 'scale(1.3)' : 'scale(1)', opacity: roletaIndex === i ? 1 : 0.4, transition: 'all 0.1s', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="80" height="80" style={{ borderRadius: '50%', border: '4px solid #000', backgroundColor: '#fff', boxShadow: roletaIndex === i ? '0 0 20px #f1c40f' : 'none' }} />
+                <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="80" height="80" style={{ borderRadius: '50%', border: '4px solid #000', backgroundColor: '#fff', boxShadow: roletaIndex === i ? '0 0 20px #f1c40f' : 'none' }} alt="Avatar" />
                 <span style={{ color: '#fff', fontWeight: 'bold', marginTop: '10px', textShadow: '2px 2px 0 #000' }}>{j.nome}</span>
               </div>
             ))}
@@ -502,427 +456,10 @@ function App() {
       <div className="ocultar-no-retrato">
         {erro && <div className="notificacao-topo-esquerdo" style={{ top: jogoIniciado ? '75px' : '20px' }}>{erro}</div>}
 
-        {vencedor ? (
-          <div className="container" style={{ marginTop: '100px' }}>
-            <h1 className="logo-kaos"><div className="carta-k-logo">K</div>AOS</h1>
-            <h1 style={{ fontSize: '50px', color: '#f1c40f' }}>🏆 {t.vencedor} 🏆</h1>
-            <h2 style={{ fontSize: '40px' }}>{vencedor} {t.acabouCartas}</h2>
-            <button className="btn btn-azul" onClick={() => { setVencedor(null); setJogoIniciado(false); setTempoPartida(0); }}>{t.voltarLobby}</button>
-          </div>
-        ) : jogoIniciado ? (
-          <div style={{ textAlign: 'center', marginTop: '10px' }}>
-            
-            <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 100, display: 'flex', gap: '15px', alignItems: 'center' }}>
-              <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
-              </div>
-
-              {meuJogadorInfo?.corEquipe && (
-                <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 ${meuJogadorInfo.corEquipe}`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: 14, height: 14, borderRadius: '50%', backgroundColor: meuJogadorInfo.corEquipe, border: '2px solid #fff' }} /> SUA EQUIPE
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-              <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
-                <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
-                <div className="tempo" style={{ color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                  {eventoNoveAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
-                </div>
-              </div>
-            </div>
-
-            <div className="mesa-redonda">
-              {oponentesOrdenados.map((op, index) => {
-                const ehVezDele = turnoAtual === op.id;
-                return (
-                  <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
-                    {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
-                    
-                    <div className="oponente-avatar" style={{ 
-                      position: 'relative', 
-                      borderColor: ehVezDele ? '#2ecc71' : '#000', 
-                      boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000',
-                      borderWidth: '3px',
-                      borderStyle: 'solid',
-                      borderRadius: '50%',
-                      backgroundColor: op.corEquipe || 'transparent',
-                      padding: op.corEquipe ? '4px' : '0px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      
-                      <img 
-                        src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} 
-                        style={{
-                          width: '100%', 
-                          height: '100%', 
-                          borderRadius: '50%',
-                          backgroundColor: '#fff',
-                          border: op.corEquipe ? '2px solid #000' : 'none',
-                          boxSizing: 'border-box',
-                          display: 'block'
-                        }} 
-                      />
-                    </div>
-                    
-                    <div className="cartas-oponente">
-                      {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => (
-                        <div key={i} className="carta-verso">K</div>
-                      ))}
-                      {op.qtdCartas > 15 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px'}}>+{op.qtdCartas - 15}</span>}
-                    </div>
-                    <div className="oponente-nome" style={{ color: ehVezDele ? '#2ecc71' : '#000' }}>{op.nome}</div>
-                  </div>
-                );
-              })}
-
-              <div className="centro-mesa">
-                <div className="coluna-baralho">
-                  <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default' }}>
-                    <Cards size={48} weight="duotone" color="#ecf0f1" />
-                  </div>
-                  {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
-                    <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0}}>{t.comprar}</button>
-                  )}
-                </div>
-
-                <div key={cartaMesa.id} className="carta carta-mesa animate-drop" style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff' }}>
-                  {renderValorCarta(cartaMesa.valor)}
-                </div>
-
-                <div className="direcao-indicador">
-                  {sentido === 1 ? <ArrowsClockwise size={50} className="spin-horario" /> : <ArrowsCounterClockwise size={50} className="spin-anti" />}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ position: 'fixed', bottom: '90px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-              <div style={{ position: 'relative' }}>
-                {emotesAtivos[socket.id] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[socket.id]}</div>}
-                <button
-                  onClick={() => setMenuEmoteAberto(!menuEmoteAberto)}
-                  style={{ background: '#fff', border: '3px solid #000', borderRadius: '50%', width: '55px', height: '55px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000', outline: 'none', transition: 'transform 0.1s' }}
-                  onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                  onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                ><Smiley size={36} weight="fill" color="#f1c40f" /></button>
-                {menuEmoteAberto && (
-                  <div style={{ position: 'absolute', bottom: '65px', right: '0', background: '#fff', border: '3px solid #000', borderRadius: '15px', padding: '10px', width: '210px', boxShadow: '4px 4px 0 #000' }}>
-                    <div className="botoes-emotes-menu">
-                      {arrayEmojis.map(emo => ( <button key={emo} className="btn-emote" onClick={() => enviarEmote(emo)}>{emo}</button> ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)} style={{ position: 'static' }}>KAOS!</button>
-            </div>
-
-            {filaPassos[0] === 'zero' && (
-              <div className="modal-overlay">
-                <div className="modal-content">
-                  <h2 style={{margin: '0 0 15px 0'}}>{t.regraZero}</h2>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                    <button className="btn btn-cinza" onClick={() => resolverPasso({ alvoTroca: 'ninguem' })}>{t.nada}</button>
-                    <button className="btn btn-verde" onClick={() => resolverPasso({ alvoTroca: 'todos' })}>{t.rodarTodas}</button>
-                  </div>
-                  <h3 style={{margin: '15px 0 10px 0'}}>{t.ouTrocar}</h3>
-                  <div className="grid-opcoes-zero">
-                    {oponentesOrdenados.map(j => (
-                      <button key={j.id} className="btn btn-azul" onClick={() => resolverPasso({ alvoTroca: j.id })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                        <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} />
-                        {j.nome} ({j.qtdCartas})
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {filaPassos[0] === 'espiar' && !maoEspiadaPrevia && (
-              <div className="modal-overlay">
-                <div className="modal-content">
-                  <h2 style={{margin: '0 0 15px 0'}}><Eye size={32} style={{verticalAlign:'middle'}}/> {t.espiarAlvo}</h2>
-                  <div className="grid-opcoes-zero">
-                    {oponentesOrdenados.map(j => (
-                      <button key={j.id} className="btn btn-roxo" onClick={() => { socket.emit('espiar_cartas_alvo', { codigoSala: minhaSala, alvoId: j.id }); setPayloadJogada(prev => ({ ...prev, alvoTroca: j.id })); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                        <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} />
-                        {j.nome} ({j.qtdCartas})
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {maoEspiadaPrevia && (
-              <div className="modal-overlay" style={{ zIndex: 1600 }}>
-                <div className="modal-content" style={{ maxWidth: '600px' }}>
-                  <h2 style={{ marginBottom: '15px' }}>Cartas de {maoEspiadaPrevia.nome}:</h2>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
-                    {maoEspiadaPrevia.cartas.map(c => ( 
-                      <div key={c.id} className="carta" style={{ backgroundColor: getCorCss(c.originalCor || c.cor), color: c.cor === 'amarelo' ? '#000' : '#fff', transform: 'scale(0.8)', margin: '-10px' }}> 
-                        {renderValorCarta(c.originalValor || c.valor)} 
-                      </div> 
-                    ))}
-                  </div>
-                  <button className="btn btn-azul" style={{ marginTop: '20px' }} onClick={() => { setMaoEspiadaPrevia(null); resolverPasso({}); }}>{t.fechar}</button>
-                </div>
-              </div>
-            )}
-
-            {filaPassos[0] === 'igualar' && (
-              <div className="modal-overlay">
-                <div className="modal-content">
-                  <h2 style={{margin: '0 0 5px 0'}}><Scales size={32} style={{verticalAlign:'middle'}}/> {t.igualarTitulo}</h2>
-                  <p style={{marginBottom: '20px'}}>{t.igualarDesc}</p>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
-                    <button className="btn btn-verde" onClick={() => resolverPasso({ alvoOpcao: 'maior' })}>{t.igualarMaior}</button>
-                    <button className="btn btn-vermelho" onClick={() => resolverPasso({ alvoOpcao: 'menor' })}>{t.igualarMenor}</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {filaPassos[0] === 'numero' && (
-              <div className="modal-overlay">
-                <div className="modal-content">
-                  <h2 style={{margin: '0 0 5px 0'}}><Hash size={32} style={{verticalAlign:'middle'}}/> {t.escolherNumTitulo}</h2>
-                  <p style={{marginBottom: '15px'}}>{t.escolherNumDesc}</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px', maxWidth: '300px', margin: '0 auto' }}>
-                    {['0','1','2','3','4','5','6','7','8','9'].map(num => ( 
-                      <button key={num} onClick={() => resolverPasso({ alvoNumero: num })} style={{ width: '50px', height: '50px', fontSize: '24px', fontWeight: 'bold', backgroundColor: '#ecf0f1', border: '3px solid #000', borderRadius: '10px', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}> 
-                        {num} 
-                      </button> 
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {filaPassos[0] === 'cor' && (
-              <div className="modal-overlay">
-                <div className="modal-content">
-                  <h2>{t.escolhaCor}</h2>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
-                    {['vermelho', 'azul', 'verde', 'amarelo'].map(cor => ( 
-                      <button key={cor} onClick={() => resolverPasso({ novaCor: cor })} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '12px', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}></button> 
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {eventoNoveAtivo && (
-              <div style={{ position: 'fixed', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 2000, pointerEvents: 'none' }}>
-                <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '160px', height: '160px', borderRadius: '50%', border: '8px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '6px 6px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}>
-                  <HandPalm weight="fill" size={96} color="#000" />
-                </button>
-              </div>
-            )}
-
-            <div className="mao-container" style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', padding: '0 10px 10px 10px', maxWidth: '1000px', margin: '15px auto' }}>
-              {minhaMao.map((carta) => {
-                const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
-                let classes = "carta";
-                if (taSelecionada) classes += " selecionada";
-                if (turnoAtual !== socket.id || eventoNoveAtivo) classes += " desabilitada";
-                return ( 
-                  <div key={carta.id} onClick={() => toggleSelecao(carta)} className={classes} style={{ backgroundColor: getCorCss(carta.cor), color: carta.cor === 'amarelo' ? '#000' : '#fff' }}> 
-                    {renderValorCarta(carta.valor)} 
-                  </div> 
-                );
-              })}
-            </div>
-
-            <div className="painel-acoes" style={{ marginBottom: '20px' }}>
-              {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && ( <button className="btn btn-verde" onClick={tentarJogarSelecionadas}>{t.jogar} ({cartasSelecionadas.length}) {t.cartas}</button> )}
-              {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && ( <button className="btn btn-vermelho" onClick={comprarCarta}>{t.aceitarPunicao} (+{comprasAcumuladas})</button> )}
-              {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && ( <button className="btn btn-cinza" onClick={passarVez}>{t.passarVez}</button> )}
-            </div>
-
-          </div>
+        {vencedor || jogoIniciado ? (
+          <Table {...tableProps} />
         ) : (
-          <div className="container" style={{ position: 'relative' }}>
-            
-            <button 
-              onClick={() => setModalRegrasAberto(true)} 
-              style={{ position: 'absolute', top: '20px', left: '20px', background: '#3498db', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
-              title={t.regrasTitulo}
-            ><BookBookmark size={26} weight="bold" color="#fff" /></button>
-
-            <button 
-              onClick={() => setModalConfigAberto(true)} 
-              style={{ position: 'absolute', top: '20px', right: '20px', background: '#f1c40f', border: '3px solid #000', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}
-              title={t.config}
-            ><Gear size={26} weight="bold" color="#000" /></button>
-
-            <div className="logo-kaos"><div className="carta-k-logo">K</div>AOS</div>
-            
-            {!minhaSala ? (
-              <>
-                <div className="avatar-seletor-container">
-                  <h3>{t.seuAvatar}</h3>
-                  <div className="avatar-display" onClick={roletarAvatar}>
-                    <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${meuAvatarSeed}`} width="100%" height="100%" />
-                  </div>
-                </div>
-                <div><input type="text" placeholder={t.seuNome} maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} /></div>
-                <div style={{ marginTop: '20px' }}>
-                  <button className="btn btn-verde" onClick={criarSala}>{t.criarSala}</button>
-                  <h3 style={{ margin: '15px 0' }}>{t.ou}</h3>
-                  <input type="text" placeholder={t.codigo} value={codigoSalaInput} onChange={(e) => setCodigoSalaInput(e.target.value)} style={{ width: '120px' }} />
-                  <button className="btn btn-azul" onClick={entrarSala}>{t.entrar}</button>
-                </div>
-                {localStorage.getItem('kaos_sala_ativa') && (
-                  <div style={{ marginTop: '15px' }}><button className="btn btn-roxo" onClick={handleReconectar}>Reconectar à Partida</button></div>
-                )}
-                <div style={{ marginTop: '40px', padding: '15px', border: '3px dashed #f1c40f', borderRadius: '15px', backgroundColor: '#fffdf0', maxWidth: '400px', margin: '40px auto 0 auto' }}>
-                  <h3 style={{ margin: '0 0 10px 0', color: '#f39c12' }}>{t.apoie}</h3>
-                  <p style={{ fontSize: '14px', margin: '0 0 15px 0', fontWeight: 'bold' }}>{t.ajude}</p>
-                  <img src={livePixQRCode} alt="QR Code LivePix" style={{ width: '120px', borderRadius: '10px', border: '3px solid #000', boxShadow: '2px 2px 0 #000' }} />
-                  <br/>
-                  <a href="https://livepix.gg/" target="_blank" rel="noreferrer" className="btn btn-roxo btn-pequeno" style={{ display: 'inline-block', marginTop: '15px', textDecoration: 'none' }}>{t.doar}</a>
-                </div>
-              </>
-            ) : (
-              <>
-                <h2>{t.codigoSala} <span style={{fontSize: '40px', color: '#ff4757'}}>{minhaSala}</span></h2>
-                
-                {jogadores[0]?.id === socket.id && (
-                  <div style={{ padding: '15px', border: '3px dashed #000', borderRadius: '15px', maxWidth: '350px', margin: '0 auto 20px auto', backgroundColor: '#f9f9f9' }}>
-                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px' }}>Regras:</h3>
-                    <div className="modo-seletor-botoes" style={{ marginBottom: '15px' }}>
-                      <button className={`btn btn-modo ${regrasSelecionadas === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
-                      <button className={`btn btn-modo ${regrasSelecionadas === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
-                    </div>
-                    <p style={{ fontSize: '13px', margin: '-5px 0 15px 0', fontWeight: 'bold', color: '#7f8c8d' }}>{regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos}</p>
-
-                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px' }}>Formato:</h3>
-                    <div className="modo-seletor-botoes">
-                      <button className={`btn btn-modo ${formatoSelecionado === 'pvp' ? 'btn-amarelo' : 'btn-cinza'}`} style={{ backgroundColor: formatoSelecionado === 'pvp' ? '#f39c12' : ''}} onClick={() => setFormatoSelecionado('pvp')}>{t.pvp}</button>
-                      <button className={`btn btn-modo ${formatoSelecionado === 'duplas' ? 'btn-verde' : 'btn-cinza'}`} onClick={() => setFormatoSelecionado('duplas')}>{t.duplas}</button>
-                    </div>
-                    {formatoSelecionado === 'duplas' && (
-                        <p style={{ fontSize: '13px', margin: '10px 0 0 0', fontWeight: 'bold', color: '#e74c3c' }}>{t.descDuplasReq}</p>
-                    )}
-                  </div>
-                )}
-
-                <h3>{t.jogadores} ({jogadores.length}/6):</h3>
-                <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%' }}>
-                  {jogadores.map((jogador, index) => {
-                    const ehHost = jogadores[0]?.id === socket.id;
-                    let corEquipeLobby = 'transparent';
-                    
-                    if (formatoSelecionado === 'duplas' && jogadores.length >= 4) {
-                      const deslocamento = Math.floor(jogadores.length / 2);
-                      const cores = ['#ff4757', '#f1c40f', '#3498db']; 
-                      corEquipeLobby = cores[index % deslocamento];
-                    }
-
-                    return (
-                      <li 
-                        key={jogador.id} 
-                        draggable={ehHost}
-                        onDragStart={() => (dragItem.current = index)}
-                        onDragEnter={() => (dragOverItem.current = index)}
-                        onDragEnd={handleSort}
-                        onDragOver={(e) => e.preventDefault()}
-                        style={{ 
-                          fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '15px', 
-                          width: '100%', maxWidth: '380px', padding: '10px', borderRadius: '15px',
-                          border: formatoSelecionado === 'duplas' ? `4px dashed ${corEquipeLobby}` : 'none',
-                          backgroundColor: formatoSelecionado === 'duplas' ? `${corEquipeLobby}33` : 'transparent',
-                          cursor: ehHost ? 'grab' : 'default', transition: '0.2s'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                          
-                          {ehHost && <List size={32} color="#7f8c8d" weight="bold" style={{ cursor: 'grab' }} />}
-                          
-                          <div style={{ padding: '4px', borderRadius: '50%', backgroundColor: corEquipeLobby !== 'transparent' ? corEquipeLobby : '#ecf0f1' }}>
-                            <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${jogador.avatar}`} width="50" height="50" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '3px solid #000', display: 'block' }} />
-                          </div>
-                          
-                          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2'}}>
-                            <span>{jogador.nome} {jogador.id === socket.id ? t.voce : ''} {index === 0 && t.host}</span>
-                            <span style={{fontSize: '16px', color: '#f39c12'}}>{t.vitorias}: {jogador.vitorias || 0}</span>
-                          </div>
-                        </div>
-
-                        {ehHost && index !== 0 && (
-                          <button onClick={() => expulsarJogador(jogador.id)} style={{ background: '#e74c3c', border: '3px solid #000', borderRadius: '8px', color: '#fff', padding: '5px 12px', cursor: 'pointer', fontWeight: '900', boxShadow: '2px 2px 0 #000' }} title="Expulsar da Sala">X</button>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-                
-                {jogadores[0]?.id === socket.id ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', maxWidth: '300px', margin: '20px auto 0 auto' }}>
-                    <button className="btn btn-vermelho" onClick={iniciarPartida} style={{ fontSize: '24px' }}>{t.iniciarPartida}</button>
-                    <button className="btn btn-roxo" onClick={adicionarBot}>+ Adicionar Bot</button>
-                  </div>
-                ) : ( <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '20px' }}>{t.aguardandoHost}</p> )}
-                <br/><button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>{t.sairSala}</button>
-              </>
-            )}
-
-            {modalRegrasAberto && (
-              <div className="modal-overlay" style={{ zIndex: 1200 }}>
-                <div className="modal-content" style={{ width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '25px' }}>
-                  <h2 style={{ textAlign: 'center', marginTop: 0 }}>{t.regrasTitulo}</h2>
-                  <h3 style={{ color: '#9b59b6', margin: '15px 0 5px 0' }}>🚀 {t.regrasNovasTitulo}</h3>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '15px', whiteSpace: 'pre-line' }}>{t.regrasNovasText}</p>
-                  <h3 style={{ color: '#2ecc71', margin: '15px 0 5px 0' }}>{t.regrasBasicasTitulo}</h3>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regrasBasicasTexto}</p>
-                  <h3 style={{ color: '#f39c12', margin: '15px 0 5px 0' }}>{t.sequenciasTitulo}</h3>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.sequenciasTexto}</p>
-                  <h3 style={{ color: '#3498db', margin: '15px 0 5px 0' }}>{t.regraZeroTitulo}</h3>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regraZeroTexto}</p>
-                  <h3 style={{ color: '#e74c3c', margin: '15px 0 5px 0' }}>{t.regraNoveTitulo}</h3>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regraNoveTexto}</p>
-                  <h3 style={{ color: '#ff4757', margin: '15px 0 5px 0' }}>{t.kaosTitulo}</h3>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.kaosTexto}</p>
-                  <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                    <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>{t.fechar}</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {modalConfigAberto && (
-              <div className="modal-overlay" style={{ zIndex: 1200 }}>
-                <div className="modal-content" style={{ width: '320px' }}>
-                  <h2>{t.config}</h2>
-                  <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}><span style={{ fontSize: '24px' }}>{idioma === 'pt' ? '🇧🇷' : '🇺🇸'}</span> {t.idioma}</div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button className={`btn btn-pequeno ${idioma === 'pt' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setIdioma('pt')}>Português</button>
-                      <button className={`btn btn-pequeno ${idioma === 'en' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setIdioma('en')}>English</button>
-                    </div>
-                  </div>
-                  <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}><MusicNote size={24} /> {t.musica}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-                      <button className="btn btn-pequeno" onClick={() => setMusicaAtiva(!musicaAtiva)} style={{ backgroundColor: musicaAtiva ? '#2ecc71' : '#e74c3c' }}>{musicaAtiva ? <SpeakerHigh size={20}/> : <SpeakerSlash size={20}/>}</button>
-                      <input type="range" min="0" max="1" step="0.05" value={volumeMusica} onChange={(e) => setVolumeMusica(parseFloat(e.target.value))} style={{ width: '100%', cursor: 'pointer', margin: 0, padding: 0 }} />
-                    </div>
-                  </div>
-                  <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold' }}><SpeakerHigh size={24} /> {t.efeitos}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-                      <button className="btn btn-pequeno" onClick={() => setEfeitosAtivos(!efeitosAtivos)} style={{ backgroundColor: efeitosAtivos ? '#2ecc71' : '#e74c3c' }}>{efeitosAtivos ? <SpeakerHigh size={20}/> : <SpeakerSlash size={20}/>}</button>
-                      <input type="range" min="0" max="1" step="0.05" value={volumeEfeitos} onChange={(e) => setVolumeEfeitos(parseFloat(e.target.value))} style={{ width: '100%', cursor: 'pointer', margin: 0, padding: 0 }} />
-                    </div>
-                  </div>
-                  <button className="btn btn-azul" onClick={() => setModalConfigAberto(false)} style={{ marginTop: '10px', width: '100%' }}>{t.fechar}</button>
-                </div>
-              </div>
-            )}
-          </div>
+          <Lobby {...lobbyProps} />
         )}
       </div>
     </div>
