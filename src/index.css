@@ -642,15 +642,15 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  height: 140px; /* Altura fixa para as cartas saltarem */
+  height: 140px; 
   padding-bottom: 20px;
   max-width: 90vw;
   margin: 0 auto;
 }
 
 .carta-moderna {
-  margin-left: -35px; /* Sobreposição das cartas */
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-left: -35px; /* Sobreposição normal */
+  transition: all 0.2s ease-out; /* Transição suave para a margem e posição */
   box-shadow: -4px 4px 10px rgba(0,0,0,0.3);
 }
 
@@ -658,17 +658,20 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   margin-left: 0;
 }
 
+/* Novo efeito: Sobe ligeiramente, muda a borda e cria um gap lateral */
 .carta-moderna:hover:not(.desabilitada) {
-  transform: translateY(-25px); /* Pula para cima em vez de rodar */
+  transform: translateY(-15px); /* Sobe só um pouco */
+  border-color: #00e5ff; /* Cor diferente nas bordas (ciano brilhante) */
+  margin-right: 15px; /* Empurra a carta da direita */
+  margin-left: -20px; /* Reduz a sobreposição com a da esquerda, criando gap */
   z-index: 100;
 }
 
 .carta-moderna.selecionada {
-  transform: translateY(-30px);
+  transform: translateY(-25px);
   border: 4px solid #f1c40f;
   box-shadow: 0 0 15px #f1c40f;
 }
-
 /* --- ANIMAÇÕES --- */
 @keyframes drawCardAnim {
   0% { opacity: 0; transform: translateY(-50px) scale(0.5); }
