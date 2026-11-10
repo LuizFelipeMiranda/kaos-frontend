@@ -84,7 +84,7 @@ export default function Lobby(props) {
               <p style={{ fontSize: '13px', margin: '0 0 10px 0', fontWeight: 'bold', color: '#7f8c8d' }}>{t.ajude}</p>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
                 <img src={livePixQRCode} alt="QR Code LivePix" style={{ width: '90px', borderRadius: '10px', border: '3px solid #000' }} />
-                <a href="https://livepix.gg/" target="_blank" rel="noreferrer" className="btn btn-amarelo btn-pequeno" style={{ textDecoration: 'none' }}>{t.doar}</a>
+                <a href="https://livepix.gg/" target="_blank" rel="noreferrer" className="btn btn-amarelo btn-pequeno" style={{ textDecoration: 'none', color: '#000' }}>{t.doar}</a>
               </div>
             </div>
           </>
@@ -117,9 +117,21 @@ export default function Lobby(props) {
                   <div style={{ flex: 1 }}>
                     <h3 style={{ margin: '0 0 10px 0' }}>Formato:</h3>
                     <div className="modo-seletor-botoes" style={{ marginBottom: '5px' }}>
-                      <button className={`btn btn-modo ${formatoSelecionado === 'pvp' ? 'btn-amarelo' : 'btn-cinza'}`} onClick={() => setFormatoSelecionado('pvp')}>{t.pvp}</button>
-                      <button className={`btn btn-modo ${formatoSelecionado === 'duplas' ? 'btn-verde' : 'btn-cinza'}`} onClick={() => setFormatoSelecionado('duplas')}>{t.duplas}</button>
+                      <button 
+                        className={`btn btn-modo ${formatoSelecionado === 'pvp' ? 'btn-amarelo' : 'btn-cinza'}`} 
+                        style={{ color: formatoSelecionado === 'pvp' ? '#000' : '#fff' }} 
+                        onClick={() => setFormatoSelecionado('pvp')}
+                      >
+                        {t.pvp}
+                      </button>
+                      <button 
+                        className={`btn btn-modo ${formatoSelecionado === 'duplas' ? 'btn-verde' : 'btn-cinza'}`} 
+                        onClick={() => setFormatoSelecionado('duplas')}
+                      >
+                        {t.duplas}
+                      </button>
                     </div>
+                    
                   </div>
                 </div>
                 <p style={{ fontSize: '13px', margin: '15px 0 0 0', fontWeight: 'bold', color: '#7f8c8d' }}>
@@ -178,7 +190,9 @@ export default function Lobby(props) {
                       {jogador.nome} {jogador.id === socket.id && <span style={{ color: '#3498db', display: 'block', fontSize: '14px' }}>{t.voce}</span>}
                     </span>
                     
-                    <span style={{ fontSize: '14px', color: '#f39c12', fontWeight: 'bold', marginTop: '5px' }}>🏆 {jogador.vitorias || 0}</span>
+                    <span style={{ fontSize: '14px', color: '#f39c12', fontWeight: 'bold', marginTop: '5px', marginBottom: (euSouHost && !ehHost) ? '15px' : '0' }}>
+                      🏆 {jogador.vitorias || 0}
+                    </span>
                     
                     {euSouHost && !ehHost && (
                       <button onClick={() => expulsarJogador(jogador.id)} style={{ position: 'absolute', bottom: '-10px', background: '#e74c3c', border: '3px solid #000', borderRadius: '10px', color: '#fff', padding: '2px 15px', cursor: 'pointer', fontWeight: '900', boxShadow: '2px 2px 0 #000' }} title="Expulsar">
