@@ -22,7 +22,11 @@ function App() {
   const [nome, setNome] = useState('');
   const [meuAvatarSeed, setMeuAvatarSeed] = useState(() => gerarSeedAleatoria());
   
-  const [codigoSalaInput, setCodigoSalaInput] = useState('');
+  const [codigoSalaInput, setCodigoSalaInput] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('sala') || '';
+  });
+  
   const [minhaSala, setMinhaSala] = useState(null);
   
   const [jogadores, setJogadores] = useState([]);
