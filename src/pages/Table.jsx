@@ -13,16 +13,13 @@ export default function Table(props) {
   } = props;
 
   // ORDENAÇÃO AUTOMÁTICA DAS CARTAS
-  // Esta função não altera a array do jogo, apenas a ordem visual.
   const cartasOrdenadas = useMemo(() => {
     const ordemCores = { vermelho: 1, amarelo: 2, azul: 3, verde: 4, preto: 5 };
     
     return [...minhaMao].sort((a, b) => {
-      // 1. Ordenar por cor
       if (ordemCores[a.cor] !== ordemCores[b.cor]) {
         return (ordemCores[a.cor] || 99) - (ordemCores[b.cor] || 99);
       }
-      // 2. Desempate: Ordenar por valor (0 a 9, depois especiais)
       return a.valor.toString().localeCompare(b.valor.toString());
     });
   }, [minhaMao]);
@@ -40,7 +37,7 @@ export default function Table(props) {
 
   return (
     <div style={{ textAlign: 'center', marginTop: '10px' }}>
-      {/* Top Bar (Tempo e Equipa) */}
+      {/* Top Bar ESQUERDA (Tempo e Equipa) */}
       <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 100, display: 'flex', gap: '15px', alignItems: 'center' }}>
         <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
@@ -52,17 +49,17 @@ export default function Table(props) {
         )}
       </div>
 
-      {/* Indicador de Turno */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+      {/* Top Bar DIREITA (Indicador de Turno) */}
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100 }}>
         <div className="status-turno-box" style={{ 
           backgroundColor: turnoAtual === socket.id ? '#2ecc71' : '#fff', 
           color: turnoAtual === socket.id ? '#000' : '#7f8c8d',
-          border: '4px solid #000', borderRadius: '20px', padding: '10px 30px', fontWeight: '900',
+          border: '4px solid #000', borderRadius: '20px', padding: '10px 20px', fontWeight: '900',
           boxShadow: turnoAtual === socket.id ? '4px 4px 0 #000' : 'none'
         }}>
-          <div style={{ fontSize: '18px' }}>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
+          <div style={{ fontSize: '16px' }}>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
           <div style={{ color: turnoAtual === socket.id ? '#000' : '#e74c3c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '5px' }}>
-            {eventoNoveAtivo ? <span>PAUSA (BATA NA MESA)</span> : <><Hourglass size={18} weight="bold" /> {tempoTurnoRestante}s</>}
+            {eventoNoveAtivo ? <span>PAUSA (BATA!)</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
           </div>
         </div>
       </div>
@@ -76,7 +73,6 @@ export default function Table(props) {
             <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
               {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
               
-              {/* O personagem com o novo corpo estruturado */}
               <div className="oponente-corpo-container">
                 <div className="oponente-avatar" style={{ 
                   borderColor: ehVezDele ? '#2ecc71' : '#000', 
@@ -87,8 +83,6 @@ export default function Table(props) {
                 }}>
                   <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} style={{ width: '100%', height: '100%', borderRadius: '50%', border: op.corEquipe ? '2px solid #000' : 'none', backgroundColor: '#fff', display: 'block' }} alt="Avatar" />
                 </div>
-                
-                {/* O Corpo Provisório (Substituir pela tag <img> do sprite depois) */}
                 <div className="player-body" style={{ backgroundColor: op.corEquipe || '#34495e' }}></div>
               </div>
               
@@ -103,25 +97,29 @@ export default function Table(props) {
           );
         })}
 
-        {/* CENTRO DA MESA */}
-        <div className="centro-mesa" style={{ display: 'flex', gap: '30px', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)', padding: '30px 40px', borderRadius: '25px', border: '4px dashed rgba(255,255,255,0.3)' }}>
-          <div className="coluna-baralho" style={{ position: 'relative' }}>
-            <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default', filter: 'drop-shadow(4px 4px 0px rgba(0,0,0,0.5))', transition: 'transform 0.1s' }} onMouseOver={(e) => { if(turnoAtual === socket.id) e.currentTarget.style.transform = 'scale(1.1)' }} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+        {/* CENTRO DA MESA REORGANIZADO */}
+        <div className="centro-mesa" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '200px', height: '200px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          
+          {/* SETAS (Ao redor, centralizadas) */}
+          <div style={{ position: 'absolute', opacity: 0.25, pointerEvents: 'none', zIndex: 1 }}>
+            {sentido === 1 ? <ArrowsClockwise size={180} color="#fff" className="spin-horario" /> : <ArrowsCounterClockwise size={180} color="#fff" className="spin-anti" />}
+          </div>
+
+          {/* BARALHO (Deslocado para o canto inferior esquerdo e ligeiramente reduzido) */}
+          <div className="coluna-baralho" style={{ position: 'absolute', bottom: '15px', left: '-15px', zIndex: 3 }}>
+            <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default', filter: 'drop-shadow(4px 4px 0px rgba(0,0,0,0.5))', transform: 'scale(0.85)', transition: 'transform 0.1s' }} onMouseOver={(e) => { if(turnoAtual === socket.id) e.currentTarget.style.transform = 'scale(0.95)' }} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(0.85)'}>
               <Cards size={64} weight="duotone" color="#ecf0f1" />
             </div>
             {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
-              <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{ position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>{t.comprar}</button>
+              <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{ position: 'absolute', bottom: '-35px', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '5px 10px', fontSize: '12px' }}>{t.comprar}</button>
             )}
           </div>
 
-          <div key={cartaMesa?.id || 'mesa'} className="carta carta-mesa anim-play" style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff', transform: 'scale(1)', boxShadow: '6px 6px 15px rgba(0,0,0,0.5)' }}>
+          {/* CARTA DA MESA (Centralizada e ligeiramente reduzida) */}
+          <div key={cartaMesa?.id || 'mesa'} className="carta carta-mesa anim-play" style={{ zIndex: 2, transform: 'scale(0.85)', backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff', boxShadow: '6px 6px 15px rgba(0,0,0,0.5)', margin: 0 }}>
             {renderValorCarta(cartaMesa.valor)}
           </div>
-        </div>
 
-        {/* INDICADOR DE DIREÇÃO AO REDOR DO CENTRO */}
-        <div style={{ position: 'absolute', opacity: 0.3, pointerEvents: 'none' }}>
-          {sentido === 1 ? <ArrowsClockwise size={250} color="#fff" className="spin-horario" /> : <ArrowsCounterClockwise size={250} color="#fff" className="spin-anti" />}
         </div>
       </div>
 
@@ -134,7 +132,7 @@ export default function Table(props) {
         </div>
       )}
 
-      {/* A MÃO DE CARTAS DO JOGADOR (ORDENADA AUTOMATICAMENTE) */}
+      {/* A MÃO DE CARTAS DO JOGADOR */}
       <div className="mao-container-moderna">
         {cartasOrdenadas.map((carta, i) => {
           const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
@@ -150,7 +148,7 @@ export default function Table(props) {
               style={{ 
                 backgroundColor: getCorCss(carta.cor), 
                 color: carta.cor === 'amarelo' ? '#000' : '#fff',
-                animationDelay: `${i * 0.05}s` /* Efeito em cascata ao entrar na mão */
+                animationDelay: `${i * 0.05}s` 
               }}
             > 
               {renderValorCarta(carta.valor)} 
@@ -166,7 +164,7 @@ export default function Table(props) {
         {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && ( <button className="btn btn-cinza" onClick={passarVez} style={{ fontSize: '20px', padding: '12px 30px' }}>{t.passarVez}</button> )}
       </div>
 
-      {/* MENU DE EMOTES E UNO */}
+      {/* MENU DE EMOTES E UNO (Corrigido para texto centrado) */}
       <div style={{ position: 'fixed', bottom: '90px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
         <div style={{ position: 'relative' }}>
           {emotesAtivos[socket.id] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[socket.id]}</div>}
@@ -185,18 +183,20 @@ export default function Table(props) {
           )}
         </div>
         
-        {/* NOVO BOTÃO UNO (KAOS!) */}
         <button 
           onClick={() => socket.emit('apertar_uno', props.minhaSala)} 
-          style={{ background: '#e74c3c', color: '#fff', fontWeight: '900', fontSize: '20px', padding: '15px', border: '4px solid #000', borderRadius: '50%', width: '80px', height: '80px', cursor: 'pointer', boxShadow: '4px 4px 0 #000', animation: 'flutuarEgirar 3s ease-in-out infinite' }}
+          style={{ 
+            background: '#e74c3c', color: '#fff', fontWeight: '900', fontSize: '18px',
+            border: '4px solid #000', borderRadius: '50%', width: '80px', height: '80px', 
+            cursor: 'pointer', boxShadow: '4px 4px 0 #000',
+            display: 'flex', justifyContent: 'center', alignItems: 'center'
+          }}
         >
           KAOS!
         </button>
       </div>
 
-      {/* --- MODAIS DE AÇÃO MANTIDOS ABAIXO --- */}
-      {/* ... (O código dos modais de regras zero, igualar, etc., continuam intactos, apenas deixados limpos para o React renderizar) */}
-      
+      {/* MODAIS DE EFEITO (Regra Zero, Espiar, Igualar, Escolher Número, Cor) */}
       {filaPassos[0] === 'zero' && (
         <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }}>
           <div className="modal-content" style={{ border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
