@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import { dic } from './utils/dictionary';
+import { getCorCss, renderValorCarta, gerarSeedAleatoria, getPosicaoOponente, arrayEmojis } from './utils/gameUtils';
 import { 
-  HandPalm, Palette, Prohibit, ArrowsLeftRight, Cards, 
+  HandPalm, Cards, 
   ArrowsClockwise, ArrowsCounterClockwise, Gear, SpeakerHigh, 
   SpeakerSlash, MusicNote, BookBookmark, DeviceMobile, Hourglass, 
   Timer, Eye, Scales, Hash, Smiley, List 
@@ -15,115 +17,6 @@ import somVitoria from './assets/vitoria.mp3';
 import livePixQRCode from './assets/livepix.png';
 
 const socket = io('https://kaos-backend-83du.onrender.com');
-
-const dic = {
-  pt: {
-    suaVez: "A SUA VEZ!", vezDe: "VEZ DE", aguarde: "Aguarde...", comprar: "COMPRAR",
-    jogar: "JOGAR", cartas: "CARTAS", aceitarPunicao: "ACEITAR PUNIÇÃO", passarVez: "PASSAR A VEZ",
-    regraZero: "Regra do Zero! O que deseja fazer?", nada: "NADA (Passar)", rodarTodas: "RODAR TODAS AS MÃOS",
-    ouTrocar: "Ou trocar com:", escolhaCor: "Escolha a nova cor:", sorteando: "Sorteando quem começa...",
-    seuAvatar: "O seu Avatar", seuNome: "Seu Nome", criarSala: "Criar Nova Sala",
-    ou: "OU", codigo: "Código...", entrar: "Entrar", apoie: "Pague-me um Cafezinho!",
-    ajude: "Ajude a manter o KAOS online e sem anúncios.", doar: "Doar via LivePix", codigoSala: "Código da Sala:",
-    jogadores: "Jogadores", voce: "(Você)", host: "- Host", iniciarPartida: "INICIAR PARTIDA",
-    aguardandoHost: "A aguardar que o anfitrião inicie...", sairSala: "SAIR DA SALA", 
-    config: "Configurações", musica: "Música de Fundo", efeitos: "Efeitos Sonoros", fechar: "Fechar",
-    vencedor: "VENCEU A PARTIDA!", acabouCartas: "acabou com as cartas!", voltarLobby: "Voltar para o Lobby",
-    vitorias: "Vitórias", idioma: "Idioma", tempo: "Duração",
-    espiarAlvo: "Que bisbilhoteiro! De quem queres ver a mão?",
-    igualarTitulo: "Igualar as Cartas", igualarDesc: "Ajustar o tamanho das mãos de toda a gente para a:", 
-    igualarMaior: "Maior Quantidade", igualarMenor: "Menor Quantidade",
-    escolherNumTitulo: "Escolha o Número", escolherNumDesc: "Selecione o número que a mesa vai passar a ter:",
-    casual: "Casual", kaos: "KAOS!", pvp: "Cada um por si", duplas: "Duplas / Equipes",
-    descCasual: "modo de jogo clássico",
-    descKaos: "modo de jogo para fazer o kaos!",
-    descDuplasReq: "Requer 4 ou 6 jogadores (Equipes opostas na mesa).",
-    regrasTitulo: "Regras do Jogo",
-    regrasNovasTitulo: "Mega Atualização (Novas Cartas!)",
-    regrasNovasText: "• Espiar (Olho): Veja a mão de qualquer jogador.\n• +3 (Cor): Compra 3 cartas.\n• +6 (Preto): O próximo compra 6.\n• Igualar (Balança): Escolha 'Maior' ou 'Menor' para igualar o número de cartas de todos!\n• Recomeço (Ampulheta): Todos descartam as mãos e compram 7 novas cartas.\n• Escolher Número (#): Muda a mesa para um número específico (cartas de efeito ignoram a cor e anulam esta carta).",
-    regrasBasicasTitulo: "Regras Básicas",
-    regrasBasicasTexto: "Cada jogador começa com 7 cartas. O objetivo é ser o primeiro a ficar sem cartas. O baralho possui 3 cópias de cada carta numérica (1 ao 9) para criar ainda mais sequências! Deve jogar cartas que combinem com a Cor ou com o Número da mesa.",
-    sequenciasTitulo: "Sequências (Múltiplas Cartas)",
-    sequenciasTexto: "Pode jogar mais de uma carta ao mesmo tempo se elas tiverem o MESMO VALOR (ex: três cartas '5') OU se formarem uma SEQUÊNCIA DA MESMA COR (ex: 3, 4, 5 vermelhos, ou 9, 8, 7 azuis).",
-    regraZeroTitulo: "A Regra do Zero (0)",
-    regraZeroTexto: "Jogou um 0? Escolha trocar as suas cartas com um oponente específico ou 'Rodar' todas as mãos.",
-    regraNoveTitulo: "A Regra do Nove (9)",
-    regraNoveTexto: "Sempre que o '9' for jogado, um botão gigante aparecerá. O último a bater compra as cartas de punição!",
-    kaosTitulo: "KAOS!",
-    kaosTexto: "Quando for ficar com apenas 1 carta, DEVE gritar 'KAOS!'. Pode gritar a qualquer momento se tiver 1 carta, ou APENAS na sua vez se tiver 2 cartas para se proteger. Pode sempre usar o botão para denunciar quem esqueceu!"
-  },
-  en: {
-    suaVez: "YOUR TURN!", vezDe: "TURN:", aguarde: "Wait...", comprar: "DRAW",
-    jogar: "PLAY", cartas: "CARDS", aceitarPunicao: "ACCEPT PENALTY", passarVez: "PASS TURN",
-    regraZero: "Rule of Zero! What to do?", nada: "NOTHING (Pass)", rodarTodas: "ROTATE ALL HANDS",
-    ouTrocar: "Or swap with:", escolhaCor: "Choose new color:", sorteando: "Choosing who starts...",
-    seuAvatar: "Your Avatar", seuNome: "Your Name", criarSala: "Create New Room",
-    ou: "OR", codigo: "Room Code...", entrar: "Join", apoie: "Buy me a Coffee!",
-    ajude: "Help keep KAOS online and ad-free.", doar: "Donate via LivePix", codigoSala: "Room Code:",
-    jogadores: "Players", voce: "(You)", host: "- Host", iniciarPartida: "START GAME",
-    aguardandoHost: "Waiting for host to start...", sairSala: "LEAVE ROOM", 
-    config: "Settings", musica: "Background Music", efeitos: "Sound Effects", fechar: "Close",
-    vencedor: "WON THE MATCH!", acabouCartas: "finished their cards!", voltarLobby: "Back to Lobby",
-    vitorias: "Wins", idioma: "Language", tempo: "Match Time",
-    espiarAlvo: "Peeping Tom! Whose hand do you want to see?",
-    igualarTitulo: "Equalize Cards", igualarDesc: "Adjust everyone's hand size to match the:", 
-    igualarMaior: "Largest Hand", igualarMenor: "Smallest Hand",
-    escolherNumTitulo: "Choose a Number", escolherNumDesc: "Select the number the table will change to:",
-    casual: "Casual", kaos: "KAOS!", pvp: "Free for All", duplas: "2v2/3v3 Teams",
-    descCasual: "modo de jogo clássico",
-    descKaos: "modo de jogo para fazer o kaos!",
-    descDuplasReq: "Requires 4 or 6 players (Opposite teams on the table).",
-    regrasTitulo: "Game Rules",
-    regrasNovasTitulo: "Mega Update (New Cards!)",
-    regrasNovasText: "• Peek (Eye): Look at any player's hand.\n• +3 (Color): Draw 3.\n• +6 (Black): Next player draws 6.\n• Equalizer (Scales): Match everyone's card count to the 'Largest' or 'Smallest' hand!\n• Restart (Hourglass): Everyone discards and draws 7 new cards.\n• Choose Number (#): Change the table to a specific number (effect cards override this rule).",
-    regrasBasicasTitulo: "Basic Rules",
-    regrasBasicasTexto: "Each player starts with 7 cards. Objective: get rid of all your cards. The deck has 3 copies of each numbered card (1 to 9) for even more sequences! Match the Color or Number of the top card.",
-    sequenciasTitulo: "Sequences (Multiple Cards)",
-    sequenciasTexto: "Play multiple cards if they have the SAME VALUE (e.g. three '5's) OR form a SEQUENCE IN THE SAME COLOR (ascending 3, 4, 5 or descending 9, 8, 7).",
-    regraZeroTitulo: "The Rule of Zero (0)",
-    regraZeroTexto: "Played a 0? Swap your cards with an opponent or 'Rotate' all hands.",
-    regraNoveTitulo: "The Rule of Nine (9)",
-    regraNoveTexto: "When '9' is played, a giant button appears. The last one to slap it draws the penalty!",
-    kaosTitulo: "KAOS!",
-    kaosTexto: "When you are left with 1 card, you MUST shout 'KAOS!'. You can shout anytime if you have 1 card, or ONLY on your turn if you have 2 cards to protect yourself. You can always use the button to denounce someone!"
-  }
-};
-
-const getCorCss = (cor) => {
-  switch(cor) {
-    case 'vermelho': return '#ff4757';
-    case 'azul': return '#1e90ff';
-    case 'verde': return '#2ed573';
-    case 'amarelo': return '#ffa502';
-    case 'preto': return '#2f3542';
-    default: return '#ffffff';
-  }
-};
-
-const renderValorCarta = (valor) => {
-  if (valor === 'coringa') return <Palette size="1em" weight="fill" />;
-  if (valor === 'bloqueio') return <Prohibit size="1em" weight="bold" />;
-  if (valor === 'inverter') return <ArrowsLeftRight size="1em" weight="bold" />;
-  if (valor === '+3') return '+3';
-  if (valor === '+6') return '+6';
-  if (valor === 'espiar') return <Eye size="1em" weight="bold" />;
-  if (valor === 'igualar') return <Scales size="1em" weight="bold" />;
-  if (valor === 'reinicio') return <Hourglass size="1em" weight="bold" />; 
-  if (valor === 'escolher_numero') return <Hash size="1em" weight="bold" />;
-  return valor;
-};
-
-const gerarSeedAleatoria = () => Math.random().toString(36).substring(7);
-
-const getPosicaoOponente = (index, totalOponentes) => {
-  if (totalOponentes === 1) return { top: '8%', left: '50%' }; 
-  if (totalOponentes === 2) return index === 0 ? { top: '15%', left: '10%' } : { top: '15%', left: '90%' };
-  if (totalOponentes === 3) return index === 0 ? { top: '40%', left: '0%' } : index === 1 ? { top: '10%', left: '50%' } : { top: '40%', left: '100%' };
-  if (totalOponentes === 4) return index === 0 ? { top: '40%', left: '0%' } : index === 1 ? { top: '12%', left: '30%' } : index === 2 ? { top: '12%', left: '70%' } : { top: '40%', left: '100%' };
-  return index === 0 ? { top: '50%', left: '0%' } : index === 1 ? { top: '15%', left: '15%' } : index === 2 ? { top: '10%', left: '50%' } : index === 3 ? { top: '15%', left: '85%' } : { top: '50%', left: '100%' };
-};
-
-const arrayEmojis = ['❤️', '💛', '💚', '💙', '🖕', '😴', '😎', '😂', '😡', '👍', '👎', '🤔'];
 
 function App() {
   const [idioma, setIdioma] = useState('pt');
