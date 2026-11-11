@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { HandPalm, Cards, ArrowsClockwise, ArrowsCounterClockwise, Hourglass, Timer, Eye, Scales, Hash, Smiley } from '@phosphor-icons/react';
+import { HandPalm, ArrowsClockwise, ArrowsCounterClockwise, Hourglass, Timer, Eye, Scales, Hash, Smiley } from '@phosphor-icons/react';
 import { getCorCss, renderValorCarta, getPosicaoOponente, arrayEmojis } from '../utils/gameUtils';
 
 export default function Table(props) {
@@ -15,11 +15,8 @@ export default function Table(props) {
   // ORDENAÇÃO AUTOMÁTICA DAS CARTAS
   const cartasOrdenadas = useMemo(() => {
     const ordemCores = { vermelho: 1, amarelo: 2, azul: 3, verde: 4, preto: 5 };
-    
     return [...minhaMao].sort((a, b) => {
-      if (ordemCores[a.cor] !== ordemCores[b.cor]) {
-        return (ordemCores[a.cor] || 99) - (ordemCores[b.cor] || 99);
-      }
+      if (ordemCores[a.cor] !== ordemCores[b.cor]) return (ordemCores[a.cor] || 99) - (ordemCores[b.cor] || 99);
       return a.valor.toString().localeCompare(b.valor.toString());
     });
   }, [minhaMao]);
@@ -36,98 +33,134 @@ export default function Table(props) {
   }
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '10px' }}>
+    <div style={{ textAlign: 'center', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      
       {/* Top Bar ESQUERDA (Tempo e Equipa) */}
-      <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 100, display: 'flex', gap: '15px', alignItems: 'center' }}>
-        <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
+      <div style={{ position: 'fixed', top: '10px', left: '10px', zIndex: 100, display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '6px 15px', borderRadius: '15px', border: '3px solid #000', boxShadow: '3px 3px 0 #000', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <Timer size={16} weight="bold" /> {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
         </div>
         {meuJogadorInfo?.corEquipe && (
-          <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 ${meuJogadorInfo.corEquipe}`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: 14, height: 14, borderRadius: '50%', backgroundColor: meuJogadorInfo.corEquipe, border: '2px solid #fff' }} /> SUA EQUIPE
+          <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '6px 15px', borderRadius: '15px', border: '3px solid #000', boxShadow: `3px 3px 0 ${meuJogadorInfo.corEquipe}`, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: meuJogadorInfo.corEquipe, border: '2px solid #fff' }} /> EQUIPE
           </div>
         )}
       </div>
 
-      {/* Top Bar DIREITA (Indicador de Turno - Atualizado para Verde e Vermelho) */}
-      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100 }}>
+      {/* Top Bar DIREITA (Indicador de Turno - Sem fundo branco no temporizador) */}
+      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 100 }}>
         <div className="status-turno-box" style={{ 
-          backgroundColor: '#2ecc71', /* Fixo em Verde */
-          color: '#fff', /* Nome em Branco */
-          border: '4px solid #000', borderRadius: '20px', padding: '10px 20px', fontWeight: '900',
-          boxShadow: '4px 4px 0 #000'
+          backgroundColor: '#2ecc71', color: '#fff', border: '4px solid #000', borderRadius: '15px', 
+          padding: '8px 15px', fontWeight: '900', boxShadow: '3px 3px 0 #000', textAlign: 'center'
         }}>
-          <div style={{ fontSize: '16px', textShadow: '1px 1px 0 #000' }}>
+          <div style={{ fontSize: '14px', textShadow: '1px 1px 0 #000' }}>
             {turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}
           </div>
           
-          {/* Pílula branca para o temporizador vermelho se destacar */}
-          <div style={{ backgroundColor: '#fff', color: '#e74c3c', border: '2px solid #000', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '6px', padding: '2px 10px' }}>
-            {eventoNoveAtivo ? <span>PAUSA (BATA!)</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
+          <div style={{ color: '#e74c3c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '2px', textShadow: '1px 1px 0 #000' }}>
+            {eventoNoveAtivo ? <span>PAUSA!</span> : <><Hourglass size={14} weight="bold" /> {tempoTurnoRestante}s</>}
           </div>
         </div>
       </div>
 
-      {/* MESA REDONDA DE MADEIRA */}
-      <div className="mesa-redonda-moderna">
-        {/* OPONENTES */}
-        {oponentesOrdenados.map((op, index) => {
-          const ehVezDele = turnoAtual === op.id;
-          return (
-            <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
-              {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
-              
-              <div className="oponente-corpo-container">
-                <div className="oponente-avatar" style={{ 
-                  borderColor: ehVezDele ? '#2ecc71' : '#000', 
-                  boxShadow: ehVezDele ? '0 0 15px #2ecc71' : 'none',
-                  borderWidth: '3px', borderStyle: 'solid', borderRadius: '50%',
-                  backgroundColor: op.corEquipe || '#fff', padding: op.corEquipe ? '4px' : '0px',
-                  width: '60px', height: '60px', transition: 'all 0.3s'
-                }}>
-                  <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} style={{ width: '100%', height: '100%', borderRadius: '50%', border: op.corEquipe ? '2px solid #000' : 'none', backgroundColor: '#fff', display: 'block' }} alt="Avatar" />
+      {/* ÁREA CENTRAL - MESA DE MADEIRA (Ajustada para não haver scroll) */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+        <div className="mesa-redonda-moderna">
+          {oponentesOrdenados.map((op, index) => {
+            const ehVezDele = turnoAtual === op.id;
+            return (
+              <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
+                {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
+                
+                <div className="oponente-corpo-container">
+                  <div className="oponente-avatar" style={{ 
+                    borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : 'none',
+                    borderWidth: '3px', borderStyle: 'solid', borderRadius: '50%', backgroundColor: op.corEquipe || '#fff', 
+                    padding: op.corEquipe ? '4px' : '0px', width: '50px', height: '50px', transition: 'all 0.3s'
+                  }}>
+                    <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} style={{ width: '100%', height: '100%', borderRadius: '50%', border: op.corEquipe ? '2px solid #000' : 'none', backgroundColor: '#fff', display: 'block' }} alt="Avatar" />
+                  </div>
+                  <div className="player-body" style={{ backgroundColor: op.corEquipe || '#34495e', width: '60px', height: '35px' }}></div>
                 </div>
-                <div className="player-body" style={{ backgroundColor: op.corEquipe || '#34495e' }}></div>
+                
+                <div className="cartas-oponente" style={{ marginTop: '-15px', zIndex: 3 }}>
+                  {Array.from({ length: Math.min(op.qtdCartas, 8) }).map((_, i) => (
+                    <div key={i} className="carta-verso" style={{ width: '16px', height: '24px', fontSize: '10px', marginLeft: i > 0 ? '-8px' : '0' }}>K</div>
+                  ))}
+                  {op.qtdCartas > 8 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px', fontSize: '12px', textShadow: '1px 1px 0 #000'}}>+{op.qtdCartas - 8}</span>}
+                </div>
+                
+                <div className="oponente-nome" style={{ backgroundColor: '#fff', color: '#000', border: '2px solid #000', borderRadius: '10px', padding: '2px 8px', fontSize: '11px', fontWeight: '900', marginTop: '3px', zIndex: 3, boxShadow: ehVezDele ? '0 0 8px #2ecc71' : '2px 2px 0 #000' }}>
+                  {op.nome}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* CENTRO DA MESA */}
+          <div className="centro-mesa" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            
+            {/* SETAS DE DIREÇÃO */}
+            <div style={{ position: 'absolute', opacity: 0.25, pointerEvents: 'none', zIndex: 1 }}>
+              {sentido === 1 ? <ArrowsClockwise size={220} color="#fff" className="spin-horario" /> : <ArrowsCounterClockwise size={220} color="#fff" className="spin-anti" />}
+            </div>
+
+            {/* CARTA DA MESA (Centralizada) */}
+            <div key={cartaMesa?.id || 'mesa'} className="carta carta-mesa" style={{ zIndex: 2, transform: 'scale(0.9)', backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff', boxShadow: '6px 6px 15px rgba(0,0,0,0.5)', margin: 0 }}>
+              {renderValorCarta(cartaMesa.valor)}
+            </div>
+
+            {/* MONTE DE COMPRA (Canto inferior esquerdo e visual Kaos) */}
+            <div style={{ position: 'absolute', bottom: '15%', left: '20%', zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div 
+                className="baralho-kaos" 
+                onClick={comprarCarta} 
+                style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default' }}
+              >
+                <span className="k-logo">K</span>
               </div>
               
-              {/* Cartas subidas pela metade do corpo (-20px) */}
-              <div className="cartas-oponente" style={{ marginTop: '-20px', zIndex: 3 }}>
-                {Array.from({ length: Math.min(op.qtdCartas, 8) }).map((_, i) => (
-                  <div key={i} className="carta-verso" style={{ width: '20px', height: '30px', fontSize: '12px', marginLeft: i > 0 ? '-10px' : '0' }}>K</div>
-                ))}
-                {op.qtdCartas > 8 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px', textShadow: '1px 1px 0 #000'}}>+{op.qtdCartas - 8}</span>}
-              </div>
-              
-              {/* Nomes legíveis: Fundo branco e Letra preta */}
-              <div className="oponente-nome" style={{ backgroundColor: '#fff', color: '#000', border: '2px solid #000', borderRadius: '10px', padding: '2px 10px', fontSize: '13px', fontWeight: '900', marginTop: '5px', zIndex: 3, boxShadow: ehVezDele ? '0 0 10px #2ecc71' : '2px 2px 0 #000' }}>
-                {op.nome}
-              </div>
+              {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
+                <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{ position: 'absolute', bottom: '-30px', whiteSpace: 'nowrap', padding: '4px 8px', fontSize: '11px', margin: 0 }}>{t.comprar}</button>
+              )}
             </div>
-          );
-        })}
 
-        {/* CENTRO DA MESA */}
-        <div className="centro-mesa" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '200px', height: '200px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          
-          {/* SETAS MAIORES */}
-          <div style={{ position: 'absolute', opacity: 0.25, pointerEvents: 'none', zIndex: 1 }}>
-            {sentido === 1 ? <ArrowsClockwise size={260} color="#fff" className="spin-horario" /> : <ArrowsCounterClockwise size={260} color="#fff" className="spin-anti" />}
           </div>
+        </div>
+      </div>
 
-          {/* BARALHO (Afastado do centro, indo para o canto inferior esquerdo) */}
-          <div className="coluna-baralho" style={{ position: 'absolute', bottom: '-20px', left: '-45px', zIndex: 3 }}>
-            <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default', filter: 'drop-shadow(4px 4px 0px rgba(0,0,0,0.5))', transform: 'scale(0.85)', transition: 'transform 0.1s' }} onMouseOver={(e) => { if(turnoAtual === socket.id) e.currentTarget.style.transform = 'scale(0.95)' }} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(0.85)'}>
-              <Cards size={64} weight="duotone" color="#ecf0f1" />
-            </div>
-            {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
-              <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{ position: 'absolute', bottom: '-35px', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '5px 10px', fontSize: '12px' }}>{t.comprar}</button>
-            )}
-          </div>
+      {/* ÁREA INFERIOR (Apenas Cartas e Botões - Sem causar overflow) */}
+      <div style={{ paddingBottom: '10px' }}>
+        
+        {/* A MÃO DE CARTAS DO JOGADOR */}
+        <div className="mao-container-moderna">
+          {cartasOrdenadas.map((carta) => {
+            const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
+            let classes = "carta carta-moderna";
+            if (taSelecionada) classes += " selecionada";
+            if (turnoAtual !== socket.id || eventoNoveAtivo) classes += " desabilitada";
+            
+            return ( 
+              <div 
+                key={carta.id} 
+                onClick={() => toggleSelecao(carta)} 
+                className={classes} 
+                style={{ 
+                  backgroundColor: getCorCss(carta.cor), 
+                  color: carta.cor === 'amarelo' ? '#000' : '#fff'
+                }}
+              > 
+                {renderValorCarta(carta.valor)} 
+              </div> 
+            );
+          })}
+        </div>
 
-          {/* CARTA DA MESA */}
-          <div key={cartaMesa?.id || 'mesa'} className="carta carta-mesa anim-play" style={{ zIndex: 2, transform: 'scale(0.85)', backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff', boxShadow: '6px 6px 15px rgba(0,0,0,0.5)', margin: 0 }}>
-            {renderValorCarta(cartaMesa.valor)}
-          </div>
+        {/* PAINEL DE AÇÕES INFERIOR */}
+        <div className="painel-acoes" style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
+          {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && ( <button className="btn btn-verde" onClick={tentarJogarSelecionadas} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.jogar} ({cartasSelecionadas.length})</button> )}
+          {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && ( <button className="btn btn-vermelho" onClick={comprarCarta} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.aceitarPunicao} (+{comprasAcumuladas})</button> )}
+          {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && ( <button className="btn btn-cinza" onClick={passarVez} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.passarVez}</button> )}
         </div>
       </div>
 
@@ -140,52 +173,20 @@ export default function Table(props) {
         </div>
       )}
 
-      {/* A MÃO DE CARTAS DO JOGADOR */}
-      <div className="mao-container-moderna">
-        {cartasOrdenadas.map((carta, i) => {
-          const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
-          let classes = "carta carta-moderna anim-draw";
-          if (taSelecionada) classes += " selecionada";
-          if (turnoAtual !== socket.id || eventoNoveAtivo) classes += " desabilitada";
-          
-          return ( 
-            <div 
-              key={carta.id} 
-              onClick={() => toggleSelecao(carta)} 
-              className={classes} 
-              style={{ 
-                backgroundColor: getCorCss(carta.cor), 
-                color: carta.cor === 'amarelo' ? '#000' : '#fff',
-                animationDelay: `${i * 0.05}s` 
-              }}
-            > 
-              {renderValorCarta(carta.valor)} 
-            </div> 
-          );
-        })}
-      </div>
-
-      {/* PAINEL DE AÇÕES INFERIOR */}
-      <div className="painel-acoes" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
-        {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && ( <button className="btn btn-verde" onClick={tentarJogarSelecionadas} style={{ fontSize: '20px', padding: '12px 30px' }}>{t.jogar} ({cartasSelecionadas.length})</button> )}
-        {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && ( <button className="btn btn-vermelho" onClick={comprarCarta} style={{ fontSize: '20px', padding: '12px 30px' }}>{t.aceitarPunicao} (+{comprasAcumuladas})</button> )}
-        {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && ( <button className="btn btn-cinza" onClick={passarVez} style={{ fontSize: '20px', padding: '12px 30px' }}>{t.passarVez}</button> )}
-      </div>
-
-      {/* MENU DE EMOTES E UNO (Reposicionado e Botão Maior) */}
-      <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+      {/* MENU DE EMOTES E UNO (Fixos no canto) */}
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
         <div style={{ position: 'relative' }}>
           {emotesAtivos[socket.id] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[socket.id]}</div>}
           <button
             onClick={() => setMenuEmoteAberto(!menuEmoteAberto)}
-            style={{ background: '#fff', border: '4px solid #000', borderRadius: '50%', width: '60px', height: '60px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '4px 4px 0 #000', transition: 'transform 0.1s' }}
+            style={{ background: '#fff', border: '3px solid #000', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000', transition: 'transform 0.1s' }}
             onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
             onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          ><Smiley size={40} weight="fill" color="#f1c40f" /></button>
+          ><Smiley size={32} weight="fill" color="#f1c40f" /></button>
           {menuEmoteAberto && (
-            <div style={{ position: 'absolute', bottom: '75px', right: '0', background: '#fff', border: '4px solid #000', borderRadius: '20px', padding: '15px', width: '240px', boxShadow: '6px 6px 0 #000' }}>
-              <div className="botoes-emotes-menu">
-                {arrayEmojis.map(emo => ( <button key={emo} className="btn-emote" onClick={() => enviarEmote(emo)}>{emo}</button> ))}
+            <div style={{ position: 'absolute', bottom: '65px', right: '0', background: '#fff', border: '4px solid #000', borderRadius: '15px', padding: '10px', width: '200px', boxShadow: '6px 6px 0 #000' }}>
+              <div className="botoes-emotes-menu" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px' }}>
+                {arrayEmojis.map(emo => ( <button key={emo} className="btn-emote" onClick={() => enviarEmote(emo)} style={{ fontSize: '20px' }}>{emo}</button> ))}
               </div>
             </div>
           )}
@@ -194,17 +195,16 @@ export default function Table(props) {
         <button 
           onClick={() => socket.emit('apertar_uno', props.minhaSala)} 
           style={{ 
-            background: '#e74c3c', color: '#fff', fontWeight: '900', fontSize: '24px',
-            border: '4px solid #000', borderRadius: '50%', width: '110px', height: '110px', 
-            cursor: 'pointer', boxShadow: '4px 4px 0 #000',
-            display: 'flex', justifyContent: 'center', alignItems: 'center', textShadow: '2px 2px 0 #000'
+            background: '#e74c3c', color: '#fff', fontWeight: '900', fontSize: '20px',
+            border: '4px solid #000', borderRadius: '50%', width: '90px', height: '90px', 
+            cursor: 'pointer', boxShadow: '4px 4px 0 #000', display: 'flex', justifyContent: 'center', alignItems: 'center', textShadow: '2px 2px 0 #000'
           }}
         >
           KAOS!
         </button>
       </div>
 
-      {/* --- MODAIS MANTIDOS INTACTOS A PARTIR DAQUI --- */}
+      {/* --- MODAIS DE AÇÃO --- */}
       {filaPassos[0] === 'zero' && (
         <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }}>
           <div className="modal-content" style={{ border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
