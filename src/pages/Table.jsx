@@ -40,7 +40,7 @@ export default function Table(props) {
 
         {meuJogadorInfo?.isBoss && (
           <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#e74c3c', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 #000`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-             <Skull size={20} weight="bold" /> VOCÊ É O BOSS
+             <Skull size={20} weight="bold" /> VOCÊ É O CHEFÂO
           </div>
         )}
       </div>
@@ -82,7 +82,7 @@ export default function Table(props) {
               
               {op.isBoss && (
                 <div style={{ backgroundColor: '#e74c3c', color: '#fff', fontWeight: 'bold', fontSize: '10px', padding: '2px 8px', borderRadius: '10px', border: '2px solid #000', marginTop: '-5px', zIndex: 10, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-                  <Skull size={12} weight="bold" /> BOSS
+                  <Skull size={12} weight="bold" /> CHEFÃO
                 </div>
               )}
 

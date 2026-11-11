@@ -24,7 +24,7 @@ export default function Lobby(props) {
   };
 
   const getDescricaoFormato = () => {
-    if (regrasSelecionadas === 'boss') return "👑 MODO BOSS: 1 vs Todos! O Boss joga com 15 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
+    if (regrasSelecionadas === 'boss') return " MODO CHEFÃO: 1 vs Todos! O Chefão joga com 15 cartas e tem 2 jogadas seguidas por turno. Os outros jogadores tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
     if (formatoSelecionado === 'duplas') return t.descDuplasReq;
     return regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos;
   };
@@ -109,7 +109,7 @@ export default function Lobby(props) {
                       <button className={`btn btn-modo ${regrasSelecionadas === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
                       <button className={`btn btn-modo ${regrasSelecionadas === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
                     </div>
-                    <button className={`btn btn-modo ${regrasSelecionadas === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('boss')} style={{ width: '100%', marginTop: '5px', backgroundColor: regrasSelecionadas === 'boss' ? '#e74c3c' : '' }}>👹 BOSS (1 vs Todos)</button>
+                    <button className={`btn btn-modo ${regrasSelecionadas === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('boss')} style={{ width: '100%', marginTop: '5px', backgroundColor: regrasSelecionadas === 'boss' ? '#e74c3c' : '' }}> CHEFÃO (1 vs Todos)</button>
                   </div>
                 </div>
                 <div style={{ width: '4px', height: '90px', backgroundColor: '#000', margin: '0 15px', borderRadius: '2px' }}></div>
