@@ -4,7 +4,7 @@ import { getCorCss, renderValorCarta, getPosicaoOponente, arrayEmojis } from '..
 
 export default function Table(props) {
   const {
-    t, socket, tempoPartida, meuJogadorInfo, turnoAtual, eventoNoveAtivo,
+    t, socket, tempoPartida, turnoAtual, eventoNoveAtivo,
     tempoTurnoRestante, oponentesOrdenados, emotesAtivos, menuEmoteAberto, setMenuEmoteAberto,
     enviarEmote, baterNaMesa, euJaBati, posicaoNove, minhaMao, cartasSelecionadas,
     toggleSelecao, tentarJogarSelecionadas, comprasAcumuladas, comprarCarta, jaComprou,
@@ -12,6 +12,7 @@ export default function Table(props) {
     setMaoEspiadaPrevia, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez
   } = props;
 
+  // ORDENAÇÃO AUTOMÁTICA DAS CARTAS POR COR
   const cartasOrdenadas = useMemo(() => {
     const ordemCores = { vermelho: 1, amarelo: 2, azul: 3, verde: 4, preto: 5 };
     return [...minhaMao].sort((a, b) => {
@@ -22,194 +23,147 @@ export default function Table(props) {
 
   if (vencedor) {
     return (
-      <div className="container" style={{ marginTop: '100px', border: '6px solid #000', borderRadius: '30px', padding: '40px', backgroundColor: '#fff' }}>
+      <div className="container" style={{ marginTop: '100px' }}>
         <h1 className="logo-kaos"><div className="carta-k-logo">K</div>AOS</h1>
-        <h1 style={{ fontSize: '50px', color: '#f1c40f', textShadow: '2px 2px 0 #000' }}>🏆 {t.vencedor} 🏆</h1>
-        <h2 style={{ fontSize: '40px', marginBottom: '30px' }}>{vencedor} {t.acabouCartas}</h2>
-        <button className="btn btn-azul" style={{ fontSize: '24px', padding: '15px 40px' }} onClick={() => { setVencedor(null); setJogoIniciado(false); setTempoPartida(0); }}>{t.voltarLobby}</button>
+        <h1 style={{ fontSize: '40px', color: '#f1c40f' }}>🏆 {t.vencedor} 🏆</h1>
+        <h2>{vencedor} {t.acabouCartas}</h2>
+        <button className="btn btn-azul" onClick={() => { setVencedor(null); setJogoIniciado(false); setTempoPartida(0); }}>{t.voltarLobby}</button>
       </div>
     );
   }
 
   return (
-    <div style={{ textAlign: 'center', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="container" style={{ maxWidth: '1000px', margin: '10px auto' }}>
       
-      {/* Top Bar ESQUERDA (Tempo e Equipa) */}
-      <div style={{ position: 'fixed', top: '15px', left: '15px', zIndex: 100, display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '6px 15px', borderRadius: '15px', border: '3px solid #000', boxShadow: '3px 3px 0 #000', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <Timer size={16} weight="bold" /> {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
+      {/* Topo: Relógio e Turno */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <Timer size={20} /> {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
         </div>
-        {meuJogadorInfo?.corEquipe && (
-          <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '6px 15px', borderRadius: '15px', border: '3px solid #000', boxShadow: `3px 3px 0 ${meuJogadorInfo.corEquipe}`, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: meuJogadorInfo.corEquipe, border: '2px solid #fff' }} /> EQUIPE
-          </div>
-        )}
-      </div>
-
-      {/* Top Bar DIREITA (Indicador de Turno) */}
-      <div style={{ position: 'fixed', top: '15px', right: '15px', zIndex: 100 }}>
-        <div className="status-turno-box" style={{ 
-          backgroundColor: '#2ecc71', color: '#fff', border: '4px solid #000', borderRadius: '15px', 
-          padding: '8px 15px', fontWeight: '900', boxShadow: '3px 3px 0 #000', textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '14px', textShadow: '1px 1px 0 #000' }}>
-            {turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}
-          </div>
-          
-          {/* Temporizador branco e sem sombra */}
-          <div style={{ color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '2px' }}>
-            {eventoNoveAtivo ? <span>PAUSA!</span> : <><Hourglass size={14} weight="bold" /> {tempoTurnoRestante}s</>}
-          </div>
+        
+        <div className={`status-turno ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
+          {turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}
+          {!eventoNoveAtivo && <span style={{ marginLeft: '10px' }}><Hourglass size={16} style={{ verticalAlign: 'middle' }} /> {tempoTurnoRestante}s</span>}
         </div>
       </div>
 
-      {/* ÁREA CENTRAL - MESA DE MADEIRA (Muito mais espaçosa) */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, padding: '40px 0' }}>
-        <div className="mesa-redonda-moderna">
-          {oponentesOrdenados.map((op, index) => {
-            const ehVezDele = turnoAtual === op.id;
-            return (
-              <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
-                {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
-                
-                <div className="oponente-corpo-container">
-                  <div className="oponente-avatar" style={{ 
-                    borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 15px #2ecc71' : 'none',
-                    borderWidth: '3px', borderStyle: 'solid', borderRadius: '50%', backgroundColor: op.corEquipe || '#fff', 
-                    padding: op.corEquipe ? '4px' : '0px', width: '50px', height: '50px', transition: 'all 0.3s'
-                  }}>
-                    <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} style={{ width: '100%', height: '100%', borderRadius: '50%', border: op.corEquipe ? '2px solid #000' : 'none', backgroundColor: '#fff', display: 'block' }} alt="Avatar" />
-                  </div>
-                  <div className="player-body" style={{ backgroundColor: op.corEquipe || '#34495e', width: '60px', height: '35px' }}></div>
-                </div>
-                
-                <div className="cartas-oponente" style={{ marginTop: '-15px', zIndex: 3 }}>
-                  {Array.from({ length: Math.min(op.qtdCartas, 8) }).map((_, i) => (
-                    <div key={i} className="carta-verso" style={{ width: '16px', height: '24px', fontSize: '10px', marginLeft: i > 0 ? '-8px' : '0' }}>K</div>
-                  ))}
-                  {op.qtdCartas > 8 && <span style={{color: 'white', fontWeight: 'bold', marginLeft: '5px', fontSize: '12px', textShadow: '1px 1px 0 #000'}}>+{op.qtdCartas - 8}</span>}
-                </div>
-                
-                <div className="oponente-nome" style={{ backgroundColor: '#fff', color: '#000', border: '2px solid #000', borderRadius: '10px', padding: '2px 8px', fontSize: '11px', fontWeight: '900', marginTop: '3px', zIndex: 3, boxShadow: ehVezDele ? '0 0 8px #2ecc71' : '2px 2px 0 #000' }}>
-                  {op.nome}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* CENTRO DA MESA */}
-          <div className="centro-mesa" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            
-            <div style={{ position: 'absolute', opacity: 0.25, pointerEvents: 'none', zIndex: 1 }}>
-              {sentido === 1 ? <ArrowsClockwise size={220} color="#fff" className="spin-horario" /> : <ArrowsCounterClockwise size={220} color="#fff" className="spin-anti" />}
-            </div>
-
-            {/* Envolucro da carta da mesa para manter tamanho base e permitir animação interna */}
-            <div style={{ zIndex: 2, transform: 'scale(0.85)' }}>
-              <div key={cartaMesa?.id || 'mesa'} className="carta carta-mesa anim-play" style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff', boxShadow: '6px 6px 15px rgba(0,0,0,0.5)', margin: 0 }}>
-                {renderValorCarta(cartaMesa.valor)}
-              </div>
-            </div>
-
-            {/* MONTE DE COMPRA (Canto inferior esquerdo e visual Kaos corrigido) */}
-            <div style={{ position: 'absolute', bottom: '15%', left: '20%', zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div className="baralho-kaos" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default' }}>
-                <span className="k-logo">K</span>
+      {/* MESA DE JOGO ORIGINAL */}
+      <div className="mesa-redonda">
+        {oponentesOrdenados.map((op, index) => {
+          const ehVezDele = turnoAtual === op.id;
+          return (
+            <div key={op.id} className="oponente-container" style={getPosicaoOponente(index, oponentesOrdenados.length)}>
+              {emotesAtivos[op.id] && <div className="emote-anim">{emotesAtivos[op.id]}</div>}
+              
+              <div className="oponente-avatar" style={{ borderColor: ehVezDele ? '#2ecc71' : '#000', boxShadow: ehVezDele ? '0 0 10px #2ecc71' : '4px 4px 0 #000' }}>
+                <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} width="60" height="60" alt="Avatar" />
               </div>
               
-              {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
-                <button className="btn btn-roxo btn-pequeno anim-draw" onClick={comprarCarta} style={{ position: 'absolute', bottom: '-30px', whiteSpace: 'nowrap', padding: '4px 8px', fontSize: '11px', margin: 0 }}>{t.comprar}</button>
-              )}
+              <div className="cartas-oponente">
+                {Array.from({ length: Math.min(op.qtdCartas, 8) }).map((_, i) => (
+                  <div key={i} className="carta-verso">K</div>
+                ))}
+                {op.qtdCartas > 8 && <span style={{ color: 'white', fontWeight: 'bold', fontSize: '11px', marginLeft: '4px' }}>+{op.qtdCartas - 8}</span>}
+              </div>
+              
+              <div className="oponente-nome">{op.nome}</div>
             </div>
+          );
+        })}
 
+        {/* CENTRO DA MESA ORIGINAL */}
+        <div className="centro-mesa">
+          <div className="direcao-indicador" style={{ position: 'absolute' }}>
+            {sentido === 1 ? <ArrowsClockwise size={280} className="spin-horario" /> : <ArrowsCounterClockwise size={280} className="spin-anti" />}
+          </div>
+
+          <div className="coluna-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default', zIndex: 2 }}>
+            <div className="icone-baralho">
+              <span style={{ fontSize: '28px', fontWeight: '900', color: '#bdc3c7' }}>K</span>
+            </div>
+            {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
+              <button className="btn btn-roxo btn-pequeno">{t.comprar}</button>
+            )}
+          </div>
+
+          <div key={cartaMesa?.id || 'mesa'} className="carta carta-mesa animate-drop" style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff', zIndex: 2 }}>
+            {renderValorCarta(cartaMesa.valor)}
           </div>
         </div>
       </div>
 
-      {/* ÁREA INFERIOR */}
-      <div style={{ paddingBottom: '15px' }}>
-        
-        <div className="mao-container-moderna">
-          {cartasOrdenadas.map((carta, i) => {
-            const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
-            let classes = "carta carta-moderna anim-draw";
-            if (taSelecionada) classes += " selecionada";
-            if (turnoAtual !== socket.id || eventoNoveAtivo) classes += " desabilitada";
-            
-            return ( 
-              <div 
-                key={carta.id} 
-                onClick={() => toggleSelecao(carta)} 
-                className={classes} 
-                style={{ 
-                  backgroundColor: getCorCss(carta.cor), 
-                  color: carta.cor === 'amarelo' ? '#000' : '#fff',
-                  animationDelay: `${i * 0.04}s` 
-                }}
-              > 
-                {renderValorCarta(carta.valor)} 
-              </div> 
-            );
-          })}
-        </div>
-
-        <div className="painel-acoes" style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
-          {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && ( <button className="btn btn-verde anim-draw" onClick={tentarJogarSelecionadas} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.jogar} ({cartasSelecionadas.length})</button> )}
-          {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && ( <button className="btn btn-vermelho anim-draw" onClick={comprarCarta} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.aceitarPunicao} (+{comprasAcumuladas})</button> )}
-          {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && ( <button className="btn btn-cinza anim-draw" onClick={passarVez} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.passarVez}</button> )}
-        </div>
-      </div>
-
-      {/* BATER NA MESA */}
+      {/* EVENTO DO 9 */}
       {eventoNoveAtivo && (
         <div style={{ position: 'fixed', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 2000, pointerEvents: 'none' }}>
-          <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '160px', height: '160px', borderRadius: '50%', border: '8px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: euJaBati ? 'inset 4px 4px 10px rgba(0,0,0,0.5)' : '6px 6px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}>
+          <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '160px', height: '160px', borderRadius: '50%', border: '8px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: euJaBati ? 'inset 4px 4px 10px rgba(0,0,0,0.5)' : '6px 6px 0 #000', cursor: euJaBati ? 'default' : 'pointer' }}>
             <HandPalm weight="fill" size={96} color="#000" />
           </button>
         </div>
       )}
 
-      {/* MENU DE EMOTES E KAOS BUTTON */}
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-        <div style={{ position: 'relative' }}>
-          {emotesAtivos[socket.id] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[socket.id]}</div>}
-          <button
-            onClick={() => setMenuEmoteAberto(!menuEmoteAberto)}
-            style={{ background: '#fff', border: '3px solid #000', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000', transition: 'transform 0.1s' }}
-            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          ><Smiley size={32} weight="fill" color="#f1c40f" /></button>
-          {menuEmoteAberto && (
-            <div style={{ position: 'absolute', bottom: '65px', right: '0', background: '#fff', border: '4px solid #000', borderRadius: '15px', padding: '10px', width: '200px', boxShadow: '6px 6px 0 #000' }}>
-              <div className="botoes-emotes-menu" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px' }}>
-                {arrayEmojis.map(emo => ( <button key={emo} className="btn-emote" onClick={() => enviarEmote(emo)} style={{ fontSize: '20px' }}>{emo}</button> ))}
-              </div>
+      {/* MÃO DE CARTAS DO JOGADOR (ORDENADA POR CORES) */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '20px', minHeight: '130px', alignItems: 'flex-end' }}>
+        {cartasOrdenadas.map((carta) => {
+          const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
+          let classes = "carta";
+          if (taSelecionada) classes += " selecionada";
+          if (turnoAtual !== socket.id || eventoNoveAtivo) classes += " desabilitada";
+
+          return (
+            <div 
+              key={carta.id} 
+              onClick={() => toggleSelecao(carta)} 
+              className={classes} 
+              style={{ backgroundColor: getCorCss(carta.cor), color: carta.cor === 'amarelo' ? '#000' : '#fff' }}
+            >
+              {renderValorCarta(carta.valor)}
             </div>
-          )}
-        </div>
-        
-        {/* BOTÃO KAOS com a classe exclusiva */}
-        <button className="btn-kaos" onClick={() => socket.emit('apertar_uno', props.minhaSala)}>
-          KAOS!
-        </button>
+          );
+        })}
       </div>
 
-      {/* --- MODAIS DE AÇÃO --- */}
+      {/* PAINEL DE AÇÕES */}
+      <div className="painel-acoes">
+        {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && (
+          <button className="btn btn-verde" onClick={tentarJogarSelecionadas}>{t.jogar} ({cartasSelecionadas.length})</button>
+        )}
+        {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && (
+          <button className="btn btn-vermelho" onClick={comprarCarta}>{t.aceitarPunicao} (+{comprasAcumuladas})</button>
+        )}
+        {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && (
+          <button className="btn btn-cinza" onClick={passarVez}>{t.passarVez}</button>
+        )}
+      </div>
+
+      {/* BOTÃO KAOS E EMOTES */}
+      <button className="btn-uno" onClick={() => socket.emit('apertar_uno', props.minhaSala)}>KAOS!</button>
+      
+      <div style={{ position: 'fixed', bottom: '120px', right: '20px', zIndex: 1000 }}>
+        <button className="btn btn-pequeno" onClick={() => setMenuEmoteAberto(!menuEmoteAberto)} style={{ borderRadius: '50%', width: '50px', height: '50px', background: '#fff' }}>
+          <Smiley size={30} color="#f1c40f" weight="fill" />
+        </button>
+        {menuEmoteAberto && (
+          <div style={{ position: 'absolute', bottom: '60px', right: '0', background: '#fff', border: '3px solid #000', borderRadius: '15px', padding: '10px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px', boxShadow: '4px 4px 0 #000' }}>
+            {arrayEmojis.map(emo => (
+              <button key={emo} onClick={() => enviarEmote(emo)} style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer' }}>{emo}</button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* MODAIS (Regra Zero, Espiar, Igualar, etc.) */}
       {filaPassos[0] === 'zero' && (
-        <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }}>
-          <div className="modal-content" style={{ border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
-            <h2 style={{margin: '0 0 15px 0'}}>{t.regraZero}</h2>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>{t.regraZero}</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', margin: '15px 0' }}>
               <button className="btn btn-cinza" onClick={() => resolverPasso({ alvoTroca: 'ninguem' })}>{t.nada}</button>
               <button className="btn btn-verde" onClick={() => resolverPasso({ alvoTroca: 'todos' })}>{t.rodarTodas}</button>
             </div>
-            <h3 style={{margin: '15px 0 10px 0'}}>{t.ouTrocar}</h3>
+            <h3>{t.ouTrocar}</h3>
             <div className="grid-opcoes-zero">
               {oponentesOrdenados.map(j => (
-                <button key={j.id} className="btn btn-azul" onClick={() => resolverPasso({ alvoTroca: j.id })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                  <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} alt="Avatar" />
-                  {j.nome} ({j.qtdCartas})
-                </button>
+                <button key={j.id} className="btn btn-azul" onClick={() => resolverPasso({ alvoTroca: j.id })}>{j.nome} ({j.qtdCartas})</button>
               ))}
             </div>
           </div>
@@ -217,15 +171,12 @@ export default function Table(props) {
       )}
 
       {filaPassos[0] === 'espiar' && !maoEspiadaPrevia && (
-        <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }}>
-          <div className="modal-content" style={{ border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
-            <h2 style={{margin: '0 0 15px 0'}}><Eye size={32} style={{verticalAlign:'middle'}}/> {t.espiarAlvo}</h2>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2><Eye size={32} style={{ verticalAlign: 'middle' }} /> {t.espiarAlvo}</h2>
             <div className="grid-opcoes-zero">
               {oponentesOrdenados.map(j => (
-                <button key={j.id} className="btn btn-roxo" onClick={() => { socket.emit('espiar_cartas_alvo', { codigoSala: props.minhaSala, alvoId: j.id }); props.setPayloadJogada(prev => ({ ...prev, alvoTroca: j.id })); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                  <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} alt="Avatar" />
-                  {j.nome} ({j.qtdCartas})
-                </button>
+                <button key={j.id} className="btn btn-roxo" onClick={() => { socket.emit('espiar_cartas_alvo', { codigoSala: props.minhaSala, alvoId: j.id }); props.setPayloadJogada(prev => ({ ...prev, alvoTroca: j.id })); }}>{j.nome}</button>
               ))}
             </div>
           </div>
@@ -233,27 +184,27 @@ export default function Table(props) {
       )}
 
       {maoEspiadaPrevia && (
-        <div className="modal-overlay" style={{ zIndex: 1600, backdropFilter: 'blur(5px)' }}>
-          <div className="modal-content" style={{ maxWidth: '600px', border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
-            <h2 style={{ marginBottom: '15px' }}>Cartas de {maoEspiadaPrevia.nome}:</h2>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
-              {maoEspiadaPrevia.cartas.map(c => ( 
-                <div key={c.id} className="carta" style={{ backgroundColor: getCorCss(c.originalCor || c.cor), color: c.cor === 'amarelo' ? '#000' : '#fff', transform: 'scale(0.8)', margin: '-10px' }}> 
-                  {renderValorCarta(c.originalValor || c.valor)} 
-                </div> 
+        <div className="modal-overlay" style={{ zIndex: 1600 }}>
+          <div className="modal-content" style={{ maxWidth: '600px' }}>
+            <h2>Cartas de {maoEspiadaPrevia.nome}:</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px', margin: '20px 0' }}>
+              {maoEspiadaPrevia.cartas.map(c => (
+                <div key={c.id} className="carta" style={{ backgroundColor: getCorCss(c.originalCor || c.cor), color: c.cor === 'amarelo' ? '#000' : '#fff', transform: 'scale(0.8)' }}>
+                  {renderValorCarta(c.originalValor || c.valor)}
+                </div>
               ))}
             </div>
-            <button className="btn btn-azul" style={{ marginTop: '20px' }} onClick={() => { setMaoEspiadaPrevia(null); resolverPasso({}); }}>{t.fechar}</button>
+            <button className="btn btn-azul" onClick={() => { setMaoEspiadaPrevia(null); resolverPasso({}); }}>{t.fechar}</button>
           </div>
         </div>
       )}
 
       {filaPassos[0] === 'igualar' && (
-        <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }}>
-          <div className="modal-content" style={{ border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
-            <h2 style={{margin: '0 0 5px 0'}}><Scales size={32} style={{verticalAlign:'middle'}}/> {t.igualarTitulo}</h2>
-            <p style={{marginBottom: '20px'}}>{t.igualarDesc}</p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2><Scales size={32} style={{ verticalAlign: 'middle' }} /> {t.igualarTitulo}</h2>
+            <p>{t.igualarDesc}</p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '20px' }}>
               <button className="btn btn-verde" onClick={() => resolverPasso({ alvoOpcao: 'maior' })}>{t.igualarMaior}</button>
               <button className="btn btn-vermelho" onClick={() => resolverPasso({ alvoOpcao: 'menor' })}>{t.igualarMenor}</button>
             </div>
@@ -262,15 +213,13 @@ export default function Table(props) {
       )}
 
       {filaPassos[0] === 'numero' && (
-        <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }}>
-          <div className="modal-content" style={{ border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
-            <h2 style={{margin: '0 0 5px 0'}}><Hash size={32} style={{verticalAlign:'middle'}}/> {t.escolherNumTitulo}</h2>
-            <p style={{marginBottom: '15px'}}>{t.escolherNumDesc}</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px', maxWidth: '300px', margin: '0 auto' }}>
-              {['0','1','2','3','4','5','6','7','8','9'].map(num => ( 
-                <button key={num} onClick={() => resolverPasso({ alvoNumero: num })} style={{ width: '50px', height: '50px', fontSize: '24px', fontWeight: 'bold', backgroundColor: '#ecf0f1', border: '3px solid #000', borderRadius: '10px', cursor: 'pointer', boxShadow: '3px 3px 0 #000', transition: 'transform 0.1s' }} onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}> 
-                  {num} 
-                </button> 
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2><Hash size={32} style={{ verticalAlign: 'middle' }} /> {t.escolherNumTitulo}</h2>
+            <p>{t.escolherNumDesc}</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px', maxWidth: '300px', margin: '15px auto' }}>
+              {['0','1','2','3','4','5','6','7','8','9'].map(num => (
+                <button key={num} onClick={() => resolverPasso({ alvoNumero: num })} style={{ width: '45px', height: '45px', fontSize: '20px', fontWeight: 'bold', backgroundColor: '#ecf0f1', border: '3px solid #000', borderRadius: '10px', cursor: 'pointer' }}>{num}</button>
               ))}
             </div>
           </div>
@@ -278,17 +227,18 @@ export default function Table(props) {
       )}
 
       {filaPassos[0] === 'cor' && (
-        <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }}>
-          <div className="modal-content" style={{ border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
+        <div className="modal-overlay">
+          <div className="modal-content">
             <h2>{t.escolhaCor}</h2>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
-              {['vermelho', 'azul', 'verde', 'amarelo'].map(cor => ( 
-                <button key={cor} onClick={() => resolverPasso({ novaCor: cor })} style={{ width: '70px', height: '70px', backgroundColor: getCorCss(cor), border: '4px solid #000', borderRadius: '15px', cursor: 'pointer', boxShadow: '4px 4px 0 #000', transition: 'transform 0.1s' }} onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}></button> 
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '20px' }}>
+              {['vermelho', 'azul', 'verde', 'amarelo'].map(cor => (
+                <button key={cor} onClick={() => resolverPasso({ novaCor: cor })} style={{ width: '60px', height: '60px', backgroundColor: getCorCss(cor), border: '3px solid #000', borderRadius: '12px', cursor: 'pointer' }}></button>
               ))}
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
