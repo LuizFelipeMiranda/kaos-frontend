@@ -65,6 +65,7 @@ function App() {
   const [menuEmoteAberto, setMenuEmoteAberto] = useState(false);
 
   const [vencedor, setVencedor] = useState(null);
+  const [jogadaBossAtiva, setJogadaBossAtiva] = useState(1);
 
   const [modalConfigAberto, setModalConfigAberto] = useState(false);
   const [modalRegrasAberto, setModalRegrasAberto] = useState(false); 
@@ -187,6 +188,7 @@ function App() {
       setComprasAcumuladas(dados.comprasAcumuladas); 
       setSentido(dados.sentido || 1);
       setInfoJogadores(dados.infoJogadores || []); 
+      setJogadaBossAtiva(dados.jogadaBossAtiva || 1);
       setCartasSelecionadas([]); 
       setVencedor(null); 
       setTempoPartida(0);
@@ -204,6 +206,7 @@ function App() {
       setComprasAcumuladas(dados.comprasAcumuladas); 
       setSentido(dados.sentido || 1); 
       setInfoJogadores(dados.infoJogadores || []); 
+      if (dados.jogadaBossAtiva) setJogadaBossAtiva(dados.jogadaBossAtiva);
       setCartasSelecionadas([]); 
       
       if (dados.resetarTempo) { 
@@ -213,9 +216,7 @@ function App() {
       tocarEfeito('carta');
     });
 
-    socket.on('mao_espiao_previa', (dados) => { 
-      setMaoEspiadaPrevia(dados); 
-    });
+    socket.on('mao_espiao_previa', (dados) => { setMaoEspiadaPrevia(dados); });
 
     socket.on('emote_recebido', ({ id, emote }) => {
       setEmotesAtivos(prev => ({ ...prev, [id]: emote }));
@@ -229,12 +230,8 @@ function App() {
     });
 
     socket.on('iniciar_evento_nove', () => { 
-      setEventoNoveAtivo(true); 
-      setEuJaBati(false); 
-      setPosicaoNove({ 
-        top: `${Math.floor(Math.random() * 50) + 25}%`, 
-        left: `${Math.floor(Math.random() * 70) + 15}%` 
-      }); 
+      setEventoNoveAtivo(true); setEuJaBati(false); 
+      setPosicaoNove({ top: `${Math.floor(Math.random() * 50) + 25}%`, left: `${Math.floor(Math.random() * 70) + 15}%` }); 
       tocarEfeito('alarme'); 
     });
 
@@ -244,29 +241,19 @@ function App() {
       setTimeout(() => setErro(''), 6000); 
     });
 
-    socket.on('fim_de_jogo', (nomeGanhador) => { 
-      setVencedor(nomeGanhador); 
-    });
+    socket.on('fim_de_jogo', (nomeGanhador) => { setVencedor(nomeGanhador); });
     
     socket.on('voce_foi_removido', () => {
       setErro(idioma === 'pt' ? 'Você foi expulso da sala pelo anfitrião.' : 'You were kicked from the room.');
       setTimeout(() => setErro(''), 4000);
       
       socket.emit('sair_sala', minhaSala);
-      setMinhaSala(null); 
-      setJogadores([]); 
-      setInfoJogadores([]);
-      setJogoIniciado(false); 
-      setVencedor(null); 
-      setTempoPartida(0); 
-      setMostrandoSorteio(false);
+      setMinhaSala(null); setJogadores([]); setInfoJogadores([]);
+      setJogoIniciado(false); setVencedor(null); setTempoPartida(0); setMostrandoSorteio(false);
       localStorage.removeItem('kaos_sala_ativa');
     });
     
-    socket.on('erro', (mensagem) => { 
-      setErro(mensagem); 
-      setTimeout(() => setErro(''), 4000); 
-    });
+    socket.on('erro', (mensagem) => { setErro(mensagem); setTimeout(() => setErro(''), 4000); });
 
     socket.on('disconnect', () => { 
       setErro('Aviso: Conexão perdida! O ecrã será atualizado em instantes...'); 
@@ -274,20 +261,11 @@ function App() {
     });
 
     return () => {
-      socket.off('sala_criada'); 
-      socket.off('entrou_na_sala'); 
-      socket.off('atualizar_jogadores'); 
-      socket.off('sorteando_primeiro_jogador'); 
-      socket.off('partida_iniciada'); 
-      socket.off('estado_atualizado'); 
-      socket.off('mao_espiao_previa'); 
-      socket.off('emote_recebido'); 
-      socket.off('erro'); 
-      socket.off('iniciar_evento_nove'); 
-      socket.off('fim_evento_nove'); 
-      socket.off('fim_de_jogo');
-      socket.off('voce_foi_removido'); 
-      socket.off('disconnect');
+      socket.off('sala_criada'); socket.off('entrou_na_sala'); socket.off('atualizar_jogadores'); 
+      socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); 
+      socket.off('mao_espiao_previa'); socket.off('emote_recebido'); socket.off('erro'); 
+      socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo');
+      socket.off('voce_foi_removido'); socket.off('disconnect');
     };
   }, [nome, meuAvatarSeed, tocarEfeito, idioma, minhaSala]);
 
@@ -297,9 +275,10 @@ function App() {
   
   const iniciarPartida = () => { 
     if (formatoSelecionado === 'duplas' && (jogadores.length !== 4 && jogadores.length !== 6)) {
-      setErro(idioma === 'pt' ? 'O modo Duplas requer exatamente 4 ou 6 jogadores!' : '2v2 Mode requires exactly 4 or 6 players!');
-      setTimeout(() => setErro(''), 4000); 
-      return;
+      setErro('O modo Duplas requer exatamente 4 ou 6 jogadores!'); setTimeout(() => setErro(''), 4000); return;
+    }
+    if (formatoSelecionado === 'boss' && jogadores.length < 3) {
+      setErro('O modo Boss requer no mínimo 3 jogadores!'); setTimeout(() => setErro(''), 4000); return;
     }
     socket.emit('iniciar_partida', { codigoSala: minhaSala, regras: regrasSelecionadas, formato: formatoSelecionado }); 
   };
@@ -329,13 +308,9 @@ function App() {
 
   const handleReconectar = () => {
     const salaSalva = localStorage.getItem('kaos_sala_ativa');
-    if (salaSalva && nome) {
-      socket.emit('entrar_sala', { codigoSala: salaSalva, nomeJogador: nome, avatar: meuAvatarSeed });
-    } else if (!nome) { 
-      setErro('Digite o seu nome antes de reconectar!'); setTimeout(() => setErro(''), 3000); 
-    } else { 
-      setErro('Nenhuma sessão anterior encontrada!'); setTimeout(() => setErro(''), 3000); 
-    }
+    if (salaSalva && nome) socket.emit('entrar_sala', { codigoSala: salaSalva, nomeJogador: nome, avatar: meuAvatarSeed });
+    else if (!nome) { setErro('Digite o seu nome antes de reconectar!'); setTimeout(() => setErro(''), 3000); } 
+    else { setErro('Nenhuma sessão anterior encontrada!'); setTimeout(() => setErro(''), 3000); }
   };
 
   const comprarCarta = () => { if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('comprar_carta', minhaSala); };
@@ -405,29 +380,20 @@ function App() {
     t, idioma, socket, tempoPartida, meuJogadorInfo, turnoAtual, eventoNoveAtivo, tempoTurnoRestante, oponentesOrdenados, emotesAtivos, menuEmoteAberto,
     setMenuEmoteAberto, enviarEmote, minhaSala, baterNaMesa, euJaBati, posicaoNove, minhaMao, cartasSelecionadas, toggleSelecao, tentarJogarSelecionadas,
     comprasAcumuladas, comprarCarta, jaComprou, passarVez, cartaMesa, sentido, filaPassos, resolverPasso, maoEspiadaPrevia, setMaoEspiadaPrevia,
-    setPayloadJogada, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez
+    setPayloadJogada, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, jogadaBossAtiva
   };
 
   return (
     <div>
       <style>{`
-        @keyframes flutuarEmote { 
-          0% { opacity: 0; transform: translate(-50%, -20px) scale(0.5); } 
-          15% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); } 
-          30% { opacity: 1; transform: translate(-50%, -20px) scale(1); } 
-          80% { opacity: 1; transform: translate(-50%, -60px) scale(1); } 
-          100% { opacity: 0; transform: translate(-50%, -100px) scale(1.5); } 
-        }
+        @keyframes flutuarEmote { 0% { opacity: 0; transform: translate(-50%, -20px) scale(0.5); } 15% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); } 30% { opacity: 1; transform: translate(-50%, -20px) scale(1); } 80% { opacity: 1; transform: translate(-50%, -60px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -100px) scale(1.5); } }
         .emote-anim { position: absolute; top: 0px; left: 50%; font-size: 60px; animation: flutuarEmote 2.5s ease-out forwards; z-index: 5000; pointer-events: none; text-shadow: 2px 2px 0 #000; }
         .botoes-emotes-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
         .btn-emote { font-size: 24px; background: transparent; border: none; cursor: pointer; transition: 0.1s; }
         .btn-emote:hover { transform: scale(1.3); }
         .status-turno-box { min-width: 220px; padding: 10px 30px; border-radius: 20px; font-size: 16px; }
         .status-turno-box .tempo { font-size: 15px; margin-top: 4px; }
-        @media (max-width: 600px) { 
-          .status-turno-box { min-width: 140px !important; padding: 5px 15px !important; font-size: 13px !important; } 
-          .status-turno-box .tempo { font-size: 12px !important; margin-top: 2px !important; } 
-        }
+        @media (max-width: 600px) { .status-turno-box { min-width: 140px !important; padding: 5px 15px !important; font-size: 13px !important; } .status-turno-box .tempo { font-size: 12px !important; margin-top: 2px !important; } }
         .modo-seletor-botoes { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
         .btn-modo { flex: 1; padding: 8px !important; font-size: 14px !important; }
       `}</style>
@@ -449,7 +415,7 @@ function App() {
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
             {jogadores.map((j, i) => (
               <div key={j.id} style={{ transform: roletaIndex === i ? 'scale(1.3)' : 'scale(1)', opacity: roletaIndex === i ? 1 : 0.4, transition: 'all 0.1s', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="80" height="80" style={{ borderRadius: '50%', border: '4px solid #000', backgroundColor: '#fff', boxShadow: roletaIndex === i ? '0 0 20px #f1c40f' : 'none' }} alt="Avatar" />
+                <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="80" height="80" style={{ borderRadius: '50%', border: j.isBoss ? '4px solid #e74c3c' : '4px solid #000', backgroundColor: '#fff', boxShadow: roletaIndex === i ? '0 0 20px #f1c40f' : 'none' }} alt="Avatar" />
                 <span style={{ color: '#fff', fontWeight: 'bold', marginTop: '10px', textShadow: '2px 2px 0 #000' }}>{j.nome}</span>
               </div>
             ))}
@@ -459,12 +425,7 @@ function App() {
 
       <div className="ocultar-no-retrato">
         {erro && <div className="notificacao-topo-esquerdo" style={{ top: jogoIniciado ? '75px' : '20px' }}>{erro}</div>}
-
-        {vencedor || jogoIniciado ? (
-          <Table {...tableProps} />
-        ) : (
-          <Lobby {...lobbyProps} />
-        )}
+        {vencedor || jogoIniciado ? <Table {...tableProps} /> : <Lobby {...lobbyProps} />}
       </div>
     </div>
   );
