@@ -12,7 +12,6 @@ export default function Table(props) {
     setMaoEspiadaPrevia, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez
   } = props;
 
-  // ORDENAÇÃO AUTOMÁTICA DAS CARTAS
   const cartasOrdenadas = useMemo(() => {
     const ordemCores = { vermelho: 1, amarelo: 2, azul: 3, verde: 4, preto: 5 };
     return [...minhaMao].sort((a, b) => {
@@ -36,7 +35,7 @@ export default function Table(props) {
     <div style={{ textAlign: 'center', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       
       {/* Top Bar ESQUERDA (Tempo e Equipa) */}
-      <div style={{ position: 'fixed', top: '10px', left: '10px', zIndex: 100, display: 'flex', gap: '10px', alignItems: 'center' }}>
+      <div style={{ position: 'fixed', top: '15px', left: '15px', zIndex: 100, display: 'flex', gap: '10px', alignItems: 'center' }}>
         <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '6px 15px', borderRadius: '15px', border: '3px solid #000', boxShadow: '3px 3px 0 #000', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
           <Timer size={16} weight="bold" /> {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
         </div>
@@ -47,8 +46,8 @@ export default function Table(props) {
         )}
       </div>
 
-      {/* Top Bar DIREITA (Indicador de Turno - Sem fundo branco no temporizador) */}
-      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 100 }}>
+      {/* Top Bar DIREITA (Indicador de Turno) */}
+      <div style={{ position: 'fixed', top: '15px', right: '15px', zIndex: 100 }}>
         <div className="status-turno-box" style={{ 
           backgroundColor: '#2ecc71', color: '#fff', border: '4px solid #000', borderRadius: '15px', 
           padding: '8px 15px', fontWeight: '900', boxShadow: '3px 3px 0 #000', textAlign: 'center'
@@ -57,14 +56,15 @@ export default function Table(props) {
             {turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}
           </div>
           
-          <div style={{ color: '#e74c3c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '2px', textShadow: '1px 1px 0 #000' }}>
+          {/* Temporizador branco e sem sombra */}
+          <div style={{ color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '2px' }}>
             {eventoNoveAtivo ? <span>PAUSA!</span> : <><Hourglass size={14} weight="bold" /> {tempoTurnoRestante}s</>}
           </div>
         </div>
       </div>
 
-      {/* ÁREA CENTRAL - MESA DE MADEIRA (Ajustada para não haver scroll) */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+      {/* ÁREA CENTRAL - MESA DE MADEIRA (Muito mais espaçosa) */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, padding: '40px 0' }}>
         <div className="mesa-redonda-moderna">
           {oponentesOrdenados.map((op, index) => {
             const ehVezDele = turnoAtual === op.id;
@@ -100,28 +100,25 @@ export default function Table(props) {
           {/* CENTRO DA MESA */}
           <div className="centro-mesa" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             
-            {/* SETAS DE DIREÇÃO */}
             <div style={{ position: 'absolute', opacity: 0.25, pointerEvents: 'none', zIndex: 1 }}>
               {sentido === 1 ? <ArrowsClockwise size={220} color="#fff" className="spin-horario" /> : <ArrowsCounterClockwise size={220} color="#fff" className="spin-anti" />}
             </div>
 
-            {/* CARTA DA MESA (Centralizada) */}
-            <div key={cartaMesa?.id || 'mesa'} className="carta carta-mesa" style={{ zIndex: 2, transform: 'scale(0.9)', backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff', boxShadow: '6px 6px 15px rgba(0,0,0,0.5)', margin: 0 }}>
-              {renderValorCarta(cartaMesa.valor)}
+            {/* Envolucro da carta da mesa para manter tamanho base e permitir animação interna */}
+            <div style={{ zIndex: 2, transform: 'scale(0.85)' }}>
+              <div key={cartaMesa?.id || 'mesa'} className="carta carta-mesa anim-play" style={{ backgroundColor: getCorCss(cartaMesa.cor), color: cartaMesa.cor === 'amarelo' ? '#000' : '#fff', boxShadow: '6px 6px 15px rgba(0,0,0,0.5)', margin: 0 }}>
+                {renderValorCarta(cartaMesa.valor)}
+              </div>
             </div>
 
-            {/* MONTE DE COMPRA (Canto inferior esquerdo e visual Kaos) */}
+            {/* MONTE DE COMPRA (Canto inferior esquerdo e visual Kaos corrigido) */}
             <div style={{ position: 'absolute', bottom: '15%', left: '20%', zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div 
-                className="baralho-kaos" 
-                onClick={comprarCarta} 
-                style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default' }}
-              >
+              <div className="baralho-kaos" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default' }}>
                 <span className="k-logo">K</span>
               </div>
               
               {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
-                <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{ position: 'absolute', bottom: '-30px', whiteSpace: 'nowrap', padding: '4px 8px', fontSize: '11px', margin: 0 }}>{t.comprar}</button>
+                <button className="btn btn-roxo btn-pequeno anim-draw" onClick={comprarCarta} style={{ position: 'absolute', bottom: '-30px', whiteSpace: 'nowrap', padding: '4px 8px', fontSize: '11px', margin: 0 }}>{t.comprar}</button>
               )}
             </div>
 
@@ -129,14 +126,13 @@ export default function Table(props) {
         </div>
       </div>
 
-      {/* ÁREA INFERIOR (Apenas Cartas e Botões - Sem causar overflow) */}
-      <div style={{ paddingBottom: '10px' }}>
+      {/* ÁREA INFERIOR */}
+      <div style={{ paddingBottom: '15px' }}>
         
-        {/* A MÃO DE CARTAS DO JOGADOR */}
         <div className="mao-container-moderna">
-          {cartasOrdenadas.map((carta) => {
+          {cartasOrdenadas.map((carta, i) => {
             const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
-            let classes = "carta carta-moderna";
+            let classes = "carta carta-moderna anim-draw";
             if (taSelecionada) classes += " selecionada";
             if (turnoAtual !== socket.id || eventoNoveAtivo) classes += " desabilitada";
             
@@ -147,7 +143,8 @@ export default function Table(props) {
                 className={classes} 
                 style={{ 
                   backgroundColor: getCorCss(carta.cor), 
-                  color: carta.cor === 'amarelo' ? '#000' : '#fff'
+                  color: carta.cor === 'amarelo' ? '#000' : '#fff',
+                  animationDelay: `${i * 0.04}s` 
                 }}
               > 
                 {renderValorCarta(carta.valor)} 
@@ -156,15 +153,14 @@ export default function Table(props) {
           })}
         </div>
 
-        {/* PAINEL DE AÇÕES INFERIOR */}
         <div className="painel-acoes" style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
-          {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && ( <button className="btn btn-verde" onClick={tentarJogarSelecionadas} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.jogar} ({cartasSelecionadas.length})</button> )}
-          {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && ( <button className="btn btn-vermelho" onClick={comprarCarta} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.aceitarPunicao} (+{comprasAcumuladas})</button> )}
-          {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && ( <button className="btn btn-cinza" onClick={passarVez} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.passarVez}</button> )}
+          {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && ( <button className="btn btn-verde anim-draw" onClick={tentarJogarSelecionadas} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.jogar} ({cartasSelecionadas.length})</button> )}
+          {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && ( <button className="btn btn-vermelho anim-draw" onClick={comprarCarta} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.aceitarPunicao} (+{comprasAcumuladas})</button> )}
+          {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && ( <button className="btn btn-cinza anim-draw" onClick={passarVez} style={{ fontSize: '16px', padding: '10px 20px' }}>{t.passarVez}</button> )}
         </div>
       </div>
 
-      {/* EVENTO DO 9 (BOTÃO DE BATER) */}
+      {/* BATER NA MESA */}
       {eventoNoveAtivo && (
         <div style={{ position: 'fixed', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 2000, pointerEvents: 'none' }}>
           <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '160px', height: '160px', borderRadius: '50%', border: '8px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: euJaBati ? 'inset 4px 4px 10px rgba(0,0,0,0.5)' : '6px 6px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}>
@@ -173,7 +169,7 @@ export default function Table(props) {
         </div>
       )}
 
-      {/* MENU DE EMOTES E UNO (Fixos no canto) */}
+      {/* MENU DE EMOTES E KAOS BUTTON */}
       <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
         <div style={{ position: 'relative' }}>
           {emotesAtivos[socket.id] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[socket.id]}</div>}
@@ -192,14 +188,8 @@ export default function Table(props) {
           )}
         </div>
         
-        <button 
-          onClick={() => socket.emit('apertar_uno', props.minhaSala)} 
-          style={{ 
-            background: '#e74c3c', color: '#fff', fontWeight: '900', fontSize: '20px',
-            border: '4px solid #000', borderRadius: '50%', width: '90px', height: '90px', 
-            cursor: 'pointer', boxShadow: '4px 4px 0 #000', display: 'flex', justifyContent: 'center', alignItems: 'center', textShadow: '2px 2px 0 #000'
-          }}
-        >
+        {/* BOTÃO KAOS com a classe exclusiva */}
+        <button className="btn-kaos" onClick={() => socket.emit('apertar_uno', props.minhaSala)}>
           KAOS!
         </button>
       </div>
