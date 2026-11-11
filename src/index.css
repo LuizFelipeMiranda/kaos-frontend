@@ -692,3 +692,158 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
 .anim-play {
   animation: playCardAnim 0.4s ease-out forwards;
 }
+
+/* ========================================================
+   ESTILOS DA MESA E DA PARTIDA (KAOS!)
+======================================================== */
+
+/* --- A NOVA MESA DE MADEIRA --- */
+.mesa-redonda-moderna {
+  width: 90vw;
+  max-width: 500px;
+  height: 90vw;
+  max-height: 500px;
+  margin: 15px auto 10px auto;
+  border-radius: 50%;
+  position: relative;
+  background: radial-gradient(circle, #e3a869 0%, #c4823f 60%, #8b5a2b 100%);
+  border: 12px solid #4a2f15;
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.4), 0 15px 20px rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- CARTAS NA MÃO DO JOGADOR --- */
+.mao-container-moderna {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 100px;
+  max-width: 95vw;
+  margin: 0 auto;
+}
+
+.carta {
+  width: 60px;
+  height: 90px;
+  border-radius: 8px;
+  border: 3px solid #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  font-family: 'Fredoka', sans-serif;
+}
+
+.carta-moderna {
+  margin-left: -35px; /* Sobreposição das cartas */
+  transition: transform 0.15s ease-out; /* Apenas animação de posição */
+  box-shadow: -4px 4px 10px rgba(0,0,0,0.3);
+}
+
+.carta-moderna:first-child {
+  margin-left: 0;
+}
+
+/* Ao passar o rato: sobe ligeiramente (sem mudar de cor) */
+.carta-moderna:hover:not(.desabilitada) {
+  transform: translateY(-10px);
+}
+
+/* Ao selecionar: sobe mais um pouco e mantém a borda preta */
+.carta-moderna.selecionada {
+  transform: translateY(-20px);
+  border: 3px solid #000;
+}
+
+.carta-moderna.desabilitada {
+  filter: brightness(0.6) grayscale(0.5);
+  cursor: not-allowed;
+}
+
+/* --- O NOVO VERSO DO BARALHO (MONTE DE COMPRAS) --- */
+.baralho-kaos {
+  width: 70px;
+  height: 105px;
+  background-color: #2f3542;
+  border: 4px solid #000;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 4px 4px 0 #000, 8px 8px 15px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.baralho-kaos:hover {
+  transform: scale(1.05);
+}
+
+.baralho-kaos .k-logo {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 900;
+  font-size: 32px;
+  color: #a4b0be;
+}
+
+/* --- ESTRUTURA DOS OPONENTES (AVATAR + CORPO) --- */
+.oponente-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.oponente-corpo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.player-body {
+  width: 60px;
+  height: 35px;
+  background-color: #34495e; /* O "corpo" base */
+  border-radius: 40px 40px 10px 10px;
+  margin-top: -15px; /* Puxa o corpo para baixo da cabeça */
+  border: 3px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  z-index: 1;
+}
+
+.oponente-avatar {
+  z-index: 2;
+}
+
+.carta-verso {
+  background-color: #2c3e50;
+  color: #fff;
+  border: 2px solid #000;
+  border-radius: 4px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+/* --- ANIMAÇÕES DA MESA --- */
+.spin-horario {
+  animation: spinRight 10s linear infinite;
+}
+.spin-anti {
+  animation: spinLeft 10s linear infinite;
+}
+
+@keyframes spinRight {
+  100% { transform: rotate(360deg); }
+}
+@keyframes spinLeft {
+  100% { transform: rotate(-360deg); }
+}
