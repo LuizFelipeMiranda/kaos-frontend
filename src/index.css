@@ -82,7 +82,10 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   transition: all 0.1s;
   margin: 5px;
 }
-.btn-pequeno { padding: 6px 12px; font-size: 14px; }
+.btn-pequeno {
+  padding: 6px 12px;
+  font-size: 14px;
+}
 .btn:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0 #000; }
 .btn-verde { background-color: #2ecc71; }
 .btn-azul { background-color: #3498db; }
@@ -124,7 +127,7 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   width: 95%;
   max-width: 750px;
   height: clamp(350px, 45vh, 480px); 
-  margin: 35px auto 0 auto;
+  margin: 35px auto 0 auto; /* Adicionamos 35px de margem no topo para empurrar a mesa para baixo */
   background-color: #156135; 
   border-radius: 50%;
   border: 12px solid #6a3834; 
@@ -287,7 +290,6 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   margin-top: 15px; 
   margin-bottom: 35px; 
 }
-
 /* MODAIS E BOTÕES */
 .modal-overlay {
   position: fixed;
@@ -361,3 +363,233 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   overflow: hidden;
 }
 .avatar-display:hover { transform: scale(1.1) rotate(5deg); }
+.avatar-dica { font-size: 14px; font-weight: bold; color: #7f8c8d; margin-top: 5px; }
+
+/* =========================================
+   NOVOS ESTILOS: NOTIFICAÇÃO E MOBILE
+========================================= */
+
+/* Notificação no Canto Superior Esquerdo */
+.notificacao-topo-esquerdo {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background-color: #ff7675;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 3px solid #000;
+  font-weight: 900;
+  z-index: 1500;
+  box-shadow: 4px 4px 0 #000;
+  max-width: 280px;
+  text-align: left;
+  font-size: 15px;
+  animation: deslizarEsquerda 0.3s ease-out;
+}
+
+@keyframes deslizarEsquerda {
+  from { transform: translateX(-120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Ecrã de Aviso para Rodar o Dispositivo (Apenas na Vertical) */
+.aviso-rotacao {
+  display: none;
+}
+
+@media (max-width: 899px) and (orientation: portrait) {
+  .aviso-rotacao {
+    display: flex;
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background-color: #2c3e50;
+    color: white;
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+    box-sizing: border-box;
+  }
+  .aviso-rotacao svg {
+    margin-bottom: 20px;
+    animation: animacaoRodar 2s infinite ease-in-out;
+  }
+  @keyframes animacaoRodar {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(-90deg); }
+    100% { transform: rotate(-90deg); }
+  }
+  /* Oculta o jogo principal quando o aviso está ativo */
+  .ocultar-no-retrato {
+    display: none !important;
+  }
+}
+
+/* Ajustes de Responsividade para Telemóveis na Horizontal (Landscape) */
+/* Ajustes de Responsividade para Telemóveis na Horizontal (Landscape) */
+@media (max-height: 500px) and (orientation: landscape) {
+  .container {
+    margin: 10px auto;
+    padding: 15px;
+  }
+  
+  /* Reduz os status superiores */
+  .status-turno {
+    top: 10px;
+    right: 10px;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-width: 2px;
+  }
+  .notificacao-topo-esquerdo {
+    top: 10px;
+    left: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+    max-width: 220px;
+    border-width: 2px;
+  }
+
+  /* Reduz o botão KAOS */
+  .btn-uno {
+    bottom: 10px;
+    right: 10px;
+    width: 60px;
+    height: 60px;
+    font-size: 14px;
+    border-width: 3px;
+    box-shadow: 3px 3px 0 #000, inset 0 -3px 0 rgba(0,0,0,0.2);
+  }
+
+  /* === CORREÇÃO: Impede que a mesa fique demasiado larga no telemóvel === */
+  .mesa-redonda {
+    margin-top: 15px;
+    height: 40vh; 
+    width: 80%; /* Não deixa esticar ao longo de todo o ecrã */
+    max-width: 500px; /* Impede expansão excessiva */
+    min-height: 140px;
+    border-width: 6px;
+  }
+  
+  /* Diminui os avatares e nomes dos oponentes */
+  .oponente-avatar {
+    width: 40px;
+    height: 40px;
+    border-width: 2px;
+  }
+  .oponente-nome {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-width: 2px;
+  }
+  .carta-verso {
+    width: 12px;
+    height: 22px;
+    font-size: 9px;
+    border-width: 1px;
+  }
+
+  /* Reduz as cartas da mesa e da mão para não sobreporem o ecrã */
+  .carta, .icone-baralho, .carta-mesa {
+    width: 45px !important;
+    height: 55px !important;
+    font-size: 22px !important;
+    border-width: 2px !important;
+    border-radius: 6px !important;
+  }
+  .direcao-indicador svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  /* Encolhe o painel de botões de ação */
+  .painel-acoes {
+    height: auto;
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+  .painel-acoes .btn {
+    padding: 4px 10px;
+    font-size: 12px;
+    border-width: 2px;
+  }
+
+  /* Ajusta a distância e o espaço da mão do jogador */
+  .mao-container {
+    padding: 0 5px 5px 5px !important;
+    gap: 4px !important;
+    position: relative;
+    z-index: 10;
+    margin-top: 1rem;
+  }
+}
+
+/* --- ESTILO GARTIC: PAINEL DO LOBBY --- */
+.lobby-panel {
+  background-color: #ffffff;
+  border: 6px solid #000;
+  border-radius: 30px;
+  padding: 30px;
+  max-width: 650px;
+  margin: 40px auto;
+  box-shadow: 10px 10px 0px #000;
+  position: relative;
+}
+
+/* --- ANIMAÇÃO DA CARTA "K" --- */
+@keyframes flutuarEgirar {
+  0% { transform: translateY(0) rotate(-10deg); }
+  25% { transform: translateY(-15px) rotate(-10deg); }
+  50% { transform: translateY(0) rotate(-10deg); }
+  75% { transform: translateY(-15px) rotate(350deg); }
+  100% { transform: translateY(0) rotate(350deg); }
+}
+
+.k-animado {
+  display: inline-block;
+  animation: flutuarEgirar 4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* --- GRID DE JOGADORES (SALA DE ESPERA) --- */
+.grid-jogadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.card-jogador {
+  background: #f8f9fa;
+  border: 4px solid #000;
+  border-radius: 20px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 4px 4px 0 #000;
+  position: relative;
+  transition: transform 0.1s;
+}
+
+.card-jogador:hover {
+  transform: translateY(-5px);
+  box-shadow: 4px 9px 0 #000;
+}
+
+.host-badge {
+  position: absolute;
+  top: -15px;
+  right: -10px;
+  background: #f1c40f;
+  border: 3px solid #000;
+  border-radius: 50%;
+  padding: 5px;
+  box-shadow: 2px 2px 0 #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
