@@ -274,13 +274,14 @@ function App() {
   const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
   
   const iniciarPartida = () => { 
-    if (formatoSelecionado === 'duplas' && (jogadores.length !== 4 && jogadores.length !== 6)) {
+    if (formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss' && (jogadores.length !== 4 && jogadores.length !== 6)) {
       setErro('O modo Duplas requer exatamente 4 ou 6 jogadores!'); setTimeout(() => setErro(''), 4000); return;
     }
-    if (formatoSelecionado === 'boss' && jogadores.length < 3) {
+    if (regrasSelecionadas === 'boss' && jogadores.length < 3) {
       setErro('O modo Boss requer no mínimo 3 jogadores!'); setTimeout(() => setErro(''), 4000); return;
     }
-    socket.emit('iniciar_partida', { codigoSala: minhaSala, regras: regrasSelecionadas, formato: formatoSelecionado }); 
+    // Se for Boss, passamos como Regra e o Formato assume PvP por defeito.
+    socket.emit('iniciar_partida', { codigoSala: minhaSala, regras: regrasSelecionadas, formato: regrasSelecionadas === 'boss' ? 'pvp' : formatoSelecionado }); 
   };
   
   const adicionarBot = () => {
