@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookBookmark, Gear, MusicNote, SpeakerHigh, SpeakerSlash, Copy, Check, Crown, UserPlus} from '@phosphor-icons/react';
+import { BookBookmark, Gear, MusicNote, SpeakerHigh, SpeakerSlash, Copy, Check, Crown, UserPlus } from '@phosphor-icons/react';
 import livePixQRCode from '../assets/livepix.png';
 
 export default function Lobby(props) {
@@ -11,7 +11,7 @@ export default function Lobby(props) {
     sairDaSala, expulsarJogador, handleSort, dragItem, dragOverItem,
     modalRegrasAberto, setModalRegrasAberto, modalConfigAberto, setModalConfigAberto,
     musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos,
-    setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos,
+    setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos
   } = props;
 
   const [linkCopiado, setLinkCopiado] = useState(false);
@@ -24,8 +24,8 @@ export default function Lobby(props) {
   };
 
   const getDescricaoFormato = () => {
+    if (regrasSelecionadas === 'boss') return "👑 MODO BOSS: 1 vs Todos! O Boss joga com 15 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
     if (formatoSelecionado === 'duplas') return t.descDuplasReq;
-    if (formatoSelecionado === 'boss') return "1 vs Todos! O Boss joga com 15 cartas e joga 2 vezes seguidas. A aliança tenta derrotá-lo! (Mín. 3 jogadores, Regras Casuais).";
     return regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos;
   };
 
@@ -103,19 +103,21 @@ export default function Lobby(props) {
             <div style={{ padding: '20px', border: '4px dashed #000', borderRadius: '20px', margin: '0 auto 25px auto', backgroundColor: '#f9f9f9' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: '0 0 10px 0' }}>Regras:</h3>
-                  <div className="modo-seletor-botoes" style={{ marginBottom: '5px' }}>
-                    <button disabled={formatoSelecionado === 'boss'} className={`btn btn-modo ${regrasSelecionadas === 'casual' || formatoSelecionado === 'boss' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
-                    <button disabled={formatoSelecionado === 'boss'} className={`btn btn-modo ${regrasSelecionadas === 'kaos' && formatoSelecionado !== 'boss' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
+                  <h3 style={{ margin: '0 0 10px 0' }}>Modo de Jogo:</h3>
+                  <div className="modo-seletor-botoes" style={{ marginBottom: '5px', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <button className={`btn btn-modo ${regrasSelecionadas === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
+                      <button className={`btn btn-modo ${regrasSelecionadas === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
+                    </div>
+                    <button className={`btn btn-modo ${regrasSelecionadas === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('boss')} style={{ width: '100%', marginTop: '5px', backgroundColor: regrasSelecionadas === 'boss' ? '#e74c3c' : '' }}>👹 BOSS (1 vs Todos)</button>
                   </div>
                 </div>
-                <div style={{ width: '4px', height: '60px', backgroundColor: '#000', margin: '0 15px', borderRadius: '2px' }}></div>
+                <div style={{ width: '4px', height: '90px', backgroundColor: '#000', margin: '0 15px', borderRadius: '2px' }}></div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ margin: '0 0 10px 0' }}>Formato:</h3>
-                  <div className="modo-seletor-botoes" style={{ marginBottom: '5px' }}>
-                    <button className={`btn btn-modo ${formatoSelecionado === 'pvp' ? 'btn-amarelo' : 'btn-cinza'}`} style={{ backgroundColor: formatoSelecionado === 'pvp' ? '#f1c40f' : '', color: formatoSelecionado === 'pvp' ? '#000' : '#fff' }} onClick={() => setFormatoSelecionado('pvp')}>{t.pvp}</button>
-                    <button className={`btn btn-modo ${formatoSelecionado === 'duplas' ? 'btn-verde' : 'btn-cinza'}`} onClick={() => setFormatoSelecionado('duplas')}>{t.duplas}</button>
-                    <button className={`btn btn-modo ${formatoSelecionado === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} onClick={() => setFormatoSelecionado('boss')}>BOSS</button>
+                  <div className="modo-seletor-botoes" style={{ marginBottom: '5px', flexDirection: 'column', gap: '5px' }}>
+                    <button disabled={regrasSelecionadas === 'boss'} className={`btn btn-modo ${formatoSelecionado === 'pvp' || regrasSelecionadas === 'boss' ? 'btn-amarelo' : 'btn-cinza'}`} style={{ backgroundColor: (formatoSelecionado === 'pvp' || regrasSelecionadas === 'boss') ? '#f1c40f' : '', color: (formatoSelecionado === 'pvp' || regrasSelecionadas === 'boss') ? '#000' : '#fff', opacity: regrasSelecionadas === 'boss' ? 0.6 : 1 }} onClick={() => setFormatoSelecionado('pvp')}>{t.pvp}</button>
+                    <button disabled={regrasSelecionadas === 'boss'} className={`btn btn-modo ${formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss' ? 'btn-verde' : 'btn-cinza'}`} style={{ opacity: regrasSelecionadas === 'boss' ? 0.6 : 1 }} onClick={() => setFormatoSelecionado('duplas')}>{t.duplas}</button>
                   </div>
                 </div>
               </div>
@@ -140,7 +142,7 @@ export default function Lobby(props) {
               const euSouHost = jogadores[0]?.id === socket.id;
               let corEquipeLobby = 'transparent';
               
-              if (formatoSelecionado === 'duplas' && jogadores.length >= 4) {
+              if (formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss' && jogadores.length >= 4) {
                 const deslocamento = Math.floor(jogadores.length / 2);
                 const cores = ['#ff4757', '#f1c40f', '#3498db']; 
                 corEquipeLobby = cores[index % deslocamento];
@@ -157,7 +159,7 @@ export default function Lobby(props) {
                   onDragOver={(e) => e.preventDefault()}
                   style={{ 
                     cursor: euSouHost ? 'grab' : 'default',
-                    backgroundColor: formatoSelecionado === 'duplas' ? `${corEquipeLobby}22` : '#fff'
+                    backgroundColor: (formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss') ? `${corEquipeLobby}22` : '#fff'
                   }}
                 >
                   {ehHost && (
@@ -207,14 +209,6 @@ export default function Lobby(props) {
             <p style={{ margin: '0 0 10px 0', fontSize: '15px', whiteSpace: 'pre-line' }}>{t.regrasNovasText}</p>
             <h3 style={{ color: '#2ecc71', margin: '15px 0 5px 0' }}>{t.regrasBasicasTitulo}</h3>
             <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regrasBasicasTexto}</p>
-            <h3 style={{ color: '#f39c12', margin: '15px 0 5px 0' }}>{t.sequenciasTitulo}</h3>
-            <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.sequenciasTexto}</p>
-            <h3 style={{ color: '#3498db', margin: '15px 0 5px 0' }}>{t.regraZeroTitulo}</h3>
-            <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regraZeroTexto}</p>
-            <h3 style={{ color: '#e74c3c', margin: '15px 0 5px 0' }}>{t.regraNoveTitulo}</h3>
-            <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regraNoveTexto}</p>
-            <h3 style={{ color: '#ff4757', margin: '15px 0 5px 0' }}>{t.kaosTitulo}</h3>
-            <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.kaosTexto}</p>
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>{t.fechar}</button>
             </div>
