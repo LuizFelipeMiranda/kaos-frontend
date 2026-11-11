@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { HandPalm, Cards, ArrowsClockwise, ArrowsCounterClockwise, Hourglass, Timer, Eye, Scales, Hash, Smiley } from '@phosphor-icons/react';
+import { HandPalm, Cards, ArrowsClockwise, ArrowsCounterClockwise, Hourglass, Timer, Eye, Scales, Hash, Smiley, Skull } from '@phosphor-icons/react';
 import { getCorCss, renderValorCarta, getPosicaoOponente, arrayEmojis } from '../utils/gameUtils';
 
 export default function Table(props) {
@@ -40,7 +40,7 @@ export default function Table(props) {
 
         {meuJogadorInfo?.isBoss && (
           <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#e74c3c', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 #000`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-             😈 VOCÊ É O BOSS
+             <Skull size={20} weight="bold" /> VOCÊ É O BOSS
           </div>
         )}
       </div>
@@ -80,7 +80,11 @@ export default function Table(props) {
                 />
               </div>
               
-              {op.isBoss && <div style={{backgroundColor: '#e74c3c', color: '#fff', fontWeight: 'bold', fontSize: '10px', padding: '2px 8px', borderRadius: '10px', border: '2px solid #000', marginTop: '-5px', zIndex: 10, position: 'relative'}}>BOSS</div>}
+              {op.isBoss && (
+                <div style={{ backgroundColor: '#e74c3c', color: '#fff', fontWeight: 'bold', fontSize: '10px', padding: '2px 8px', borderRadius: '10px', border: '2px solid #000', marginTop: '-5px', zIndex: 10, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                  <Skull size={12} weight="bold" /> BOSS
+                </div>
+              )}
 
               <div className="cartas-oponente">
                 {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => (
@@ -177,7 +181,7 @@ export default function Table(props) {
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
               {maoEspiadaPrevia.cartas.map(c => ( 
                 <div key={c.id} className="carta" style={{ backgroundColor: getCorCss(c.originalCor || c.cor), color: c.cor === 'amarelo' ? '#000' : '#fff', transform: 'scale(0.8)', margin: '-10px' }}> 
-                  {renderValorCarta(c.originalValor || c.valor)} 
+                  {renderValorCarta(c.originalCor ? c.originalValor : c.valor)} 
                 </div> 
               ))}
             </div>
