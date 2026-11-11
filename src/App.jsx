@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { dic } from './utils/dictionary';
 import { gerarSeedAleatoria } from './utils/gameUtils';
-import { DeviceMobile } from '@phosphor-icons/react';
+import { DeviceMobile, Skull } from '@phosphor-icons/react';
 
 import Lobby from './pages/Lobby';
 import Table from './pages/Table';
@@ -280,7 +280,6 @@ function App() {
     if (regrasSelecionadas === 'boss' && jogadores.length < 3) {
       setErro('O modo Boss requer no mínimo 3 jogadores!'); setTimeout(() => setErro(''), 4000); return;
     }
-    // Se for Boss, passamos como Regra e o Formato assume PvP por defeito.
     socket.emit('iniciar_partida', { codigoSala: minhaSala, regras: regrasSelecionadas, formato: regrasSelecionadas === 'boss' ? 'pvp' : formatoSelecionado }); 
   };
   
@@ -417,7 +416,9 @@ function App() {
             {jogadores.map((j, i) => (
               <div key={j.id} style={{ transform: roletaIndex === i ? 'scale(1.3)' : 'scale(1)', opacity: roletaIndex === i ? 1 : 0.4, transition: 'all 0.1s', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="80" height="80" style={{ borderRadius: '50%', border: j.isBoss ? '4px solid #e74c3c' : '4px solid #000', backgroundColor: '#fff', boxShadow: roletaIndex === i ? '0 0 20px #f1c40f' : 'none' }} alt="Avatar" />
-                <span style={{ color: '#fff', fontWeight: 'bold', marginTop: '10px', textShadow: '2px 2px 0 #000' }}>{j.nome}</span>
+                <span style={{ color: '#fff', fontWeight: 'bold', marginTop: '10px', textShadow: '2px 2px 0 #000', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  {j.isBoss && <Skull size={16} weight="bold" color="#e74c3c" />} {j.nome}
+                </span>
               </div>
             ))}
           </div>
