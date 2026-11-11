@@ -22,7 +22,6 @@ body {
   text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
   letter-spacing: 2px;
   margin-bottom: 20px;
-  font-family: 'Fredoka', sans-serif;
   font-weight: 900;
 }
 .carta-k-logo {
@@ -38,7 +37,6 @@ body {
   color: #2c3e50;
   box-shadow: 6px 6px 0 #000;
   margin-right: 8px;
-  text-shadow: none;
   transform: rotate(-10deg);
   position: relative;
   top: -5px;
@@ -82,10 +80,7 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   transition: all 0.1s;
   margin: 5px;
 }
-.btn-pequeno {
-  padding: 6px 12px;
-  font-size: 14px;
-}
+.btn-pequeno { padding: 6px 12px; font-size: 14px; }
 .btn:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0 #000; }
 .btn-verde { background-color: #2ecc71; }
 .btn-azul { background-color: #3498db; }
@@ -93,203 +88,6 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
 .btn-roxo { background-color: #9b59b6; }
 .btn-cinza { background-color: #95a5a6; }
 
-/* Status "VEZ DE NOME" Fixo no Canto Superior Direito */
-.status-turno {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  font-size: 16px;
-  font-weight: 900;
-  color: #fff;
-  background-color: #2c3e50;
-  padding: 8px 20px;
-  border: 3px solid #000;
-  border-radius: 15px;
-  box-shadow: 4px 4px 0 #000;
-  letter-spacing: 1px;
-  z-index: 1000;
-}
-.status-turno.minha-vez {
-  background-color: #2ecc71;
-  color: #000;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-/* === MESA E ADVERSÁRIOS === */
-.mesa-redonda {
-  position: relative;
-  width: 95%;
-  max-width: 750px;
-  height: clamp(350px, 45vh, 480px); 
-  margin: 35px auto 0 auto; /* Adicionamos 35px de margem no topo para empurrar a mesa para baixo */
-  background-color: #156135; 
-  border-radius: 50%;
-  border: 12px solid #6a3834; 
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.3), 8px 8px 0px #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.oponente-container {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-}
-
-.oponente-avatar {
-  background: #ecf0f1;
-  border: 4px solid #000;
-  border-radius: 50%;
-  width: 70px; 
-  height: 70px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 4px 4px 0 #000;
-  z-index: 1; 
-  overflow: hidden;
-}
-
-.cartas-oponente {
-  display: flex;
-  justify-content: center;
-  z-index: 2; 
-  margin-top: -25px; 
-}
-
-.carta-verso {
-  width: 18px;
-  height: 32px;
-  background-color: #bdc3c7; 
-  border: 2px solid #000;
-  border-radius: 4px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: 900;
-  font-size: 13px;
-  color: #2c3e50;
-  margin-left: -10px; 
-  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
-}
-.cartas-oponente .carta-verso:first-child { margin-left: 0; }
-
-.oponente-nome {
-  background: #fff;
-  border: 3px solid #000;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-weight: bold;
-  font-size: 13px;
-  box-shadow: 2px 2px 0 #000;
-  white-space: nowrap;
-  z-index: 3; 
-  margin-top: -5px; 
-}
-
-/* === CARTAS === */
-.carta {
-  width: clamp(65px, 9vw, 90px);
-  height: clamp(90px, 13vw, 130px);
-  font-size: clamp(30px, 4.5vw, 45px);
-  border: 4px solid #000;
-  border-radius: 12px;
-  box-shadow: 4px 4px 0 #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  background-color: white;
-}
-.carta:hover { transform: translateY(-10px) rotate(-5deg); }
-.carta.selecionada {
-  border-color: #fff;
-  box-shadow: 0 0 0 4px #2ecc71, 6px 6px 0 #000;
-  transform: translateY(-20px) scale(1.1);
-}
-.carta.desabilitada { cursor: not-allowed; filter: brightness(0.7); }
-.carta.desabilitada:hover { transform: none; }
-
-/* === CENTRO DA MESA === */
-.centro-mesa {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(15px, 4vw, 40px);
-  z-index: 5;
-}
-
-.coluna-baralho {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.icone-baralho {
-  width: clamp(65px, 9vw, 90px);
-  height: clamp(90px, 13vw, 130px);
-  background-color: #2c3e50;
-  border: 4px solid #000;
-  border-radius: 12px;
-  box-shadow: 4px 4px 0 #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  transition: all 0.2s;
-}
-.icone-baralho:hover { transform: scale(1.05); }
-
-.carta-mesa {
-  cursor: default;
-  margin: 0;
-  width: clamp(65px, 9vw, 90px);
-  height: clamp(90px, 13vw, 130px);
-  font-size: clamp(30px, 4.5vw, 45px);
-}
-.carta-mesa:hover { transform: none; }
-
-@keyframes dropCard {
-  0% { transform: translateY(150px) scale(1.5) rotate(10deg); opacity: 0; }
-  100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
-}
-.animate-drop {
-  animation: dropCard 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-.direcao-indicador {
-  color: rgba(0, 0, 0, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-@keyframes spinRight { 100% { transform: rotate(360deg); } }
-@keyframes spinLeft { 100% { transform: rotate(-360deg); } }
-.spin-horario { animation: spinRight 12s linear infinite; }
-.spin-anti { animation: spinLeft 12s linear infinite; }
-
-/* === PAINEL DE AÇÕES === */
-.painel-acoes {
-  height: 90px; 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 15px; 
-  margin-bottom: 35px; 
-}
 /* MODAIS E BOTÕES */
 .modal-overlay {
   position: fixed;
@@ -299,7 +97,7 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2500;
 }
 .modal-content {
   background: white;
@@ -316,394 +114,29 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   margin-top: 20px;
 }
 
-.btn-uno {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  background-color: #e74c3c;
-  color: white;
-  font-weight: 900;
-  font-size: 20px;
-  font-family: 'Fredoka', sans-serif;
-  border: 6px solid #000;
-  box-shadow: 6px 6px 0 #000, inset 0 -5px 0 rgba(0,0,0,0.2);
-  cursor: pointer;
-  z-index: 1000;
-  transform: rotate(-15deg);
-  transition: all 0.2s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.btn-uno:active { transform: rotate(-15deg) translate(4px, 4px); box-shadow: 0px 0px 0 #000, inset 0 -2px 0 rgba(0,0,0,0.2); }
-.btn-uno:hover { transform: rotate(-5deg) scale(1.1); }
-
-/* SISTEMA DE AVATAR */
-.avatar-seletor-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 20px;
-}
-.avatar-display {
-  width: 100px;
-  height: 100px;
-  border: 4px solid #000;
-  border-radius: 50%;
-  background-color: #ecf0f1;
-  box-shadow: 4px 4px 0 #000;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-}
+/* SISTEMA DE AVATAR LOBBY */
+.avatar-seletor-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+.avatar-display { width: 100px; height: 100px; border: 4px solid #000; border-radius: 50%; background-color: #ecf0f1; box-shadow: 4px 4px 0 #000; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 .avatar-display:hover { transform: scale(1.1) rotate(5deg); }
-.avatar-dica { font-size: 14px; font-weight: bold; color: #7f8c8d; margin-top: 5px; }
 
-/* =========================================
-   NOVOS ESTILOS: NOTIFICAÇÃO E MOBILE
-========================================= */
-
-/* Notificação no Canto Superior Esquerdo */
-.notificacao-topo-esquerdo {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background-color: #ff7675;
-  color: #fff;
-  padding: 12px 20px;
-  border-radius: 12px;
-  border: 3px solid #000;
-  font-weight: 900;
-  z-index: 1500;
-  box-shadow: 4px 4px 0 #000;
-  max-width: 280px;
-  text-align: left;
-  font-size: 15px;
-  animation: deslizarEsquerda 0.3s ease-out;
-}
-
-@keyframes deslizarEsquerda {
-  from { transform: translateX(-120%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-/* Ecrã de Aviso para Rodar o Dispositivo (Apenas na Vertical) */
-.aviso-rotacao {
-  display: none;
-}
-
-@media (max-width: 899px) and (orientation: portrait) {
-  .aviso-rotacao {
-    display: flex;
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background-color: #2c3e50;
-    color: white;
-    z-index: 9999;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 30px;
-    box-sizing: border-box;
-  }
-  .aviso-rotacao svg {
-    margin-bottom: 20px;
-    animation: animacaoRodar 2s infinite ease-in-out;
-  }
-  @keyframes animacaoRodar {
-    0% { transform: rotate(0deg); }
-    50% { transform: rotate(-90deg); }
-    100% { transform: rotate(-90deg); }
-  }
-  /* Oculta o jogo principal quando o aviso está ativo */
-  .ocultar-no-retrato {
-    display: none !important;
-  }
-}
-
-/* Ajustes de Responsividade para Telemóveis na Horizontal (Landscape) */
-/* Ajustes de Responsividade para Telemóveis na Horizontal (Landscape) */
-@media (max-height: 500px) and (orientation: landscape) {
-  .container {
-    margin: 10px auto;
-    padding: 15px;
-  }
-  
-  /* Reduz os status superiores */
-  .status-turno {
-    top: 10px;
-    right: 10px;
-    padding: 4px 10px;
-    font-size: 12px;
-    border-width: 2px;
-  }
-  .notificacao-topo-esquerdo {
-    top: 10px;
-    left: 10px;
-    padding: 8px 12px;
-    font-size: 12px;
-    max-width: 220px;
-    border-width: 2px;
-  }
-
-  /* Reduz o botão KAOS */
-  .btn-uno {
-    bottom: 10px;
-    right: 10px;
-    width: 60px;
-    height: 60px;
-    font-size: 14px;
-    border-width: 3px;
-    box-shadow: 3px 3px 0 #000, inset 0 -3px 0 rgba(0,0,0,0.2);
-  }
-
-  /* === CORREÇÃO: Impede que a mesa fique demasiado larga no telemóvel === */
-  .mesa-redonda {
-    margin-top: 15px;
-    height: 40vh; 
-    width: 80%; /* Não deixa esticar ao longo de todo o ecrã */
-    max-width: 500px; /* Impede expansão excessiva */
-    min-height: 140px;
-    border-width: 6px;
-  }
-  
-  /* Diminui os avatares e nomes dos oponentes */
-  .oponente-avatar {
-    width: 40px;
-    height: 40px;
-    border-width: 2px;
-  }
-  .oponente-nome {
-    font-size: 10px;
-    padding: 2px 6px;
-    border-width: 2px;
-  }
-  .carta-verso {
-    width: 12px;
-    height: 22px;
-    font-size: 9px;
-    border-width: 1px;
-  }
-
-  /* Reduz as cartas da mesa e da mão para não sobreporem o ecrã */
-  .carta, .icone-baralho, .carta-mesa {
-    width: 45px !important;
-    height: 55px !important;
-    font-size: 22px !important;
-    border-width: 2px !important;
-    border-radius: 6px !important;
-  }
-  .direcao-indicador svg {
-    width: 30px;
-    height: 30px;
-  }
-
-  /* Encolhe o painel de botões de ação */
-  .painel-acoes {
-    height: auto;
-    margin-top: 5px;
-    margin-bottom: 5px;
-  }
-  .painel-acoes .btn {
-    padding: 4px 10px;
-    font-size: 12px;
-    border-width: 2px;
-  }
-
-  /* Ajusta a distância e o espaço da mão do jogador */
-  .mao-container {
-    padding: 0 5px 5px 5px !important;
-    gap: 4px !important;
-    position: relative;
-    z-index: 10;
-    margin-top: 1rem;
-  }
-}
-
-/* --- ESTILO GARTIC: PAINEL DO LOBBY --- */
-.lobby-panel {
-  background-color: #ffffff;
-  border: 6px solid #000;
-  border-radius: 30px;
-  padding: 30px;
-  max-width: 650px;
-  margin: 40px auto;
-  box-shadow: 10px 10px 0px #000;
-  position: relative;
-}
-
-/* --- ANIMAÇÃO DA CARTA "K" --- */
-@keyframes flutuarEgirar {
-  0% { transform: translateY(0) rotate(-10deg); }
-  25% { transform: translateY(-15px) rotate(-10deg); }
-  50% { transform: translateY(0) rotate(-10deg); }
-  75% { transform: translateY(-15px) rotate(350deg); }
-  100% { transform: translateY(0) rotate(350deg); }
-}
-
-.k-animado {
-  display: inline-block;
-  animation: flutuarEgirar 4s ease-in-out infinite;
-  transform-origin: center;
-}
-
-/* --- GRID DE JOGADORES (SALA DE ESPERA) --- */
-.grid-jogadores {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.card-jogador {
-  background: #f8f9fa;
-  border: 4px solid #000;
-  border-radius: 20px;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-shadow: 4px 4px 0 #000;
-  position: relative;
-  transition: transform 0.1s;
-}
-
-.card-jogador:hover {
-  transform: translateY(-5px);
-  box-shadow: 4px 9px 0 #000;
-}
-
-.host-badge {
-  position: absolute;
-  top: -15px;
-  right: -10px;
-  background: #f1c40f;
-  border: 3px solid #000;
-  border-radius: 50%;
-  padding: 5px;
-  box-shadow: 2px 2px 0 #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* --- A NOVA MESA DE MADEIRA --- */
-.mesa-redonda-moderna {
-  width: 85vw;
-  max-width: 600px;
-  height: 85vw;
-  max-height: 600px;
-  margin: 30px auto;
-  border-radius: 50%;
-  position: relative;
-  /* Textura de madeira realista usando gradientes */
-  background: radial-gradient(circle, #e3a869 0%, #c4823f 60%, #8b5a2b 100%);
-  border: 12px solid #4a2f15;
-  box-shadow: 
-    inset 0 0 40px rgba(0,0,0,0.4), /* Sombra interna para profundidade */
-    0 20px 25px rgba(0,0,0,0.5);    /* Sombra externa da mesa no chão */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* --- O CORPO DOS PERSONAGENS (PREPARAÇÃO PARA SPRITES) --- */
-.oponente-corpo-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-}
-
-.player-body {
-  width: 70px;
-  height: 40px;
-  background-color: #34495e; /* Cor genérica do "terno" provisório */
-  border-radius: 40px 40px 10px 10px; /* Formato de ombros */
-  margin-top: -15px; /* Puxa o corpo para baixo da cabeça */
-  border: 3px solid #000;
-  box-shadow: 2px 2px 0 #000;
-  z-index: 1;
-}
-
-.oponente-avatar {
-  z-index: 2; /* Garante que a cabeça fica por cima do corpo */
-}
-
-/* --- CARTAS NA MÃO (RETAS, SEM LEQUE) --- */
-.mao-container-moderna {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  height: 140px; 
-  padding-bottom: 20px;
-  max-width: 90vw;
-  margin: 0 auto;
-}
-
-.carta-moderna {
-  margin-left: -35px; /* Sobreposição normal */
-  transition: all 0.2s ease-out; /* Transição suave para a margem e posição */
-  box-shadow: -4px 4px 10px rgba(0,0,0,0.3);
-}
-
-.carta-moderna:first-child {
-  margin-left: 0;
-}
-
-/* Efeito Hover: Sobe um pouco, muda para Verde e cria o gap lateral */
-.carta-moderna:hover:not(.desabilitada) {
-  transform: translateY(-15px);
-  border-color: #2ecc71; /* Alterado de ciano para verde */
-  margin-right: 15px; 
-  margin-left: -20px; 
-  z-index: 100;
-}
-
-/* Carta Selecionada: Sobe BASTANTE para se destacar da mão */
-.carta-moderna.selecionada {
-  transform: translateY(-40px); /* Aumentado para subir bem mais */
-  border: 4px solid #f1c40f;
-  box-shadow: 0 0 15px #f1c40f;
-}
-/* --- ANIMAÇÕES --- */
-@keyframes drawCardAnim {
-  0% { opacity: 0; transform: translateY(-50px) scale(0.5); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.anim-draw {
-  animation: drawCardAnim 0.3s ease-out forwards;
-}
-
-@keyframes playCardAnim {
-  0% { transform: scale(1.5) translateY(50px); opacity: 0; }
-  50% { transform: scale(1.2) translateY(-10px); }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
-}
-
-.anim-play {
-  animation: playCardAnim 0.4s ease-out forwards;
-}
+.lobby-panel { background-color: #ffffff; border: 6px solid #000; border-radius: 30px; padding: 30px; max-width: 650px; margin: 40px auto; box-shadow: 10px 10px 0px #000; position: relative; }
+.grid-jogadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-top: 20px; }
+.card-jogador { background: #f8f9fa; border: 4px solid #000; border-radius: 20px; padding: 15px; display: flex; flex-direction: column; align-items: center; box-shadow: 4px 4px 0 #000; position: relative; transition: transform 0.1s; }
+.card-jogador:hover { transform: translateY(-5px); box-shadow: 4px 9px 0 #000; }
+.host-badge { position: absolute; top: -15px; right: -10px; background: #f1c40f; border: 3px solid #000; border-radius: 50%; padding: 5px; box-shadow: 2px 2px 0 #000; display: flex; justify-content: center; align-items: center; }
 
 /* ========================================================
-   ESTILOS DA MESA E DA PARTIDA (KAOS!)
+   A MESA DE JOGO (KAOS!) E LAYOUT RESPONSIVO
 ======================================================== */
 
-/* --- A NOVA MESA DE MADEIRA --- */
 .mesa-redonda-moderna {
-  width: 90vw;
-  max-width: 500px;
-  height: 90vw;
-  max-height: 500px;
-  margin: 15px auto 10px auto;
+  width: 100%;
+  height: 100%;
+  /* A magia que impede o ecrã de ficar com scroll: a mesa nunca ultrapassa 48% da altura da tela! */
+  max-width: 48vh; 
+  max-height: 48vh;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
   border-radius: 50%;
   position: relative;
   background: radial-gradient(circle, #e3a869 0%, #c4823f 60%, #8b5a2b 100%);
@@ -714,84 +147,7 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   justify-content: center;
 }
 
-/* --- CARTAS NA MÃO DO JOGADOR --- */
-.mao-container-moderna {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  height: 100px;
-  max-width: 95vw;
-  margin: 0 auto;
-}
-
-.carta {
-  width: 60px;
-  height: 90px;
-  border-radius: 8px;
-  border: 3px solid #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-  user-select: none;
-  font-family: 'Fredoka', sans-serif;
-}
-
-.carta-moderna {
-  margin-left: -35px; /* Sobreposição das cartas */
-  transition: transform 0.15s ease-out; /* Apenas animação de posição */
-  box-shadow: -4px 4px 10px rgba(0,0,0,0.3);
-}
-
-.carta-moderna:first-child {
-  margin-left: 0;
-}
-
-/* Ao passar o rato: sobe ligeiramente (sem mudar de cor) */
-.carta-moderna:hover:not(.desabilitada) {
-  transform: translateY(-10px);
-}
-
-/* Ao selecionar: sobe mais um pouco e mantém a borda preta */
-.carta-moderna.selecionada {
-  transform: translateY(-20px);
-  border: 3px solid #000;
-}
-
-.carta-moderna.desabilitada {
-  filter: brightness(0.6) grayscale(0.5);
-  cursor: not-allowed;
-}
-
-/* --- O NOVO VERSO DO BARALHO (MONTE DE COMPRAS) --- */
-.baralho-kaos {
-  width: 70px;
-  height: 105px;
-  background-color: #2f3542;
-  border: 4px solid #000;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 4px 4px 0 #000, 8px 8px 15px rgba(0,0,0,0.4);
-  cursor: pointer;
-  transition: transform 0.1s;
-}
-
-.baralho-kaos:hover {
-  transform: scale(1.05);
-}
-
-.baralho-kaos .k-logo {
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 900;
-  font-size: 32px;
-  color: #a4b0be;
-}
-
-/* --- ESTRUTURA DOS OPONENTES (AVATAR + CORPO) --- */
+/* ESTRUTURA DOS OPONENTES (AVATAR + CORPO) */
 .oponente-container {
   position: absolute;
   display: flex;
@@ -799,51 +155,134 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
   align-items: center;
   transform: translate(-50%, -50%);
 }
-
-.oponente-corpo-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-}
-
+.oponente-corpo-container { display: flex; flex-direction: column; align-items: center; position: relative; }
 .player-body {
-  width: 60px;
-  height: 35px;
-  background-color: #34495e; /* O "corpo" base */
+  width: 60px; height: 35px;
+  background-color: #34495e; 
   border-radius: 40px 40px 10px 10px;
-  margin-top: -15px; /* Puxa o corpo para baixo da cabeça */
-  border: 3px solid #000;
-  box-shadow: 2px 2px 0 #000;
-  z-index: 1;
+  margin-top: -15px; 
+  border: 3px solid #000; box-shadow: 2px 2px 0 #000; z-index: 1;
 }
-
-.oponente-avatar {
-  z-index: 2;
-}
+.oponente-avatar { z-index: 2; }
 
 .carta-verso {
-  background-color: #2c3e50;
+  background-color: #2c3e50; color: #fff; border: 2px solid #000; border-radius: 4px;
+  display: inline-flex; justify-content: center; align-items: center; font-weight: bold;
+}
+
+/* ========================================================
+   ESTILOS DAS CARTAS E BARALHO
+======================================================== */
+
+.carta {
+  width: 60px; height: 90px;
+  border-radius: 8px; border: 3px solid #000;
+  display: flex; justify-content: center; align-items: center;
+  font-size: 28px; font-weight: bold; cursor: pointer;
+  font-family: 'Fredoka', sans-serif;
+  user-select: none;
+}
+
+.mao-container-moderna {
+  display: flex; justify-content: center; align-items: flex-end;
+  height: 95px; margin: 0 auto; max-width: 95vw;
+}
+
+.carta-moderna {
+  margin-left: -35px; 
+  transition: transform 0.15s ease-out; 
+  box-shadow: -4px 4px 10px rgba(0,0,0,0.3);
+}
+.carta-moderna:first-child { margin-left: 0; }
+
+/* Comportamento Hover Básico */
+.carta-moderna:hover:not(.desabilitada):not(.selecionada) {
+  transform: translateY(-10px);
+}
+
+/* Carta Selecionada (Borda ROXA e bem levantada) */
+.carta-moderna.selecionada {
+  transform: translateY(-25px);
+  border: 4px solid #9b59b6 !important;
+  box-shadow: 0 0 15px #9b59b6, -4px 4px 10px rgba(0,0,0,0.3);
+}
+/* Se houver hover quando selecionada, mantém o estado (anti-bug) */
+.carta-moderna.selecionada:hover {
+  transform: translateY(-25px); 
+}
+
+.carta-moderna.desabilitada { filter: brightness(0.6) grayscale(0.5); cursor: not-allowed; }
+
+/* O NOVO VERSO DO BARALHO (MONTE DE COMPRAS) */
+.baralho-kaos {
+  width: 60px; height: 90px; /* Mesmo tamanho exato da carta */
+  background-color: #ecf0f1; /* Fundo Cinza Claro */
+  border: 3px solid #000; border-radius: 8px;
+  display: flex; justify-content: center; align-items: center;
+  box-shadow: 4px 4px 0 #000, 8px 8px 15px rgba(0,0,0,0.4);
+  transition: transform 0.1s;
+}
+.baralho-kaos:hover { transform: scale(1.05) rotate(-3deg); }
+.baralho-kaos .k-logo {
+  font-family: 'Fredoka', sans-serif; font-weight: 900;
+  font-size: 28px; color: #2c3e50; /* Letra Cinza Escuro */
+}
+
+/* ========================================================
+   O NOVO BOTÃO KAOS!
+======================================================== */
+
+.btn-kaos {
+  background-color: #e74c3c;
   color: #fff;
-  border: 2px solid #000;
-  border-radius: 4px;
-  display: inline-flex;
+  font-weight: 900;
+  font-size: 22px;
+  font-family: 'Fredoka', sans-serif;
+  border: 4px solid #000;
+  border-radius: 50%;
+  width: 90px;
+  height: 90px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #000;
+  display: flex;
   justify-content: center;
   align-items: center;
-  font-weight: bold;
+  text-shadow: 2px 2px 0 #000;
+  transition: transform 0.1s, box-shadow 0.1s;
 }
 
-/* --- ANIMAÇÕES DA MESA --- */
-.spin-horario {
-  animation: spinRight 10s linear infinite;
-}
-.spin-anti {
-  animation: spinLeft 10s linear infinite;
+.btn-kaos:hover {
+  transform: scale(1.05);
 }
 
-@keyframes spinRight {
-  100% { transform: rotate(360deg); }
+.btn-kaos:active {
+  transform: scale(0.9) translate(4px, 4px);
+  box-shadow: 0px 0px 0 #000;
 }
-@keyframes spinLeft {
-  100% { transform: rotate(-360deg); }
+
+/* ========================================================
+   ANIMAÇÕES DE PARTIDA E DIREÇÃO
+======================================================== */
+
+/* Carta saindo da mão / comprada (Vem de baixo subindo) */
+@keyframes animDrawCard {
+  0% { opacity: 0; transform: translateY(60px) scale(0.7); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
+.anim-draw {
+  animation: animDrawCard 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Carta jogada na mesa (Parece que foi atirada de fora da mesa) */
+@keyframes animPlayCard {
+  0% { opacity: 0; transform: translateY(120px) scale(0.5) rotate(15deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+}
+.anim-play {
+  animation: animPlayCard 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.spin-horario { animation: spinRight 10s linear infinite; }
+.spin-anti { animation: spinLeft 10s linear infinite; }
+@keyframes spinRight { 100% { transform: rotate(360deg); } }
+@keyframes spinLeft { 100% { transform: rotate(-360deg); } }
