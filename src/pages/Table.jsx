@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { HandPalm, Cards, ArrowsClockwise, ArrowsCounterClockwise, Hourglass, Timer, Eye, Scales, Hash, Smiley } from '@phosphor-icons/react';
 import { getCorCss, renderValorCarta, getPosicaoOponente, arrayEmojis } from '../utils/gameUtils';
 
@@ -8,15 +9,23 @@ export default function Table(props) {
     enviarEmote, baterNaMesa, euJaBati, posicaoNove, minhaMao, cartasSelecionadas,
     toggleSelecao, tentarJogarSelecionadas, comprasAcumuladas, comprarCarta, jaComprou,
     passarVez, cartaMesa, sentido, filaPassos, resolverPasso, maoEspiadaPrevia,
-    setMaoEspiadaPrevia, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez
+    setMaoEspiadaPrevia, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, jogadaBossAtiva
   } = props;
+
+  const cartasOrdenadas = useMemo(() => {
+    const ordemCores = { vermelho: 1, amarelo: 2, azul: 3, verde: 4, preto: 5 };
+    return [...minhaMao].sort((a, b) => {
+      if (ordemCores[a.cor] !== ordemCores[b.cor]) return (ordemCores[a.cor] || 99) - (ordemCores[b.cor] || 99);
+      return a.valor.toString().localeCompare(b.valor.toString());
+    });
+  }, [minhaMao]);
 
   if (vencedor) {
     return (
       <div className="container" style={{ marginTop: '100px' }}>
         <h1 className="logo-kaos"><div className="carta-k-logo">K</div>AOS</h1>
-        <h1 style={{ fontSize: '50px', color: '#f1c40f' }}>🏆 {t.vencedor} 🏆</h1>
-        <h2 style={{ fontSize: '40px' }}>{vencedor} {t.acabouCartas}</h2>
+        <h1 style={{ fontSize: '40px', color: '#f1c40f' }}>🏆 VENCEDOR 🏆</h1>
+        <h2 style={{ fontSize: '30px' }}>{vencedor}</h2>
         <button className="btn btn-azul" onClick={() => { setVencedor(null); setJogoIniciado(false); setTempoPartida(0); }}>{t.voltarLobby}</button>
       </div>
     );
@@ -29,16 +38,20 @@ export default function Table(props) {
           <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
         </div>
 
-        {meuJogadorInfo?.corEquipe && (
-          <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 ${meuJogadorInfo.corEquipe}`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: 14, height: 14, borderRadius: '50%', backgroundColor: meuJogadorInfo.corEquipe, border: '2px solid #fff' }} /> SUA EQUIPE
+        {meuJogadorInfo?.isBoss && (
+          <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#e74c3c', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 #000`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+             😈 VOCÊ É O BOSS
           </div>
         )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
         <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
-          <div>{turnoAtual === socket.id ? t.suaVez : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()}` : t.aguarde}</div>
+          <div>
+            {turnoAtual === socket.id ? 
+              (meuJogadorInfo?.isBoss ? `SUA VEZ (JOGADA ${jogadaBossAtiva}/2)` : t.suaVez) 
+              : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()} ${jogadorDaVez.isBoss ? `(JOGADA ${jogadaBossAtiva}/2)` : ''}` : t.aguarde}
+          </div>
           <div className="tempo" style={{ color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
             {eventoNoveAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
           </div>
@@ -54,27 +67,21 @@ export default function Table(props) {
               
               <div className="oponente-avatar" style={{ 
                 position: 'relative', 
-                borderColor: ehVezDele ? '#2ecc71' : '#000', 
-                boxShadow: ehVezDele ? '0 0 15px #2ecc71' : '4px 4px 0 #000',
-                borderWidth: '3px',
-                borderStyle: 'solid',
-                borderRadius: '50%',
-                backgroundColor: op.corEquipe || 'transparent',
-                padding: op.corEquipe ? '4px' : '0px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                borderColor: op.isBoss ? '#e74c3c' : (ehVezDele ? '#2ecc71' : '#000'), 
+                boxShadow: ehVezDele ? '0 0 15px #2ecc71' : (op.isBoss ? '0 0 15px #e74c3c' : '4px 4px 0 #000'),
+                borderWidth: '3px', borderStyle: 'solid', borderRadius: '50%',
+                backgroundColor: op.corEquipe || 'transparent', padding: op.corEquipe ? '4px' : '0px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}>
                 <img 
                   src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} 
-                  style={{
-                    width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#fff',
-                    border: op.corEquipe ? '2px solid #000' : 'none', boxSizing: 'border-box', display: 'block'
-                  }} 
+                  style={{ width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#fff', border: op.corEquipe ? '2px solid #000' : 'none', boxSizing: 'border-box', display: 'block' }} 
                   alt="Avatar"
                 />
               </div>
               
+              {op.isBoss && <div style={{backgroundColor: '#e74c3c', color: '#fff', fontWeight: 'bold', fontSize: '10px', padding: '2px 8px', borderRadius: '10px', border: '2px solid #000', marginTop: '-5px', zIndex: 10, position: 'relative'}}>BOSS</div>}
+
               <div className="cartas-oponente">
                 {Array.from({ length: Math.min(op.qtdCartas, 15) }).map((_, i) => (
                   <div key={i} className="carta-verso">K</div>
@@ -230,7 +237,7 @@ export default function Table(props) {
       )}
 
       <div className="mao-container" style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', padding: '0 10px 10px 10px', maxWidth: '1000px', margin: '15px auto' }}>
-        {minhaMao.map((carta) => {
+        {cartasOrdenadas.map((carta) => {
           const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
           let classes = "carta";
           if (taSelecionada) classes += " selecionada";

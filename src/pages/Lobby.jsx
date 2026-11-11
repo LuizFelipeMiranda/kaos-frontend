@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookBookmark, Gear, MusicNote, SpeakerHigh, SpeakerSlash, Copy, Check, Crown, UserPlus } from '@phosphor-icons/react';
+import { BookBookmark, Gear, MusicNote, SpeakerHigh, SpeakerSlash, Copy, Check, Crown, UserPlus} from '@phosphor-icons/react';
 import livePixQRCode from '../assets/livepix.png';
 
 export default function Lobby(props) {
@@ -11,7 +11,7 @@ export default function Lobby(props) {
     sairDaSala, expulsarJogador, handleSort, dragItem, dragOverItem,
     modalRegrasAberto, setModalRegrasAberto, modalConfigAberto, setModalConfigAberto,
     musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos,
-    setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos
+    setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos,
   } = props;
 
   const [linkCopiado, setLinkCopiado] = useState(false);
@@ -23,10 +23,15 @@ export default function Lobby(props) {
     setTimeout(() => setLinkCopiado(false), 2000);
   };
 
+  const getDescricaoFormato = () => {
+    if (formatoSelecionado === 'duplas') return t.descDuplasReq;
+    if (formatoSelecionado === 'boss') return "1 vs Todos! O Boss joga com 15 cartas e joga 2 vezes seguidas. A aliança tenta derrotá-lo! (Mín. 3 jogadores, Regras Casuais).";
+    return regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos;
+  };
+
   return (
     <div className="container" style={{ position: 'relative', maxWidth: '650px', padding: '30px' }}>
       
-      {/* Botões do Topo (Regras e Config) */}
       <button 
         onClick={() => setModalRegrasAberto(true)} 
         style={{ position: 'absolute', top: '15px', left: '15px', background: '#3498db', border: '3px solid #000', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000', zIndex: 10 }}
@@ -39,7 +44,6 @@ export default function Lobby(props) {
         title={t.config}
       ><Gear size={28} weight="bold" color="#000" /></button>
 
-      {/* Título com K Animado */}
       <h1 className="logo-kaos" style={{ marginTop: '20px' }}>
         <div className="carta-k-logo k-animado">K</div>AOS
       </h1>
@@ -71,7 +75,6 @@ export default function Lobby(props) {
             <div style={{ marginTop: '25px' }}><button className="btn btn-roxo" onClick={handleReconectar}>Voltar para partida em andamento</button></div>
           )}
           
-          {/* Secção de Doação mais integrada */}
           <div style={{ marginTop: '40px', padding: '15px', border: '4px dashed #f1c40f', borderRadius: '20px', backgroundColor: '#fffdf0' }}>
             <h3 style={{ margin: '0 0 5px 0', color: '#f39c12' }}>{t.apoie} ☕</h3>
             <p style={{ fontSize: '13px', margin: '0 0 10px 0', fontWeight: 'bold', color: '#7f8c8d' }}>{t.ajude}</p>
@@ -102,32 +105,22 @@ export default function Lobby(props) {
                 <div style={{ flex: 1 }}>
                   <h3 style={{ margin: '0 0 10px 0' }}>Regras:</h3>
                   <div className="modo-seletor-botoes" style={{ marginBottom: '5px' }}>
-                    <button className={`btn btn-modo ${regrasSelecionadas === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
-                    <button className={`btn btn-modo ${regrasSelecionadas === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
+                    <button disabled={formatoSelecionado === 'boss'} className={`btn btn-modo ${regrasSelecionadas === 'casual' || formatoSelecionado === 'boss' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
+                    <button disabled={formatoSelecionado === 'boss'} className={`btn btn-modo ${regrasSelecionadas === 'kaos' && formatoSelecionado !== 'boss' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
                   </div>
                 </div>
                 <div style={{ width: '4px', height: '60px', backgroundColor: '#000', margin: '0 15px', borderRadius: '2px' }}></div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ margin: '0 0 10px 0' }}>Formato:</h3>
                   <div className="modo-seletor-botoes" style={{ marginBottom: '5px' }}>
-                    <button 
-                      className={`btn btn-modo ${formatoSelecionado === 'pvp' ? 'btn-amarelo' : 'btn-cinza'}`} 
-                      style={{ backgroundColor: formatoSelecionado === 'pvp' ? '#f1c40f' : '', color: formatoSelecionado === 'pvp' ? '#000' : '#fff' }}
-                      onClick={() => setFormatoSelecionado('pvp')}
-                    >
-                      {t.pvp}
-                    </button>
-                    <button 
-                      className={`btn btn-modo ${formatoSelecionado === 'duplas' ? 'btn-verde' : 'btn-cinza'}`} 
-                      onClick={() => setFormatoSelecionado('duplas')}
-                    >
-                      {t.duplas}
-                    </button>
+                    <button className={`btn btn-modo ${formatoSelecionado === 'pvp' ? 'btn-amarelo' : 'btn-cinza'}`} style={{ backgroundColor: formatoSelecionado === 'pvp' ? '#f1c40f' : '', color: formatoSelecionado === 'pvp' ? '#000' : '#fff' }} onClick={() => setFormatoSelecionado('pvp')}>{t.pvp}</button>
+                    <button className={`btn btn-modo ${formatoSelecionado === 'duplas' ? 'btn-verde' : 'btn-cinza'}`} onClick={() => setFormatoSelecionado('duplas')}>{t.duplas}</button>
+                    <button className={`btn btn-modo ${formatoSelecionado === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} onClick={() => setFormatoSelecionado('boss')}>BOSS</button>
                   </div>
                 </div>
               </div>
               <p style={{ fontSize: '13px', margin: '15px 0 0 0', fontWeight: 'bold', color: '#7f8c8d' }}>
-                {formatoSelecionado === 'duplas' ? t.descDuplasReq : (regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos)}
+                {getDescricaoFormato()}
               </p>
             </div>
           )}
