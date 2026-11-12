@@ -114,7 +114,7 @@ export default function Lobby(props) {
                       <button 
                         className={`btn btn-modo ${regrasSelecionadas === 'kaos_aleatorio' ? 'btn-amarelo' : 'btn-cinza'}`} 
                         onClick={() => setRegrasSelecionadas('kaos_aleatorio')}
-                        style={{ color: regrasSelecionadas === 'kaos_aleatorio' ? '#000' : '#36ae48' }}
+                        style={{ color: regrasSelecionadas === 'kaos_aleatorio' ? '#000' : '#ffffff' }}
                       >
                         Kaos Aleatório
                       </button>
