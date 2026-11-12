@@ -35,6 +35,28 @@ export default function Table(props) {
   return (
     <div style={{ textAlign: 'center', marginTop: '10px' }}>
       
+      <style>{`
+        @media (max-width: 600px) {
+          .status-turno-box {
+            min-width: 120px !important;
+            padding: 4px 10px !important;
+            font-size: 11px !important;
+            border-width: 2px !important;
+            border-radius: 12px !important;
+          }
+          .status-turno-box .tempo {
+            font-size: 10px !important;
+            margin-top: 1px !important;
+          }
+          .coluna-baralho div[style*="width: 70px"] {
+            width: 48px !important;
+            height: 68px !important;
+            font-size: 26px !important;
+            border-width: 3px !important;
+          }
+        }
+      `}</style>
+
       {eventoAleatorioAtivo && (
         <div className="modal-overlay" style={{ zIndex: 4000, backgroundColor: 'rgba(0,0,0,0.85)' }}>
           <div className="modal-content pulsar" style={{ border: '8px solid #9b59b6', backgroundColor: '#fffdf0', maxWidth: '500px' }}>
@@ -58,7 +80,7 @@ export default function Table(props) {
         )}
       </div>
 
-      {/* Container Topo Direita - Temporizador de Jogada & Contador do Kaos Aleatório */}
+      {/* Container Topo Direita - Temporizador de Jogada & Temporizador do Kaos Aleatório */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
         
         {/* Box do Turno */}
@@ -73,7 +95,7 @@ export default function Table(props) {
           </div>
         </div>
 
-        {/* Contador do Kaos Aleatório (Abaixo do Turno) */}
+        {/* Temporizador do Kaos Aleatório (Restaurado e ativo) */}
         {regrasSelecionadas === 'kaos_aleatorio' && (
           <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '6px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '14px', boxShadow: '3px 3px 0 #000', display: 'flex', alignItems: 'center', gap: '5px' }}>
             Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
