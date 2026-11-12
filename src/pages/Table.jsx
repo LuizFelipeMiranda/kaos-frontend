@@ -58,7 +58,7 @@ export default function Table(props) {
         )}
       </div>
 
-      {/* Container Topo Direita - Temporizador de Jogada & Temporizador do Kaos */}
+      {/* Container Topo Direita - Temporizador de Jogada & Contador do Kaos Aleatório */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
         
         {/* Box do Turno */}
@@ -73,7 +73,7 @@ export default function Table(props) {
           </div>
         </div>
 
-        {/* Box do Kaos Aleatório */}
+        {/* Contador do Kaos Aleatório (Abaixo do Turno) */}
         {regrasSelecionadas === 'kaos_aleatorio' && (
           <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '6px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '14px', boxShadow: '3px 3px 0 #000', display: 'flex', alignItems: 'center', gap: '5px' }}>
             Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
@@ -123,8 +123,6 @@ export default function Table(props) {
 
         <div className="centro-mesa">
           <div className="coluna-baralho" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            
-            {/* NOVO BARALHO: Sem a classe icone-baralho para evitar a borda duplicada */}
             <div 
               onClick={comprarCarta} 
               style={{ 
