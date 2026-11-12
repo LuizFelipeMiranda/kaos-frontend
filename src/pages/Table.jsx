@@ -67,15 +67,12 @@ export default function Table(props) {
         </div>
       )}
 
-      {/* Container Topo Esquerda - Cronômetro da Partida, Temporizador do Kaos e Tag do Chefão */}
+      {/* Container Topo Esquerda */}
       <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 100, display: 'flex', gap: '15px', alignItems: 'center' }}>
-        
-        {/* 1º: Cronômetro da Partida */}
         <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
         </div>
 
-        {/* 2º: Temporizador do Kaos Aleatório (Ao lado do cronômetro com pequeno espaço) */}
         {regrasSelecionadas === 'kaos_aleatorio' && (
           <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '16px', boxShadow: '4px 4px 0 #000', display: 'flex', alignItems: 'center', gap: '8px' }}>
             Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
@@ -89,7 +86,7 @@ export default function Table(props) {
         )}
       </div>
 
-      {/* Container Topo Direita - Apenas o Aviso de Vez do Jogador */}
+      {/* Container Topo Direita - Aviso de Vez */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
         <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ margin: 0 }}>
           <div>
@@ -239,7 +236,8 @@ export default function Table(props) {
 
       {maoEspiadaPrevia && !eventoAleatorioAtivo && (
         <div className="modal-overlay" style={{ zIndex: 1600 }}>
-          <div className="modal-content" style={{ maxWidth: '600px' }}>
+          {/* Adicionado maxHeight e overflowY para permitir scroll */}
+          <div className="modal-content" style={{ maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto' }}>
             <h2 style={{ marginBottom: '15px' }}>Cartas de {maoEspiadaPrevia.nome}:</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
               {maoEspiadaPrevia.cartas.map(c => ( 
