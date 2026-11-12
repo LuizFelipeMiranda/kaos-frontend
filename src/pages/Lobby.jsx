@@ -24,8 +24,8 @@ export default function Lobby(props) {
   };
 
   const getDescricaoFormato = () => {
-    if (regrasSelecionadas === 'boss') return "MODO CHEFÃO: 1 vs Todos! O Chefão joga com 20 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
-    if (regrasSelecionadas === 'kaos_aleatorio') return "KAOS ALEATÓRIO: Eventos globais e regras súbitas disparadas a cada 45 segundos! O temporizador para e o caos acontece! (Usa cartas Casuais).";
+    if (regrasSelecionadas === 'boss') return "👑 MODO CHEFÃO: 1 vs Todos! O Chefão joga com 20 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
+    if (regrasSelecionadas === 'kaos_aleatorio') return "🎲 KAOS ALEATÓRIO: Eventos globais e regras súbitas disparadas a cada 45 segundos! O temporizador para e o caos acontece! (Usa cartas Casuais).";
     if (formatoSelecionado === 'duplas') return t.descDuplasReq;
     return regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos;
   };
@@ -110,18 +110,17 @@ export default function Lobby(props) {
                       <button className={`btn btn-modo ${regrasSelecionadas === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
                       <button className={`btn btn-modo ${regrasSelecionadas === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
                       
-                      {/* Botão Aleatório com texto escuro para não sumir no amarelo */}
+                      {/* Botão Aleatório atualizado para Verde quando selecionado */}
                       <button 
-                        className={`btn btn-modo ${regrasSelecionadas === 'kaos_aleatorio' ? 'btn-amarelo' : 'btn-cinza'}`} 
+                        className={`btn btn-modo ${regrasSelecionadas === 'kaos_aleatorio' ? 'btn-verde' : 'btn-cinza'}`} 
                         onClick={() => setRegrasSelecionadas('kaos_aleatorio')}
-                        style={{ color: regrasSelecionadas === 'kaos_aleatorio' ? '#000' : '#ffffff' }}
+                        style={{ color: '#fff' }}
                       >
                         Kaos Aleatório
                       </button>
 
                     </div>
 
-                    {/* Botão CHEFÃO atualizado */}
                     <button 
                       className={`btn btn-modo ${regrasSelecionadas === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} 
                       onClick={() => setRegrasSelecionadas('boss')} 

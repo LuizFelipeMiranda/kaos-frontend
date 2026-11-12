@@ -61,7 +61,7 @@ export default function Table(props) {
       {/* Container Topo Direita - Temporizador de Jogada & Temporizador do Kaos */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
         
-        {/* Box do Turno (Agora alinhado na direita) */}
+        {/* Box do Turno */}
         <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ margin: 0 }}>
           <div>
             {turnoAtual === socket.id ? 
@@ -73,7 +73,7 @@ export default function Table(props) {
           </div>
         </div>
 
-        {/* Box do Kaos Aleatório (Abaixo do Turno) */}
+        {/* Box do Kaos Aleatório */}
         {regrasSelecionadas === 'kaos_aleatorio' && (
           <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '6px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '14px', boxShadow: '3px 3px 0 #000', display: 'flex', alignItems: 'center', gap: '5px' }}>
             Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
@@ -122,20 +122,30 @@ export default function Table(props) {
         })}
 
         <div className="centro-mesa">
-          <div className="coluna-baralho">
-            <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo && !eventoAleatorioAtivo ? 'pointer' : 'default' }}>
-              
-              {/* NOVO BARALHO: Estilizado como as cartas do adversário com fundo cinza-escuro */}
-              <div style={{ 
-                width: '70px', height: '100px', backgroundColor: '#34495e', border: '4px solid #000', 
-                borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                color: '#fff', fontSize: '40px', fontWeight: '900', fontFamily: 'Fredoka, sans-serif', 
-                boxShadow: '4px 4px 0 #000', userSelect: 'none' 
+          <div className="coluna-baralho" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            
+            {/* NOVO BARALHO: Sem a classe icone-baralho para evitar a borda duplicada */}
+            <div 
+              onClick={comprarCarta} 
+              style={{ 
+                cursor: turnoAtual === socket.id && !eventoNoveAtivo && !eventoAleatorioAtivo ? 'pointer' : 'default',
+                width: '70px', height: '100px', 
+                backgroundColor: 'rgb(189, 195, 199)', 
+                border: '4px solid #000', 
+                borderRadius: '10px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                color: 'rgb(44, 62, 80)', 
+                fontSize: '40px', 
+                fontWeight: '900', 
+                fontFamily: 'Fredoka, sans-serif', 
+                boxShadow: '4px 4px 0 #000', 
+                userSelect: 'none' 
               }}>
-                K
-              </div>
-
+              K
             </div>
+
             {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && !eventoAleatorioAtivo && (
               <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0, marginTop: '10px'}}>{t.comprar}</button>
             )}
