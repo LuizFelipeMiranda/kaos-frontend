@@ -58,8 +58,8 @@ function App() {
   
   const [eventoAleatorioAtivo, setEventoAleatorioAtivo] = useState(null); 
   
-  // NOVOS ESTADOS PARA O TEMPORIZADOR DO EVENTO (45s)
-  const [tempoEventoRestante, setTempoEventoRestante] = useState(45);
+  // NOVOS ESTADOS PARA O TEMPORIZADOR DO EVENTO (50s)
+  const [tempoEventoRestante, setTempoEventoRestante] = useState(50);
   const [tempoRefEvento, setTempoRefEvento] = useState(() => Date.now());
 
   const [filaPassos, setFilaPassos] = useState([]);
@@ -107,7 +107,7 @@ function App() {
 
         if (regrasSelecionadas === 'kaos_aleatorio') {
           const passadoEvento = Math.floor((Date.now() - tempoRefEvento) / 1000);
-          setTempoEventoRestante(Math.max(45 - passadoEvento, 0));
+          setTempoEventoRestante(Math.max(50 - passadoEvento, 0));
         }
       }, 500);
     }
@@ -208,7 +208,7 @@ function App() {
       setTempoReferencia(Date.now()); 
       setTempoTurnoRestante(25); 
       setTempoRefEvento(Date.now());
-      setTempoEventoRestante(45);
+      setTempoEventoRestante(50);
 
       tocarEfeito('carta');
     });
@@ -239,7 +239,7 @@ function App() {
     socket.on('evento_aleatorio_concluido', () => {
       setEventoAleatorioAtivo(null);
       setTempoRefEvento(Date.now());
-      setTempoEventoRestante(45);
+      setTempoEventoRestante(50);
     });
 
     socket.on('olhar_cartas_lado', (dados) => {
@@ -422,7 +422,7 @@ function App() {
         .botoes-emotes-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
         .btn-emote { font-size: 24px; background: transparent; border: none; cursor: pointer; transition: 0.1s; }
         .btn-emote:hover { transform: scale(1.3); }
-        .status-turno-box { min-width: 220px; padding: 10px 30px; border-radius: 20px; font-size: 16px; }
+        .status-turno-box { padding: 10px 30px; border-radius: 20px; font-size: 16px; }
         .status-turno-box .tempo { font-size: 15px; margin-top: 4px; }
         @media (max-width: 600px) { .status-turno-box { min-width: 140px !important; padding: 5px 15px !important; font-size: 13px !important; } .status-turno-box .tempo { font-size: 12px !important; margin-top: 2px !important; } }
         .modo-seletor-botoes { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
