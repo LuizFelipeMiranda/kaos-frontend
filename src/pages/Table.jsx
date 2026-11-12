@@ -67,11 +67,20 @@ export default function Table(props) {
         </div>
       )}
 
-      {/* Container Topo Esquerda - Tempo da Partida e Tag do Chefão */}
+      {/* Container Topo Esquerda - Cronômetro da Partida, Temporizador do Kaos e Tag do Chefão */}
       <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 100, display: 'flex', gap: '15px', alignItems: 'center' }}>
+        
+        {/* 1º: Cronômetro da Partida */}
         <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
         </div>
+
+        {/* 2º: Temporizador do Kaos Aleatório (Ao lado do cronômetro com pequeno espaço) */}
+        {regrasSelecionadas === 'kaos_aleatorio' && (
+          <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '16px', boxShadow: '4px 4px 0 #000', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
+          </div>
+        )}
 
         {meuJogadorInfo?.isBoss && (
           <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#e74c3c', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 #000`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -80,10 +89,8 @@ export default function Table(props) {
         )}
       </div>
 
-      {/* Container Topo Direita - Aviso de Vez e Logo abaixo o Temporizador do Kaos */}
+      {/* Container Topo Direita - Apenas o Aviso de Vez do Jogador */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-        
-        {/* 1º: Box do Turno (Aviso de vez do jogador) */}
         <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ margin: 0 }}>
           <div>
             {turnoAtual === socket.id ? 
@@ -94,14 +101,6 @@ export default function Table(props) {
             {eventoNoveAtivo || eventoAleatorioAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
           </div>
         </div>
-
-        {/* 2º: Temporizador do Kaos Aleatório (Fica rigorosamente abaixo do aviso de vez) */}
-        {regrasSelecionadas === 'kaos_aleatorio' && (
-          <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '6px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '14px', boxShadow: '3px 3px 0 #000', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
-          </div>
-        )}
-
       </div>
 
       <div className="mesa-redonda" style={{ marginTop: '60px' }}>
