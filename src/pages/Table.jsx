@@ -9,7 +9,8 @@ export default function Table(props) {
     enviarEmote, baterNaMesa, euJaBati, posicaoNove, minhaMao, cartasSelecionadas,
     toggleSelecao, tentarJogarSelecionadas, comprasAcumuladas, comprarCarta, jaComprou,
     passarVez, cartaMesa, sentido, filaPassos, resolverPasso, maoEspiadaPrevia,
-    setMaoEspiadaPrevia, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, jogadaBossAtiva
+    setMaoEspiadaPrevia, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, 
+    jogadaBossAtiva, eventoAleatorioAtivo
   } = props;
 
   const cartasOrdenadas = useMemo(() => {
@@ -33,6 +34,18 @@ export default function Table(props) {
 
   return (
     <div style={{ textAlign: 'center', marginTop: '10px' }}>
+      
+      {/* MODAL DE EVENTO ALEATÓRIO GLOBAL (BLOQUEIA TUDO) */}
+      {eventoAleatorioAtivo && (
+        <div className="modal-overlay" style={{ zIndex: 4000, backgroundColor: 'rgba(0,0,0,0.85)' }}>
+          <div className="modal-content pulsar" style={{ border: '8px solid #f39c12', backgroundColor: '#fffdf0', maxWidth: '500px' }}>
+            <h1 style={{ fontSize: '36px', margin: '0 0 15px 0', color: '#f39c12' }}>{eventoAleatorioAtivo.titulo}</h1>
+            <p style={{ fontSize: '22px', fontWeight: 'bold' }}>{eventoAleatorioAtivo.descricao}</p>
+            <div style={{ fontSize: '60px', marginTop: '20px' }}>⏳</div>
+          </div>
+        </div>
+      )}
+
       <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 100, display: 'flex', gap: '15px', alignItems: 'center' }}>
         <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
@@ -40,7 +53,7 @@ export default function Table(props) {
 
         {meuJogadorInfo?.isBoss && (
           <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#e74c3c', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 #000`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-             <Skull size={20} weight="bold" /> VOCÊ É O CHEFÂO
+             <Skull size={20} weight="bold" /> VOCÊ É O BOSS
           </div>
         )}
       </div>
@@ -53,7 +66,7 @@ export default function Table(props) {
               : jogadorDaVez ? `${t.vezDe} ${jogadorDaVez.nome.toUpperCase()} ${jogadorDaVez.isBoss ? `(JOGADA ${jogadaBossAtiva}/2)` : ''}` : t.aguarde}
           </div>
           <div className="tempo" style={{ color: turnoAtual === socket.id ? '#000' : '#ff7675', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-            {eventoNoveAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
+            {eventoNoveAtivo || eventoAleatorioAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
           </div>
         </div>
       </div>
@@ -82,7 +95,7 @@ export default function Table(props) {
               
               {op.isBoss && (
                 <div style={{ backgroundColor: '#e74c3c', color: '#fff', fontWeight: 'bold', fontSize: '10px', padding: '2px 8px', borderRadius: '10px', border: '2px solid #000', marginTop: '-5px', zIndex: 10, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-                  <Skull size={12} weight="bold" /> CHEFÃO
+                  <Skull size={12} weight="bold" /> BOSS
                 </div>
               )}
 
@@ -99,10 +112,10 @@ export default function Table(props) {
 
         <div className="centro-mesa">
           <div className="coluna-baralho">
-            <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo ? 'pointer' : 'default' }}>
+            <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo && !eventoAleatorioAtivo ? 'pointer' : 'default' }}>
               <Cards size={48} weight="duotone" color="#ecf0f1" />
             </div>
-            {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && (
+            {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && !eventoAleatorioAtivo && (
               <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0}}>{t.comprar}</button>
             )}
           </div>
@@ -137,7 +150,7 @@ export default function Table(props) {
         <button className="btn-uno" onClick={() => socket.emit('apertar_uno', props.minhaSala)} style={{ position: 'static' }}>KAOS!</button>
       </div>
 
-      {filaPassos[0] === 'zero' && (
+      {filaPassos[0] === 'zero' && !eventoAleatorioAtivo && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h2 style={{margin: '0 0 15px 0'}}>{t.regraZero}</h2>
@@ -158,7 +171,7 @@ export default function Table(props) {
         </div>
       )}
 
-      {filaPassos[0] === 'espiar' && !maoEspiadaPrevia && (
+      {filaPassos[0] === 'espiar' && !maoEspiadaPrevia && !eventoAleatorioAtivo && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h2 style={{margin: '0 0 15px 0'}}><Eye size={32} style={{verticalAlign:'middle'}}/> {t.espiarAlvo}</h2>
@@ -174,7 +187,7 @@ export default function Table(props) {
         </div>
       )}
 
-      {maoEspiadaPrevia && (
+      {maoEspiadaPrevia && !eventoAleatorioAtivo && (
         <div className="modal-overlay" style={{ zIndex: 1600 }}>
           <div className="modal-content" style={{ maxWidth: '600px' }}>
             <h2 style={{ marginBottom: '15px' }}>Cartas de {maoEspiadaPrevia.nome}:</h2>
@@ -190,7 +203,7 @@ export default function Table(props) {
         </div>
       )}
 
-      {filaPassos[0] === 'igualar' && (
+      {filaPassos[0] === 'igualar' && !eventoAleatorioAtivo && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h2 style={{margin: '0 0 5px 0'}}><Scales size={32} style={{verticalAlign:'middle'}}/> {t.igualarTitulo}</h2>
@@ -203,7 +216,7 @@ export default function Table(props) {
         </div>
       )}
 
-      {filaPassos[0] === 'numero' && (
+      {filaPassos[0] === 'numero' && !eventoAleatorioAtivo && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h2 style={{margin: '0 0 5px 0'}}><Hash size={32} style={{verticalAlign:'middle'}}/> {t.escolherNumTitulo}</h2>
@@ -219,7 +232,7 @@ export default function Table(props) {
         </div>
       )}
 
-      {filaPassos[0] === 'cor' && (
+      {filaPassos[0] === 'cor' && !eventoAleatorioAtivo && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h2>{t.escolhaCor}</h2>
@@ -232,7 +245,7 @@ export default function Table(props) {
         </div>
       )}
 
-      {eventoNoveAtivo && (
+      {eventoNoveAtivo && !eventoAleatorioAtivo && (
         <div style={{ position: 'fixed', top: posicaoNove.top, left: posicaoNove.left, transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 2000, pointerEvents: 'none' }}>
           <button onClick={baterNaMesa} disabled={euJaBati} style={{ pointerEvents: 'auto', width: '160px', height: '160px', borderRadius: '50%', border: '8px solid #000', backgroundColor: euJaBati ? '#2ed573' : '#ff4757', boxShadow: '6px 6px 0 #000', cursor: euJaBati ? 'default' : 'pointer', transition: 'all 0.1s', transform: euJaBati ? 'scale(0.9)' : 'scale(1.1)' }}>
             <HandPalm weight="fill" size={96} color="#000" />
@@ -245,7 +258,7 @@ export default function Table(props) {
           const taSelecionada = cartasSelecionadas.find(c => c.id === carta.id);
           let classes = "carta";
           if (taSelecionada) classes += " selecionada";
-          if (turnoAtual !== socket.id || eventoNoveAtivo) classes += " desabilitada";
+          if (turnoAtual !== socket.id || eventoNoveAtivo || eventoAleatorioAtivo) classes += " desabilitada";
           return ( 
             <div key={carta.id} onClick={() => toggleSelecao(carta)} className={classes} style={{ backgroundColor: getCorCss(carta.cor), color: carta.cor === 'amarelo' ? '#000' : '#fff' }}> 
               {renderValorCarta(carta.valor)} 
@@ -255,9 +268,9 @@ export default function Table(props) {
       </div>
 
       <div className="painel-acoes" style={{ marginBottom: '20px' }}>
-        {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && ( <button className="btn btn-verde" onClick={tentarJogarSelecionadas}>{t.jogar} ({cartasSelecionadas.length}) {t.cartas}</button> )}
-        {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && ( <button className="btn btn-vermelho" onClick={comprarCarta}>{t.aceitarPunicao} (+{comprasAcumuladas})</button> )}
-        {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && ( <button className="btn btn-cinza" onClick={passarVez}>{t.passarVez}</button> )}
+        {turnoAtual === socket.id && cartasSelecionadas.length > 0 && !eventoNoveAtivo && !eventoAleatorioAtivo && ( <button className="btn btn-verde" onClick={tentarJogarSelecionadas}>{t.jogar} ({cartasSelecionadas.length}) {t.cartas}</button> )}
+        {turnoAtual === socket.id && comprasAcumuladas > 0 && !eventoNoveAtivo && !eventoAleatorioAtivo && ( <button className="btn btn-vermelho" onClick={comprarCarta}>{t.aceitarPunicao} (+{comprasAcumuladas})</button> )}
+        {turnoAtual === socket.id && jaComprou && cartasSelecionadas.length === 0 && comprasAcumuladas === 0 && !eventoNoveAtivo && !eventoAleatorioAtivo && ( <button className="btn btn-cinza" onClick={passarVez}>{t.passarVez}</button> )}
       </div>
 
     </div>

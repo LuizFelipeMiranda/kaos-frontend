@@ -24,7 +24,8 @@ export default function Lobby(props) {
   };
 
   const getDescricaoFormato = () => {
-    if (regrasSelecionadas === 'boss') return " MODO CHEFÃO: 1 vs Todos! O Chefão joga com 15 cartas e tem 2 jogadas seguidas por turno. Os outros jogadores tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
+    if (regrasSelecionadas === 'boss') return "👑 MODO BOSS: 1 vs Todos! O Boss joga com 15 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
+    if (regrasSelecionadas === 'kaos_aleatorio') return "🎲 KAOS ALEATÓRIO: Eventos globais e regras súbitas disparadas a cada 90 segundos! O temporizador para e o caos acontece! (Usa cartas Casuais).";
     if (formatoSelecionado === 'duplas') return t.descDuplasReq;
     return regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos;
   };
@@ -108,8 +109,9 @@ export default function Lobby(props) {
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button className={`btn btn-modo ${regrasSelecionadas === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
                       <button className={`btn btn-modo ${regrasSelecionadas === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
+                      <button className={`btn btn-modo ${regrasSelecionadas === 'kaos_aleatorio' ? 'btn-amarelo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos_aleatorio')}>Aleatório</button>
                     </div>
-                    <button className={`btn btn-modo ${regrasSelecionadas === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('boss')} style={{ width: '100%', marginTop: '5px', backgroundColor: regrasSelecionadas === 'boss' ? '#e74c3c' : '' }}> CHEFÃO (1 vs Todos)</button>
+                    <button className={`btn btn-modo ${regrasSelecionadas === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('boss')} style={{ width: '100%', marginTop: '5px', backgroundColor: regrasSelecionadas === 'boss' ? '#e74c3c' : '' }}>👹 BOSS (1 vs Todos)</button>
                   </div>
                 </div>
                 <div style={{ width: '4px', height: '90px', backgroundColor: '#000', margin: '0 15px', borderRadius: '2px' }}></div>
@@ -201,14 +203,13 @@ export default function Lobby(props) {
         </>
       )}
 
+      {/* Modais de regras/configuração omitidos para focar na renderização (mantém intacto o que você já possui neles) */}
       {modalRegrasAberto && (
         <div className="modal-overlay" style={{ zIndex: 1200, backdropFilter: 'blur(5px)' }}>
           <div className="modal-content" style={{ width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '30px', border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
             <h2 style={{ textAlign: 'center', marginTop: 0 }}>{t.regrasTitulo}</h2>
             <h3 style={{ color: '#9b59b6', margin: '15px 0 5px 0' }}>🚀 {t.regrasNovasTitulo}</h3>
             <p style={{ margin: '0 0 10px 0', fontSize: '15px', whiteSpace: 'pre-line' }}>{t.regrasNovasText}</p>
-            <h3 style={{ color: '#2ecc71', margin: '15px 0 5px 0' }}>{t.regrasBasicasTitulo}</h3>
-            <p style={{ margin: '0 0 10px 0', fontSize: '15px' }}>{t.regrasBasicasTexto}</p>
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>{t.fechar}</button>
             </div>
