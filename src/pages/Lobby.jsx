@@ -24,8 +24,8 @@ export default function Lobby(props) {
   };
 
   const getDescricaoFormato = () => {
-    if (regrasSelecionadas === 'boss') return "👑 MODO CHEFÃO: 1 vs Todos! O Chefão joga com 20 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
-    if (regrasSelecionadas === 'kaos_aleatorio') return "🎲 KAOS ALEATÓRIO: Eventos globais e regras súbitas disparadas a cada 45 segundos! O temporizador para e o caos acontece! (Usa cartas Casuais).";
+    if (regrasSelecionadas === 'boss') return "MODO CHEFÃO: 1 vs Todos! O Chefão joga com 20 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
+    if (regrasSelecionadas === 'kaos_aleatorio') return "KAOS ALEATÓRIO: Eventos globais e regras súbitas disparadas a cada 45 segundos! O temporizador para e o caos acontece! (Usa cartas Casuais).";
     if (formatoSelecionado === 'duplas') return t.descDuplasReq;
     return regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos;
   };
@@ -114,9 +114,9 @@ export default function Lobby(props) {
                       <button 
                         className={`btn btn-modo ${regrasSelecionadas === 'kaos_aleatorio' ? 'btn-amarelo' : 'btn-cinza'}`} 
                         onClick={() => setRegrasSelecionadas('kaos_aleatorio')}
-                        style={{ color: regrasSelecionadas === 'kaos_aleatorio' ? '#000' : '#fff' }}
+                        style={{ color: regrasSelecionadas === 'kaos_aleatorio' ? '#000' : '#36ae48' }}
                       >
-                        Aleatório
+                        Kaos Aleatório
                       </button>
 
                     </div>
