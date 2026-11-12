@@ -56,6 +56,8 @@ function App() {
   const [euJaBati, setEuJaBati] = useState(false);
   const [posicaoNove, setPosicaoNove] = useState({ top: '50%', left: '50%' }); 
   
+  const [eventoAleatorioAtivo, setEventoAleatorioAtivo] = useState(null); // ESTADO DO KAOS ALEATORIO
+
   const [filaPassos, setFilaPassos] = useState([]);
   const [payloadJogada, setPayloadJogada] = useState(null);
 
@@ -94,14 +96,14 @@ function App() {
 
   useEffect(() => {
     let interval;
-    if (jogoIniciado && !vencedor && !eventoNoveAtivo) {
+    if (jogoIniciado && !vencedor && !eventoNoveAtivo && !eventoAleatorioAtivo) {
       interval = setInterval(() => {
         const passado = Math.floor((Date.now() - tempoReferencia) / 1000);
         setTempoTurnoRestante(Math.max(25 - passado, 0));
       }, 500);
     }
     return () => clearInterval(interval);
-  }, [jogoIniciado, vencedor, eventoNoveAtivo, tempoReferencia]);
+  }, [jogoIniciado, vencedor, eventoNoveAtivo, eventoAleatorioAtivo, tempoReferencia]);
 
   useEffect(() => {
     if (audioMusicaRef.current) audioMusicaRef.current.pause();
@@ -192,6 +194,7 @@ function App() {
       setCartasSelecionadas([]); 
       setVencedor(null); 
       setTempoPartida(0);
+      setEventoAleatorioAtivo(null);
       
       setTempoReferencia(Date.now()); 
       setTempoTurnoRestante(25); 
@@ -214,6 +217,20 @@ function App() {
         setTempoTurnoRestante(25); 
       }
       tocarEfeito('carta');
+    });
+
+    // EVENTOS DO MODO KAOS ALEATÓRIO
+    socket.on('evento_aleatorio_iniciado', (evento) => {
+      setEventoAleatorioAtivo(evento);
+      tocarEfeito('alarme');
+    });
+    
+    socket.on('evento_aleatorio_concluido', () => {
+      setEventoAleatorioAtivo(null);
+    });
+
+    socket.on('olhar_cartas_lado', (dados) => {
+      setMaoEspiadaPrevia(dados); // Reutilizamos o modal de espiar
     });
 
     socket.on('mao_espiao_previa', (dados) => { setMaoEspiadaPrevia(dados); });
@@ -265,6 +282,7 @@ function App() {
       socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); 
       socket.off('mao_espiao_previa'); socket.off('emote_recebido'); socket.off('erro'); 
       socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo');
+      socket.off('evento_aleatorio_iniciado'); socket.off('evento_aleatorio_concluido'); socket.off('olhar_cartas_lado');
       socket.off('voce_foi_removido'); socket.off('disconnect');
     };
   }, [nome, meuAvatarSeed, tocarEfeito, idioma, minhaSala]);
@@ -313,8 +331,8 @@ function App() {
     else { setErro('Nenhuma sessão anterior encontrada!'); setTimeout(() => setErro(''), 3000); }
   };
 
-  const comprarCarta = () => { if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('comprar_carta', minhaSala); };
-  const passarVez = () => { if (turnoAtual === socket.id && !eventoNoveAtivo) socket.emit('passar_vez', minhaSala); };
+  const comprarCarta = () => { if (turnoAtual === socket.id && !eventoNoveAtivo && !eventoAleatorioAtivo) socket.emit('comprar_carta', minhaSala); };
+  const passarVez = () => { if (turnoAtual === socket.id && !eventoNoveAtivo && !eventoAleatorioAtivo) socket.emit('passar_vez', minhaSala); };
   const baterNaMesa = () => { if (euJaBati) return; setEuJaBati(true); socket.emit('bater_mesa', minhaSala); };
   const enviarEmote = (emote) => { socket.emit('enviar_emote', { codigoSala: minhaSala, emote }); setMenuEmoteAberto(false); };
   
@@ -324,16 +342,16 @@ function App() {
   };
   
   const toggleSelecao = (cartaClicada) => { 
-    if (turnoAtual !== socket.id || eventoNoveAtivo) return; 
+    if (turnoAtual !== socket.id || eventoNoveAtivo || eventoAleatorioAtivo) return; 
     tocarEfeito('carta'); 
     setCartasSelecionadas((ant) => ant.find(c => c.id === cartaClicada.id) ? ant.filter(c => c.id !== cartaClicada.id) : [...ant, cartaClicada]); 
   };
 
   const tentarJogarSelecionadas = () => {
-    if (cartasSelecionadas.length === 0 || eventoNoveAtivo) return;
+    if (cartasSelecionadas.length === 0 || eventoNoveAtivo || eventoAleatorioAtivo) return;
     const ultimaCarta = cartasSelecionadas[cartasSelecionadas.length - 1];
     let passosMapeados = [];
-    if (cartasSelecionadas.some(c => c.valor === '0')) passosMapeados.push('zero');
+    if (cartasSelecionadas.some(c => c.valor === '0') && regrasSelecionadas !== 'boss') passosMapeados.push('zero');
     if (cartasSelecionadas.some(c => c.valor === 'espiar')) passosMapeados.push('espiar');
     if (cartasSelecionadas.some(c => c.valor === 'igualar')) passosMapeados.push('igualar');
     if (cartasSelecionadas.some(c => c.valor === 'escolher_numero')) passosMapeados.push('numero');
@@ -380,7 +398,7 @@ function App() {
     t, idioma, socket, tempoPartida, meuJogadorInfo, turnoAtual, eventoNoveAtivo, tempoTurnoRestante, oponentesOrdenados, emotesAtivos, menuEmoteAberto,
     setMenuEmoteAberto, enviarEmote, minhaSala, baterNaMesa, euJaBati, posicaoNove, minhaMao, cartasSelecionadas, toggleSelecao, tentarJogarSelecionadas,
     comprasAcumuladas, comprarCarta, jaComprou, passarVez, cartaMesa, sentido, filaPassos, resolverPasso, maoEspiadaPrevia, setMaoEspiadaPrevia,
-    setPayloadJogada, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, jogadaBossAtiva
+    setPayloadJogada, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, jogadaBossAtiva, eventoAleatorioAtivo
   };
 
   return (
@@ -396,6 +414,8 @@ function App() {
         @media (max-width: 600px) { .status-turno-box { min-width: 140px !important; padding: 5px 15px !important; font-size: 13px !important; } .status-turno-box .tempo { font-size: 12px !important; margin-top: 2px !important; } }
         .modo-seletor-botoes { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
         .btn-modo { flex: 1; padding: 8px !important; font-size: 14px !important; }
+        @keyframes pulso-evento { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .pulsar { animation: pulso-evento 1s infinite; }
       `}</style>
 
       <div className="aviso-rotacao">
