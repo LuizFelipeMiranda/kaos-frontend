@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { HandPalm, Cards, ArrowsClockwise, ArrowsCounterClockwise, Hourglass, Timer, Eye, Scales, Hash, Smiley, Skull } from '@phosphor-icons/react';
+import { HandPalm, ArrowsClockwise, ArrowsCounterClockwise, Hourglass, Timer, Eye, Scales, Hash, Smiley, Skull } from '@phosphor-icons/react';
 import { getCorCss, renderValorCarta, getPosicaoOponente, arrayEmojis } from '../utils/gameUtils';
 
 export default function Table(props) {
@@ -45,6 +45,7 @@ export default function Table(props) {
         </div>
       )}
 
+      {/* Container Topo Esquerda - Tempo da Partida e Tag do Chefão */}
       <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 100, display: 'flex', gap: '15px', alignItems: 'center' }}>
         <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
@@ -52,14 +53,16 @@ export default function Table(props) {
 
         {meuJogadorInfo?.isBoss && (
           <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#e74c3c', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 #000`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-             <Skull size={20} weight="bold" /> VOCÊ É O BOSS
+             <Skull size={20} weight="bold" /> VOCÊ É O CHEFÃO
           </div>
         )}
       </div>
 
-      {/* Box do Turno */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: regrasSelecionadas === 'kaos_aleatorio' ? '5px' : '10px' }}>
-        <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
+      {/* Container Topo Direita - Temporizador de Jogada & Temporizador do Kaos */}
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+        
+        {/* Box do Turno (Agora alinhado na direita) */}
+        <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ margin: 0 }}>
           <div>
             {turnoAtual === socket.id ? 
               (meuJogadorInfo?.isBoss ? `SUA VEZ (JOGADA ${jogadaBossAtiva}/2)` : t.suaVez) 
@@ -69,18 +72,17 @@ export default function Table(props) {
             {eventoNoveAtivo || eventoAleatorioAtivo ? <span style={{fontWeight: 'bold'}}>PAUSA</span> : <><Hourglass size={16} weight="bold" /> {tempoTurnoRestante}s</>}
           </div>
         </div>
+
+        {/* Box do Kaos Aleatório (Abaixo do Turno) */}
+        {regrasSelecionadas === 'kaos_aleatorio' && (
+          <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '6px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '14px', boxShadow: '3px 3px 0 #000', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
+          </div>
+        )}
+
       </div>
 
-      {/* NOVO: Contador Visual do Kaos Aleatório colado na box de turno */}
-      {regrasSelecionadas === 'kaos_aleatorio' && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
-          <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '6px 25px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '15px', boxShadow: '3px 3px 0 #000', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            🎲 Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
-          </div>
-        </div>
-      )}
-
-      <div className="mesa-redonda">
+      <div className="mesa-redonda" style={{ marginTop: '60px' }}>
         {oponentesOrdenados.map((op, index) => {
           const ehVezDele = turnoAtual === op.id;
           return (
@@ -104,7 +106,7 @@ export default function Table(props) {
               
               {op.isBoss && (
                 <div style={{ backgroundColor: '#e74c3c', color: '#fff', fontWeight: 'bold', fontSize: '10px', padding: '2px 8px', borderRadius: '10px', border: '2px solid #000', marginTop: '-5px', zIndex: 10, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-                  <Skull size={12} weight="bold" /> BOSS
+                  <Skull size={12} weight="bold" /> CHEFÃO
                 </div>
               )}
 
@@ -122,10 +124,20 @@ export default function Table(props) {
         <div className="centro-mesa">
           <div className="coluna-baralho">
             <div className="icone-baralho" onClick={comprarCarta} style={{ cursor: turnoAtual === socket.id && !eventoNoveAtivo && !eventoAleatorioAtivo ? 'pointer' : 'default' }}>
-              <Cards size={48} weight="duotone" color="#ecf0f1" />
+              
+              {/* NOVO BARALHO: Estilizado como as cartas do adversário com fundo cinza-escuro */}
+              <div style={{ 
+                width: '70px', height: '100px', backgroundColor: '#34495e', border: '4px solid #000', 
+                borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                color: '#fff', fontSize: '40px', fontWeight: '900', fontFamily: 'Fredoka, sans-serif', 
+                boxShadow: '4px 4px 0 #000', userSelect: 'none' 
+              }}>
+                K
+              </div>
+
             </div>
             {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && !eventoAleatorioAtivo && (
-              <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0}}>{t.comprar}</button>
+              <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0, marginTop: '10px'}}>{t.comprar}</button>
             )}
           </div>
 

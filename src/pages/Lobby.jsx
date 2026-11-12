@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookBookmark, Gear, MusicNote, SpeakerHigh, SpeakerSlash, Copy, Check, Crown, UserPlus } from '@phosphor-icons/react';
+import { BookBookmark, Gear, MusicNote, SpeakerHigh, SpeakerSlash, Copy, Check, Crown, UserPlus, Skull } from '@phosphor-icons/react';
 import livePixQRCode from '../assets/livepix.png';
 
 export default function Lobby(props) {
@@ -24,7 +24,7 @@ export default function Lobby(props) {
   };
 
   const getDescricaoFormato = () => {
-    if (regrasSelecionadas === 'boss') return "👑 MODO BOSS: 1 vs Todos! O Boss joga com 15 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
+    if (regrasSelecionadas === 'boss') return "👑 MODO CHEFÃO: 1 vs Todos! O Chefão joga com 20 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
     if (regrasSelecionadas === 'kaos_aleatorio') return "🎲 KAOS ALEATÓRIO: Eventos globais e regras súbitas disparadas a cada 45 segundos! O temporizador para e o caos acontece! (Usa cartas Casuais).";
     if (formatoSelecionado === 'duplas') return t.descDuplasReq;
     return regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos;
@@ -109,9 +109,27 @@ export default function Lobby(props) {
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button className={`btn btn-modo ${regrasSelecionadas === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
                       <button className={`btn btn-modo ${regrasSelecionadas === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
-                      <button className={`btn btn-modo ${regrasSelecionadas === 'kaos_aleatorio' ? 'btn-amarelo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos_aleatorio')}>Aleatório</button>
+                      
+                      {/* Botão Aleatório com texto escuro para não sumir no amarelo */}
+                      <button 
+                        className={`btn btn-modo ${regrasSelecionadas === 'kaos_aleatorio' ? 'btn-amarelo' : 'btn-cinza'}`} 
+                        onClick={() => setRegrasSelecionadas('kaos_aleatorio')}
+                        style={{ color: regrasSelecionadas === 'kaos_aleatorio' ? '#000' : '#fff' }}
+                      >
+                        Aleatório
+                      </button>
+
                     </div>
-                    <button className={`btn btn-modo ${regrasSelecionadas === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('boss')} style={{ width: '100%', marginTop: '5px', backgroundColor: regrasSelecionadas === 'boss' ? '#e74c3c' : '' }}>👹 BOSS (1 vs Todos)</button>
+
+                    {/* Botão CHEFÃO atualizado */}
+                    <button 
+                      className={`btn btn-modo ${regrasSelecionadas === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} 
+                      onClick={() => setRegrasSelecionadas('boss')} 
+                      style={{ width: '100%', marginTop: '5px', backgroundColor: regrasSelecionadas === 'boss' ? '#e74c3c' : '', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    >
+                      <Skull size={20} weight="bold" /> CHEFÃO (1 vs Todos)
+                    </button>
+                    
                   </div>
                 </div>
                 <div style={{ width: '4px', height: '90px', backgroundColor: '#000', margin: '0 15px', borderRadius: '2px' }}></div>
