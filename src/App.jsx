@@ -56,7 +56,11 @@ function App() {
   const [euJaBati, setEuJaBati] = useState(false);
   const [posicaoNove, setPosicaoNove] = useState({ top: '50%', left: '50%' }); 
   
-  const [eventoAleatorioAtivo, setEventoAleatorioAtivo] = useState(null); // ESTADO DO KAOS ALEATORIO
+  const [eventoAleatorioAtivo, setEventoAleatorioAtivo] = useState(null); 
+  
+  // NOVOS ESTADOS PARA O TEMPORIZADOR DO EVENTO (45s)
+  const [tempoEventoRestante, setTempoEventoRestante] = useState(45);
+  const [tempoRefEvento, setTempoRefEvento] = useState(() => Date.now());
 
   const [filaPassos, setFilaPassos] = useState([]);
   const [payloadJogada, setPayloadJogada] = useState(null);
@@ -100,10 +104,15 @@ function App() {
       interval = setInterval(() => {
         const passado = Math.floor((Date.now() - tempoReferencia) / 1000);
         setTempoTurnoRestante(Math.max(25 - passado, 0));
+
+        if (regrasSelecionadas === 'kaos_aleatorio') {
+          const passadoEvento = Math.floor((Date.now() - tempoRefEvento) / 1000);
+          setTempoEventoRestante(Math.max(45 - passadoEvento, 0));
+        }
       }, 500);
     }
     return () => clearInterval(interval);
-  }, [jogoIniciado, vencedor, eventoNoveAtivo, eventoAleatorioAtivo, tempoReferencia]);
+  }, [jogoIniciado, vencedor, eventoNoveAtivo, eventoAleatorioAtivo, tempoReferencia, tempoRefEvento, regrasSelecionadas]);
 
   useEffect(() => {
     if (audioMusicaRef.current) audioMusicaRef.current.pause();
@@ -198,6 +207,9 @@ function App() {
       
       setTempoReferencia(Date.now()); 
       setTempoTurnoRestante(25); 
+      setTempoRefEvento(Date.now());
+      setTempoEventoRestante(45);
+
       tocarEfeito('carta');
     });
     
@@ -219,7 +231,6 @@ function App() {
       tocarEfeito('carta');
     });
 
-    // EVENTOS DO MODO KAOS ALEATÓRIO
     socket.on('evento_aleatorio_iniciado', (evento) => {
       setEventoAleatorioAtivo(evento);
       tocarEfeito('alarme');
@@ -227,10 +238,12 @@ function App() {
     
     socket.on('evento_aleatorio_concluido', () => {
       setEventoAleatorioAtivo(null);
+      setTempoRefEvento(Date.now());
+      setTempoEventoRestante(45);
     });
 
     socket.on('olhar_cartas_lado', (dados) => {
-      setMaoEspiadaPrevia(dados); // Reutilizamos o modal de espiar
+      setMaoEspiadaPrevia(dados); 
     });
 
     socket.on('mao_espiao_previa', (dados) => { setMaoEspiadaPrevia(dados); });
@@ -398,7 +411,7 @@ function App() {
     t, idioma, socket, tempoPartida, meuJogadorInfo, turnoAtual, eventoNoveAtivo, tempoTurnoRestante, oponentesOrdenados, emotesAtivos, menuEmoteAberto,
     setMenuEmoteAberto, enviarEmote, minhaSala, baterNaMesa, euJaBati, posicaoNove, minhaMao, cartasSelecionadas, toggleSelecao, tentarJogarSelecionadas,
     comprasAcumuladas, comprarCarta, jaComprou, passarVez, cartaMesa, sentido, filaPassos, resolverPasso, maoEspiadaPrevia, setMaoEspiadaPrevia,
-    setPayloadJogada, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, jogadaBossAtiva, eventoAleatorioAtivo
+    setPayloadJogada, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, jogadaBossAtiva, eventoAleatorioAtivo, regrasSelecionadas, tempoEventoRestante
   };
 
   return (
