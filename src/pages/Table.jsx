@@ -58,7 +58,7 @@ export default function Table(props) {
       `}</style>
 
       {eventoAleatorioAtivo && (
-        <div className="modal-overlay" style={{ zIndex: 4000, backgroundColor: 'rgba(0,0,0,0.85)' }}>
+        <div className="modal-overlay" style={{ zIndex: 5000, backgroundColor: 'rgba(0,0,0,0.85)' }}>
           <div className="modal-content pulsar" style={{ border: '8px solid #9b59b6', backgroundColor: '#fffdf0', maxWidth: '500px' }}>
             <h1 style={{ fontSize: '36px', margin: '0 0 15px 0', color: '#9b59b6' }}>{eventoAleatorioAtivo.titulo}</h1>
             <p style={{ fontSize: '22px', fontWeight: 'bold' }}>{eventoAleatorioAtivo.descricao}</p>
@@ -80,10 +80,10 @@ export default function Table(props) {
         )}
       </div>
 
-      {/* Container Topo Direita - Temporizador de Jogada & Temporizador do Kaos Aleatório */}
+      {/* Container Topo Direita - Aviso de Vez e Logo abaixo o Temporizador do Kaos */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
         
-        {/* Box do Turno */}
+        {/* 1º: Box do Turno (Aviso de vez do jogador) */}
         <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ margin: 0 }}>
           <div>
             {turnoAtual === socket.id ? 
@@ -95,7 +95,7 @@ export default function Table(props) {
           </div>
         </div>
 
-        {/* Temporizador do Kaos Aleatório (Restaurado e ativo) */}
+        {/* 2º: Temporizador do Kaos Aleatório (Fica rigorosamente abaixo do aviso de vez) */}
         {regrasSelecionadas === 'kaos_aleatorio' && (
           <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '6px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '14px', boxShadow: '3px 3px 0 #000', display: 'flex', alignItems: 'center', gap: '5px' }}>
             Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
