@@ -10,7 +10,7 @@ export default function Table(props) {
     toggleSelecao, tentarJogarSelecionadas, comprasAcumuladas, comprarCarta, jaComprou,
     passarVez, cartaMesa, sentido, filaPassos, resolverPasso, maoEspiadaPrevia,
     setMaoEspiadaPrevia, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, 
-    jogadaBossAtiva, eventoAleatorioAtivo
+    jogadaBossAtiva, eventoAleatorioAtivo, regrasSelecionadas, tempoEventoRestante
   } = props;
 
   const cartasOrdenadas = useMemo(() => {
@@ -35,11 +35,10 @@ export default function Table(props) {
   return (
     <div style={{ textAlign: 'center', marginTop: '10px' }}>
       
-      {/* MODAL DE EVENTO ALEATÓRIO GLOBAL (BLOQUEIA TUDO) */}
       {eventoAleatorioAtivo && (
         <div className="modal-overlay" style={{ zIndex: 4000, backgroundColor: 'rgba(0,0,0,0.85)' }}>
-          <div className="modal-content pulsar" style={{ border: '8px solid #f39c12', backgroundColor: '#fffdf0', maxWidth: '500px' }}>
-            <h1 style={{ fontSize: '36px', margin: '0 0 15px 0', color: '#f39c12' }}>{eventoAleatorioAtivo.titulo}</h1>
+          <div className="modal-content pulsar" style={{ border: '8px solid #9b59b6', backgroundColor: '#fffdf0', maxWidth: '500px' }}>
+            <h1 style={{ fontSize: '36px', margin: '0 0 15px 0', color: '#9b59b6' }}>{eventoAleatorioAtivo.titulo}</h1>
             <p style={{ fontSize: '22px', fontWeight: 'bold' }}>{eventoAleatorioAtivo.descricao}</p>
             <div style={{ fontSize: '60px', marginTop: '20px' }}>⏳</div>
           </div>
@@ -58,7 +57,8 @@ export default function Table(props) {
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+      {/* Box do Turno */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: regrasSelecionadas === 'kaos_aleatorio' ? '5px' : '10px' }}>
         <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`}>
           <div>
             {turnoAtual === socket.id ? 
@@ -70,6 +70,15 @@ export default function Table(props) {
           </div>
         </div>
       </div>
+
+      {/* NOVO: Contador Visual do Kaos Aleatório colado na box de turno */}
+      {regrasSelecionadas === 'kaos_aleatorio' && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+          <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '6px 25px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '15px', boxShadow: '3px 3px 0 #000', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            🎲 Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
+          </div>
+        </div>
+      )}
 
       <div className="mesa-redonda">
         {oponentesOrdenados.map((op, index) => {
