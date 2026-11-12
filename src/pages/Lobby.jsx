@@ -25,7 +25,7 @@ export default function Lobby(props) {
 
   const getDescricaoFormato = () => {
     if (regrasSelecionadas === 'boss') return "👑 MODO BOSS: 1 vs Todos! O Boss joga com 15 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
-    if (regrasSelecionadas === 'kaos_aleatorio') return "🎲 KAOS ALEATÓRIO: Eventos globais e regras súbitas disparadas a cada 90 segundos! O temporizador para e o caos acontece! (Usa cartas Casuais).";
+    if (regrasSelecionadas === 'kaos_aleatorio') return "🎲 KAOS ALEATÓRIO: Eventos globais e regras súbitas disparadas a cada 45 segundos! O temporizador para e o caos acontece! (Usa cartas Casuais).";
     if (formatoSelecionado === 'duplas') return t.descDuplasReq;
     return regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos;
   };
@@ -203,7 +203,6 @@ export default function Lobby(props) {
         </>
       )}
 
-      {/* Modais de regras/configuração omitidos para focar na renderização (mantém intacto o que você já possui neles) */}
       {modalRegrasAberto && (
         <div className="modal-overlay" style={{ zIndex: 1200, backdropFilter: 'blur(5px)' }}>
           <div className="modal-content" style={{ width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '30px', border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
