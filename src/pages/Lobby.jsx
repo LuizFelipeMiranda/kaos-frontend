@@ -24,7 +24,7 @@ export default function Lobby(props) {
   };
 
   const getDescricaoFormato = () => {
-    if (regrasSelecionadas === 'boss') return "MODO CHEFÃO: 1 vs Todos! O Chefão joga com 20 cartas e tem 2 jogadas seguidas por turno. A aliança tem de o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
+    if (regrasSelecionadas === 'boss') return "MODO CHEFÃO: 1 vs Todos! O Chefão joga com 20 cartas e tem 2 jogadas seguidas por turno. Os outros jogadores se juntam para o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
     if (regrasSelecionadas === 'kaos_aleatorio') return "KAOS ALEATÓRIO: Eventos aleatórios disparados a cada 50 segundos! O temporizador para e o caos acontece! (Usa cartas Casuais).";
     if (formatoSelecionado === 'duplas') return t.descDuplasReq;
     return regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos;
