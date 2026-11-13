@@ -315,7 +315,7 @@ function App() {
   };
   
   const adicionarBot = () => {
-    const nomesDeBots = ['ASA', 'BOTAS', 'CAIM', 'LUNA', 'RYSER'];
+    const nomesDeBots = ['ASA', 'BOTAS', 'VITE', 'LUNA', 'RYSER'];
     const nomesDisponiveis = nomesDeBots.filter((nomeBot) => !jogadores.some((jogador) => jogador.nome === `[BOT] ${nomeBot}`));
     if (nomesDisponiveis.length > 0) { 
       const nomeSorteado = nomesDisponiveis[Math.floor(Math.random() * nomesDisponiveis.length)]; 
