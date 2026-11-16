@@ -35,28 +35,6 @@ export default function Table(props) {
   return (
     <div style={{ textAlign: 'center', marginTop: '10px' }}>
       
-      <style>{`
-        @media (max-width: 600px) {
-          .status-turno-box {
-            min-width: 120px !important;
-            padding: 4px 10px !important;
-            font-size: 11px !important;
-            border-width: 2px !important;
-            border-radius: 12px !important;
-          }
-          .status-turno-box .tempo {
-            font-size: 10px !important;
-            margin-top: 1px !important;
-          }
-          .coluna-baralho div[style*="width: 70px"] {
-            width: 48px !important;
-            height: 68px !important;
-            font-size: 26px !important;
-            border-width: 3px !important;
-          }
-        }
-      `}</style>
-
       {eventoAleatorioAtivo && (
         <div className="modal-overlay" style={{ zIndex: 5000, backgroundColor: 'rgba(0,0,0,0.85)' }}>
           <div className="modal-content pulsar" style={{ border: '8px solid #9b59b6', backgroundColor: '#fffdf0', maxWidth: '500px' }}>
@@ -68,26 +46,26 @@ export default function Table(props) {
       )}
 
       {/* Container Topo Esquerda */}
-      <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 100, display: 'flex', gap: '15px', alignItems: 'center' }}>
-        <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="hud-topo-esquerdo" style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 100, display: 'flex', gap: '15px', alignItems: 'center' }}>
+        <div className="hud-badge" style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
         </div>
 
         {regrasSelecionadas === 'kaos_aleatorio' && (
-          <div style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '16px', boxShadow: '4px 4px 0 #000', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="hud-badge" style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '16px', boxShadow: '4px 4px 0 #000', display: 'flex', alignItems: 'center', gap: '8px' }}>
             Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
           </div>
         )}
 
         {meuJogadorInfo?.isBoss && (
-          <div style={{ fontWeight: '900', color: '#fff', backgroundColor: '#e74c3c', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 #000`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="hud-badge" style={{ fontWeight: '900', color: '#fff', backgroundColor: '#e74c3c', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: `4px 4px 0 #000`, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
              <Skull size={20} weight="bold" /> VOCÊ É O CHEFÃO
           </div>
         )}
       </div>
 
       {/* Container Topo Direita - Aviso de Vez */}
-      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+      <div className="hud-topo-direito" style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
         <div className={`status-turno status-turno-box ${turnoAtual === socket.id ? 'minha-vez' : ''}`} style={{ margin: 0 }}>
           <div>
             {turnoAtual === socket.id ? 
@@ -142,6 +120,7 @@ export default function Table(props) {
         <div className="centro-mesa">
           <div className="coluna-baralho" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div 
+              className="carta-baralho-monte"
               onClick={comprarCarta} 
               style={{ 
                 cursor: turnoAtual === socket.id && !eventoNoveAtivo && !eventoAleatorioAtivo ? 'pointer' : 'default',
@@ -163,7 +142,7 @@ export default function Table(props) {
             </div>
 
             {turnoAtual === socket.id && !jaComprou && comprasAcumuladas === 0 && cartasSelecionadas.length === 0 && !eventoNoveAtivo && !eventoAleatorioAtivo && (
-              <button className="btn btn-roxo btn-pequeno" onClick={comprarCarta} style={{margin: 0, marginTop: '10px'}}>{t.comprar}</button>
+              <button className="btn btn-roxo btn-pequeno btn-comprar-monte" onClick={comprarCarta} style={{margin: 0, marginTop: '10px'}}>{t.comprar}</button>
             )}
           </div>
 
@@ -177,10 +156,12 @@ export default function Table(props) {
         </div>
       </div>
 
-      <div style={{ position: 'fixed', bottom: '90px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+      {/* Controles Inferiores Direita (Emote e Botão KAOS) */}
+      <div className="hud-controles-direita" style={{ position: 'fixed', bottom: '90px', right: '20px', zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
         <div style={{ position: 'relative' }}>
           {emotesAtivos[socket.id] && <div className="emote-anim" style={{ zIndex: 1200 }}>{emotesAtivos[socket.id]}</div>}
           <button
+            className="btn-emote-toggle"
             onClick={() => setMenuEmoteAberto(!menuEmoteAberto)}
             style={{ background: '#fff', border: '3px solid #000', borderRadius: '50%', width: '55px', height: '55px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '3px 3px 0 #000', outline: 'none', transition: 'transform 0.1s' }}
             onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
@@ -236,7 +217,6 @@ export default function Table(props) {
 
       {maoEspiadaPrevia && !eventoAleatorioAtivo && (
         <div className="modal-overlay" style={{ zIndex: 1600 }}>
-          {/* Adicionado maxHeight e overflowY para permitir scroll */}
           <div className="modal-content" style={{ maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto' }}>
             <h2 style={{ marginBottom: '15px' }}>Cartas de {maoEspiadaPrevia.nome}:</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
