@@ -429,167 +429,154 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
 }
 
 /* Ajustes de Responsividade para Telemóveis na Horizontal (Landscape) */
-/* Ajustes de Responsividade para Telemóveis na Horizontal (Landscape) */
 @media (max-height: 500px) and (orientation: landscape) {
   .container {
     margin: 10px auto;
     padding: 15px;
   }
   
-  /* Reduz os status superiores */
-  .status-turno {
-    top: 10px;
-    right: 10px;
-    padding: 4px 10px;
-    font-size: 12px;
-    border-width: 2px;
+  /* 1. Reduz o Cronômetro e o Temporizador de Kaos (Topo Esquerdo) */
+  .hud-topo-esquerdo {
+    top: 8px !important;
+    left: 8px !important;
+    gap: 6px !important;
   }
+  .hud-badge {
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    border-width: 2px !important;
+    border-radius: 10px !important;
+    box-shadow: 2px 2px 0 #000 !important;
+    gap: 4px !important;
+  }
+  .hud-badge svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* 2. Reduz o Aviso de Vez do Jogador (Topo Direito) */
+  .hud-topo-direito {
+    top: 8px !important;
+    right: 8px !important;
+  }
+  .status-turno, .status-turno-box {
+    padding: 4px 12px !important;
+    font-size: 11px !important;
+    border-width: 2px !important;
+    border-radius: 10px !important;
+    box-shadow: 2px 2px 0 #000 !important;
+    min-width: auto !important;
+  }
+  .status-turno-box .tempo {
+    font-size: 10px !important;
+    margin-top: 2px !important;
+  }
+  .status-turno-box .tempo svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
   .notificacao-topo-esquerdo {
-    top: 10px;
-    left: 10px;
-    padding: 8px 12px;
-    font-size: 12px;
-    max-width: 220px;
+    top: 42px !important;
+    left: 8px !important;
+    padding: 6px 10px;
+    font-size: 11px;
+    max-width: 200px;
     border-width: 2px;
   }
 
-  /* Reduz o botão KAOS */
+  /* 3. Reposiciona e Reduz Botão KAOS e Emoji (Canto Inferior Direito) */
+  .hud-controles-direita {
+    bottom: 10px !important;
+    right: 10px !important;
+    gap: 8px !important;
+  }
+  .btn-emote-toggle {
+    width: 38px !important;
+    height: 38px !important;
+    border-width: 2px !important;
+    box-shadow: 2px 2px 0 #000 !important;
+  }
+  .btn-emote-toggle svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
   .btn-uno {
-    bottom: 10px;
-    right: 10px;
-    width: 60px;
-    height: 60px;
-    font-size: 14px;
-    border-width: 3px;
-    box-shadow: 3px 3px 0 #000, inset 0 -3px 0 rgba(0,0,0,0.2);
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 11px !important;
+    border-width: 3px !important;
+    box-shadow: 2px 2px 0 #000, inset 0 -2px 0 rgba(0,0,0,0.2) !important;
   }
 
-  /* === CORREÇÃO: Impede que a mesa fique demasiado larga no telemóvel === */
+  /* Mesa Redonda */
   .mesa-redonda {
-    margin-top: 15px;
-    height: 40vh; 
-    width: 80%; /* Não deixa esticar ao longo de todo o ecrã */
-    max-width: 500px; /* Impede expansão excessiva */
-    min-height: 140px;
+    margin-top: 28px !important;
+    height: 38vh; 
+    width: 72%; 
+    max-width: 460px; 
+    min-height: 135px;
     border-width: 6px;
   }
   
-  /* Diminui os avatares e nomes dos oponentes */
   .oponente-avatar {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-width: 2px;
   }
   .oponente-nome {
-    font-size: 10px;
+    font-size: 9px;
     padding: 2px 6px;
     border-width: 2px;
   }
   .carta-verso {
-    width: 12px;
-    height: 22px;
-    font-size: 9px;
+    width: 11px;
+    height: 20px;
+    font-size: 8px;
     border-width: 1px;
   }
 
-  /* Reduz as cartas da mesa e da mão para não sobreporem o ecrã */
-  .carta, .icone-baralho, .carta-mesa {
-    width: 45px !important;
-    height: 55px !important;
-    font-size: 22px !important;
+  /* 4. Tamanho da Carta de Compra, Mesa e Espaçamento com o Botão */
+  .carta, .icone-baralho, .carta-mesa, .carta-baralho-monte {
+    width: 42px !important;
+    height: 56px !important;
+    font-size: 20px !important;
     border-width: 2px !important;
     border-radius: 6px !important;
+    box-shadow: 2px 2px 0 #000 !important;
+  }
+  .btn-comprar-monte {
+    margin-top: 4px !important;
+    padding: 3px 8px !important;
+    font-size: 10px !important;
+    border-width: 2px !important;
+    border-radius: 8px !important;
+    box-shadow: 2px 2px 0 #000 !important;
   }
   .direcao-indicador svg {
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
   }
 
-  /* Encolhe o painel de botões de ação */
+  /* Painel de botões de ação */
   .painel-acoes {
     height: auto;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    margin-top: 4px;
+    margin-bottom: 4px;
   }
   .painel-acoes .btn {
     padding: 4px 10px;
-    font-size: 12px;
+    font-size: 11px;
     border-width: 2px;
   }
 
-  /* Ajusta a distância e o espaço da mão do jogador */
+  /* 5. Limita a Área Máxima das Cartas da Mão para não bater nos botões da direita */
   .mao-container {
+    max-width: calc(100vw - 140px) !important; /* Deixa margem livre nas laterais para o botão KAOS */
     padding: 0 5px 5px 5px !important;
     gap: 4px !important;
     position: relative;
     z-index: 10;
-    margin-top: 1rem;
+    margin: 8px auto 0 auto !important;
   }
-}
-
-/* --- ESTILO GARTIC: PAINEL DO LOBBY --- */
-.lobby-panel {
-  background-color: #ffffff;
-  border: 6px solid #000;
-  border-radius: 30px;
-  padding: 30px;
-  max-width: 650px;
-  margin: 40px auto;
-  box-shadow: 10px 10px 0px #000;
-  position: relative;
-}
-
-/* --- ANIMAÇÃO DA CARTA "K" --- */
-@keyframes flutuarEgirar {
-  0% { transform: translateY(0) rotate(-10deg); }
-  25% { transform: translateY(-15px) rotate(-10deg); }
-  50% { transform: translateY(0) rotate(-10deg); }
-  75% { transform: translateY(-15px) rotate(350deg); }
-  100% { transform: translateY(0) rotate(350deg); }
-}
-
-.k-animado {
-  display: inline-block;
-  animation: flutuarEgirar 4s ease-in-out infinite;
-  transform-origin: center;
-}
-
-/* --- GRID DE JOGADORES (SALA DE ESPERA) --- */
-.grid-jogadores {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.card-jogador {
-  background: #f8f9fa;
-  border: 4px solid #000;
-  border-radius: 20px;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-shadow: 4px 4px 0 #000;
-  position: relative;
-  transition: transform 0.1s;
-}
-
-.card-jogador:hover {
-  transform: translateY(-5px);
-  box-shadow: 4px 9px 0 #000;
-}
-
-.host-badge {
-  position: absolute;
-  top: -15px;
-  right: -10px;
-  background: #f1c40f;
-  border: 3px solid #000;
-  border-radius: 50%;
-  padding: 5px;
-  box-shadow: 2px 2px 0 #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
