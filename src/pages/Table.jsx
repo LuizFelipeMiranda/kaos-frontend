@@ -94,7 +94,7 @@ export default function Table(props) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}>
                 <img 
-                  src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${op.avatar}`} 
+                  src={`https://api.dicebear.com/10.x/adventurer-neutral/svg?seed=${op.avatar}`} 
                   style={{ width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#fff', border: op.corEquipe ? '2px solid #000' : 'none', boxSizing: 'border-box', display: 'block' }} 
                   alt="Avatar"
                 />
@@ -190,7 +190,7 @@ export default function Table(props) {
             <div className="grid-opcoes-zero">
               {oponentesOrdenados.map(j => (
                 <button key={j.id} className="btn btn-azul" onClick={() => resolverPasso({ alvoTroca: j.id })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                  <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} alt="Avatar" />
+                  <img src={`https://api.dicebear.com/10.x/adventurer-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} alt="Avatar" />
                   {j.nome} ({j.qtdCartas})
                 </button>
               ))}
@@ -206,7 +206,7 @@ export default function Table(props) {
             <div className="grid-opcoes-zero">
               {oponentesOrdenados.map(j => (
                 <button key={j.id} className="btn btn-roxo" onClick={() => { socket.emit('espiar_cartas_alvo', { codigoSala: props.minhaSala, alvoId: j.id }); props.setPayloadJogada(prev => ({ ...prev, alvoTroca: j.id })); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                  <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} alt="Avatar" />
+                  <img src={`https://api.dicebear.com/10.x/adventurer-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} alt="Avatar" />
                   {j.nome} ({j.qtdCartas})
                 </button>
               ))}

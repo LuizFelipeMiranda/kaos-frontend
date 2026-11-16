@@ -54,7 +54,7 @@ export default function Lobby(props) {
           <div className="avatar-seletor-container">
             <h3 style={{ margin: '0 0 10px 0' }}>{t.seuAvatar}</h3>
             <div className="avatar-display" onClick={roletarAvatar} style={{ border: '4px solid #000', boxShadow: '4px 4px 0 #000', cursor: 'pointer' }}>
-              <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${meuAvatarSeed}`} width="100%" height="100%" alt="Avatar" />
+              <img src={`https://api.dicebear.com/10.x/adventurer-neutral/svg?seed=${meuAvatarSeed}`} width="100%" height="100%" alt="Avatar" />
             </div>
             <p style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '5px' }}>Clique para alterar</p>
           </div>
@@ -188,7 +188,7 @@ export default function Lobby(props) {
                   )}
                   
                   <div style={{ padding: '4px', borderRadius: '50%', backgroundColor: corEquipeLobby !== 'transparent' ? corEquipeLobby : '#ecf0f1', marginBottom: '10px' }}>
-                    <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${jogador.avatar}`} width="70" height="70" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '3px solid #000', display: 'block' }} alt="Avatar" />
+                    <img src={`https://api.dicebear.com/10.x/adventurer-neutral/svg?seed=${jogador.avatar}`} width="70" height="70" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '3px solid #000', display: 'block' }} alt="Avatar" />
                   </div>
                   
                   <span style={{ fontSize: '18px', fontWeight: '900', textAlign: 'center', lineHeight: '1.1' }}>
