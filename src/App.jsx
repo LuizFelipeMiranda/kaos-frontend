@@ -448,7 +448,7 @@ function App() {
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
             {jogadores.map((j, i) => (
               <div key={j.id} style={{ transform: roletaIndex === i ? 'scale(1.3)' : 'scale(1)', opacity: roletaIndex === i ? 1 : 0.4, transition: 'all 0.1s', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <img src={`https://api.dicebear.com/7.x/avataaars-neutral/svg?seed=${j.avatar}`} width="80" height="80" style={{ borderRadius: '50%', border: j.isBoss ? '4px solid #e74c3c' : '4px solid #000', backgroundColor: '#fff', boxShadow: roletaIndex === i ? '0 0 20px #f1c40f' : 'none' }} alt="Avatar" />
+                <img src={`https://api.dicebear.com/10.x/adventurer-neutral/svg?seed=${j.avatar}`} width="80" height="80" style={{ borderRadius: '50%', border: j.isBoss ? '4px solid #e74c3c' : '4px solid #000', backgroundColor: '#fff', boxShadow: roletaIndex === i ? '0 0 20px #f1c40f' : 'none' }} alt="Avatar" />
                 <span style={{ color: '#fff', fontWeight: 'bold', marginTop: '10px', textShadow: '2px 2px 0 #000', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   {j.isBoss && <Skull size={16} weight="bold" color="#e74c3c" />} {j.nome}
                 </span>
