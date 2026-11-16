@@ -224,7 +224,7 @@ export default function Lobby(props) {
         <div className="modal-overlay" style={{ zIndex: 1200, backdropFilter: 'blur(5px)' }}>
           <div className="modal-content" style={{ width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', textAlign: 'left', padding: '30px', border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
             <h2 style={{ textAlign: 'center', marginTop: 0 }}>{t.regrasTitulo}</h2>
-            <h3 style={{ color: '#9b59b6', margin: '15px 0 5px 0' }}>🚀 {t.regrasNovasTitulo}</h3>
+            <h3 style={{ color: '#9b59b6', margin: '15px 0 5px 0' }}>{t.regrasNovasTitulo}</h3>
             <p style={{ margin: '0 0 10px 0', fontSize: '15px', whiteSpace: 'pre-line' }}>{t.regrasNovasText}</p>
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <button className="btn btn-vermelho" onClick={() => setModalRegrasAberto(false)} style={{ width: '100%' }}>{t.fechar}</button>
