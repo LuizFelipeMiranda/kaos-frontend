@@ -81,7 +81,7 @@ export default function Lobby(props) {
             <p style={{ fontSize: '13px', margin: '0 0 10px 0', fontWeight: 'bold', color: '#7f8c8d' }}>{t.ajude}</p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
               <img src={livePixQRCode} alt="QR Code LivePix" style={{ width: '90px', borderRadius: '10px', border: '3px solid #000' }} />
-              <a href="https://https://livepix.gg/felpz3r4" target="_blank" rel="noreferrer" className="btn btn-amarelo btn-pequeno" style={{ textDecoration: 'none', color: '#000' }}>{t.doar}</a>
+              <a href="https://livepix.gg/felpz3r4" target="_blank" rel="noreferrer" className="btn btn-amarelo btn-pequeno" style={{ textDecoration: 'none', color: '#000' }}>{t.doar}</a>
             </div>
           </div>
         </>
