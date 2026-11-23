@@ -11,7 +11,8 @@ import musicaTema from './assets/tema.mp3';
 import musicaJogo from './assets/jogo.mp3'; 
 import somCarta from './assets/carta.mp3';
 import somAlarme from './assets/alarme.mp3';
-import somVitoria from './assets/vitoria.mp3'; 
+import somVitoria from './assets/vitoria.mp3';
+import somKaosAleatorio from './assets/kaos_evento.mp3';
 
 const socket = io('https://kaos-backend-83du.onrender.com');
 
@@ -88,7 +89,8 @@ function App() {
   const audioJogoRef = useRef(null); 
   const audioEfeitoRef = useRef(null);
   const audioAlarmeRef = useRef(null);
-  const audioVitoriaRef = useRef(null); 
+  const audioVitoriaRef = useRef(null);
+  const audioKaosAleatorioRef = useRef(null);
 
   useEffect(() => {
     let interval;
@@ -137,7 +139,7 @@ function App() {
     }
   }, [musicaAtiva, volumeMusica, vencedor, jogoIniciado, efeitosAtivos, volumeEfeitos]);
 
-  const tocarEfeito = useCallback((tipo = 'carta') => {
+const tocarEfeito = useCallback((tipo = 'carta') => {
     if (!efeitosAtivos) return;
     if (tipo === 'carta' && audioEfeitoRef.current) {
       audioEfeitoRef.current.volume = volumeEfeitos;
@@ -147,8 +149,14 @@ function App() {
       audioAlarmeRef.current.volume = volumeEfeitos;
       audioAlarmeRef.current.currentTime = 0;
       audioAlarmeRef.current.play().catch(() => {});
+    } else if (tipo === 'kaos_aleatorio' && audioKaosAleatorioRef.current) { // <-- NOVO BLOCO
+      audioKaosAleatorioRef.current.volume = volumeEfeitos;
+      audioKaosAleatorioRef.current.currentTime = 0;
+      audioKaosAleatorioRef.current.play().catch(() => {});
     }
   }, [efeitosAtivos, volumeEfeitos]);
+
+  
 
   useEffect(() => {
     if (mostrandoSorteio && jogadorSorteado && jogadores.length > 0) {
@@ -233,7 +241,7 @@ function App() {
 
     socket.on('evento_aleatorio_iniciado', (evento) => {
       setEventoAleatorioAtivo(evento);
-      tocarEfeito('alarme');
+      tocarEfeito('kaos_aleatorio');
     });
     
     socket.on('evento_aleatorio_concluido', () => {
@@ -441,6 +449,7 @@ function App() {
       <audio ref={audioEfeitoRef} src={somCarta} />
       <audio ref={audioAlarmeRef} src={somAlarme} />
       <audio ref={audioVitoriaRef} src={somVitoria} />
+      <audio ref={audioKaosAleatorioRef} src={somKaosAleatorio} />
 
       {mostrandoSorteio && (
         <div className="modal-overlay" style={{ zIndex: 3000, flexDirection: 'column', backgroundColor: 'rgba(0,0,0,0.85)' }}>
