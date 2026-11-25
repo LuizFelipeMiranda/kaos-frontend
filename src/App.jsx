@@ -139,7 +139,7 @@ function App() {
     }
   }, [musicaAtiva, volumeMusica, vencedor, jogoIniciado, efeitosAtivos, volumeEfeitos]);
 
-const tocarEfeito = useCallback((tipo = 'carta') => {
+  const tocarEfeito = useCallback((tipo = 'carta') => {
     if (!efeitosAtivos) return;
     if (tipo === 'carta' && audioEfeitoRef.current) {
       audioEfeitoRef.current.volume = volumeEfeitos;
@@ -149,14 +149,12 @@ const tocarEfeito = useCallback((tipo = 'carta') => {
       audioAlarmeRef.current.volume = volumeEfeitos;
       audioAlarmeRef.current.currentTime = 0;
       audioAlarmeRef.current.play().catch(() => {});
-    } else if (tipo === 'kaos_aleatorio' && audioKaosAleatorioRef.current) { // <-- NOVO BLOCO
+    } else if (tipo === 'kaos_aleatorio' && audioKaosAleatorioRef.current) {
       audioKaosAleatorioRef.current.volume = volumeEfeitos;
       audioKaosAleatorioRef.current.currentTime = 0;
       audioKaosAleatorioRef.current.play().catch(() => {});
     }
   }, [efeitosAtivos, volumeEfeitos]);
-
-  
 
   useEffect(() => {
     if (mostrandoSorteio && jogadorSorteado && jogadores.length > 0) {
@@ -178,12 +176,19 @@ const tocarEfeito = useCallback((tipo = 'carta') => {
     socket.on('sala_criada', (codigo) => { 
       setMinhaSala(codigo); 
       setJogadores([{ id: socket.id, nome: nome, avatar: meuAvatarSeed, vitorias: 0 }]); 
+      setRegrasSelecionadas('kaos');
+      setFormatoSelecionado('pvp');
       localStorage.setItem('kaos_sala_ativa', codigo); 
     });
     
     socket.on('entrou_na_sala', (codigo) => { 
       setMinhaSala(codigo); 
       localStorage.setItem('kaos_sala_ativa', codigo); 
+    });
+
+    socket.on('config_sala_atualizada', ({ regras, formato }) => {
+      setRegrasSelecionadas(regras);
+      setFormatoSelecionado(formato);
     });
     
     socket.on('atualizar_jogadores', (lista) => { 
@@ -299,7 +304,7 @@ const tocarEfeito = useCallback((tipo = 'carta') => {
     });
 
     return () => {
-      socket.off('sala_criada'); socket.off('entrou_na_sala'); socket.off('atualizar_jogadores'); 
+      socket.off('sala_criada'); socket.off('entrou_na_sala'); socket.off('config_sala_atualizada'); socket.off('atualizar_jogadores'); 
       socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); 
       socket.off('mao_espiao_previa'); socket.off('emote_recebido'); socket.off('erro'); 
       socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo');
@@ -311,6 +316,22 @@ const tocarEfeito = useCallback((tipo = 'carta') => {
   const roletarAvatar = () => { setMeuAvatarSeed(gerarSeedAleatoria()); };
   const criarSala = () => { if (!nome) return setErro('Digite o seu nome!'); socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed }); };
   const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
+
+  const alterarRegras = (novaRegra) => {
+    setRegrasSelecionadas(novaRegra);
+    const novoFormato = novaRegra === 'boss' ? 'pvp' : formatoSelecionado;
+    if (novaRegra === 'boss') setFormatoSelecionado('pvp');
+    if (minhaSala && jogadores[0]?.id === socket.id) {
+      socket.emit('alterar_config_sala', { codigoSala: minhaSala, regras: novaRegra, formato: novoFormato });
+    }
+  };
+
+  const alterarFormato = (novoFormato) => {
+    setFormatoSelecionado(novoFormato);
+    if (minhaSala && jogadores[0]?.id === socket.id) {
+      socket.emit('alterar_config_sala', { codigoSala: minhaSala, regras: regrasSelecionadas, formato: novoFormato });
+    }
+  };
   
   const iniciarPartida = () => { 
     if (formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss' && (jogadores.length !== 4 && jogadores.length !== 6)) {
@@ -410,7 +431,7 @@ const tocarEfeito = useCallback((tipo = 'carta') => {
 
   const lobbyProps = {
     t, idioma, setIdioma, nome, setNome, meuAvatarSeed, roletarAvatar, codigoSalaInput, setCodigoSalaInput, minhaSala, criarSala, entrarSala,
-    handleReconectar, jogadores, socket, regrasSelecionadas, setRegrasSelecionadas, formatoSelecionado, setFormatoSelecionado, iniciarPartida,
+    handleReconectar, jogadores, socket, regrasSelecionadas, setRegrasSelecionadas: alterarRegras, formatoSelecionado, setFormatoSelecionado: alterarFormato, iniciarPartida,
     adicionarBot, sairDaSala, expulsarJogador, handleSort, dragItem, dragOverItem, modalRegrasAberto, setModalRegrasAberto, modalConfigAberto,
     setModalConfigAberto, musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos, setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos
   };
