@@ -4,7 +4,7 @@ import { getCorCss, renderValorCarta, getPosicaoOponente, arrayEmojis } from '..
 
 export default function Table(props) {
   const {
-    t, socket, tempoPartida, meuJogadorInfo, turnoAtual, eventoNoveAtivo,
+    t, socket, minhaSala, tempoPartida, meuJogadorInfo, turnoAtual, eventoNoveAtivo,
     tempoTurnoRestante, oponentesOrdenados, emotesAtivos, menuEmoteAberto, setMenuEmoteAberto,
     enviarEmote, baterNaMesa, euJaBati, posicaoNove, minhaMao, cartasSelecionadas,
     toggleSelecao, tentarJogarSelecionadas, comprasAcumuladas, comprarCarta, jaComprou,
@@ -63,6 +63,15 @@ export default function Table(props) {
           </div>
         )}
       </div>
+
+      {/* Container Inferior Esquerda - Código da Sala */}
+      {minhaSala && (
+        <div className="hud-inferior-esquerdo" style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 100 }}>
+          <div className="hud-badge" style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            Sala: <span style={{ color: '#f1c40f' }}>{minhaSala}</span>
+          </div>
+        </div>
+      )}
 
       {/* Container Topo Direita - Aviso de Vez */}
       <div className="hud-topo-direito" style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
@@ -175,7 +184,7 @@ export default function Table(props) {
             </div>
           )}
         </div>
-        <button className="btn-uno" onClick={() => socket.emit('apertar_uno', props.minhaSala)} style={{ position: 'static' }}>KAOS!</button>
+        <button className="btn-uno" onClick={() => socket.emit('apertar_uno', minhaSala)} style={{ position: 'static' }}>KAOS!</button>
       </div>
 
       {filaPassos[0] === 'zero' && !eventoAleatorioAtivo && (
@@ -205,7 +214,7 @@ export default function Table(props) {
             <h2 style={{margin: '0 0 15px 0'}}><Eye size={32} style={{verticalAlign:'middle'}}/> {t.espiarAlvo}</h2>
             <div className="grid-opcoes-zero">
               {oponentesOrdenados.map(j => (
-                <button key={j.id} className="btn btn-roxo" onClick={() => { socket.emit('espiar_cartas_alvo', { codigoSala: props.minhaSala, alvoId: j.id }); props.setPayloadJogada(prev => ({ ...prev, alvoTroca: j.id })); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                <button key={j.id} className="btn btn-roxo" onClick={() => { socket.emit('espiar_cartas_alvo', { codigoSala: minhaSala, alvoId: j.id }); props.setPayloadJogada(prev => ({ ...prev, alvoTroca: j.id })); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                   <img src={`https://api.dicebear.com/10.x/adventurer-neutral/svg?seed=${j.avatar}`} width="30" height="30" style={{ borderRadius: '50%', backgroundColor: '#fff', border: '2px solid #000' }} alt="Avatar" />
                   {j.nome} ({j.qtdCartas})
                 </button>
