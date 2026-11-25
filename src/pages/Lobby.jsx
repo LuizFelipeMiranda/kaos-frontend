@@ -100,7 +100,7 @@ export default function Lobby(props) {
             </button>
           </div>
           
-          {jogadores[0]?.id === socket.id && (
+          {jogadores[0]?.id === socket.id ? (
             <div style={{ padding: '20px', border: '4px dashed #000', borderRadius: '20px', margin: '0 auto 25px auto', backgroundColor: '#f9f9f9' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
@@ -110,7 +110,6 @@ export default function Lobby(props) {
                       <button className={`btn btn-modo ${regrasSelecionadas === 'casual' ? 'btn-azul' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('casual')}>{t.casual}</button>
                       <button className={`btn btn-modo ${regrasSelecionadas === 'kaos' ? 'btn-roxo' : 'btn-cinza'}`} onClick={() => setRegrasSelecionadas('kaos')}>{t.kaos}</button>
                       
-                      {/* Botão Aleatório atualizado para Verde quando selecionado */}
                       <button 
                         className={`btn btn-modo ${regrasSelecionadas === 'kaos_aleatorio' ? 'btn-verde' : 'btn-cinza'}`} 
                         onClick={() => setRegrasSelecionadas('kaos_aleatorio')}
@@ -140,6 +139,38 @@ export default function Lobby(props) {
                   </div>
                 </div>
               </div>
+              <p style={{ fontSize: '13px', margin: '15px 0 0 0', fontWeight: 'bold', color: '#7f8c8d' }}>
+                {getDescricaoFormato()}
+              </p>
+            </div>
+          ) : (
+            <div style={{ padding: '18px 20px', border: '4px dashed #000', borderRadius: '20px', margin: '0 auto 25px auto', backgroundColor: '#f9f9f9' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#7f8c8d', display: 'block', marginBottom: '6px' }}>Modo de Jogo:</span>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 16px', borderRadius: '12px', border: '3px solid #000', fontWeight: '900', fontSize: '15px', boxShadow: '2px 2px 0 #000', color: '#fff',
+                    backgroundColor: regrasSelecionadas === 'casual' ? '#3498db' : regrasSelecionadas === 'kaos' ? '#9b59b6' : regrasSelecionadas === 'kaos_aleatorio' ? '#2ecc71' : '#e74c3c'
+                  }}>
+                    {regrasSelecionadas === 'boss' && <Skull size={18} weight="bold" />}
+                    {regrasSelecionadas === 'casual' ? t.casual : regrasSelecionadas === 'kaos' ? t.kaos : regrasSelecionadas === 'kaos_aleatorio' ? 'Kaos Aleatório' : 'CHEFÃO (1 vs Todos)'}
+                  </span>
+                </div>
+
+                <div style={{ width: '3px', height: '45px', backgroundColor: '#000', borderRadius: '2px' }}></div>
+
+                <div>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#7f8c8d', display: 'block', marginBottom: '6px' }}>Formato:</span>
+                  <span style={{
+                    display: 'inline-block', padding: '6px 16px', borderRadius: '12px', border: '3px solid #000', fontWeight: '900', fontSize: '15px', boxShadow: '2px 2px 0 #000',
+                    backgroundColor: (formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss') ? '#2ecc71' : '#f1c40f',
+                    color: (formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss') ? '#fff' : '#000'
+                  }}>
+                    {(formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss') ? t.duplas : t.pvp}
+                  </span>
+                </div>
+              </div>
+
               <p style={{ fontSize: '13px', margin: '15px 0 0 0', fontWeight: 'bold', color: '#7f8c8d' }}>
                 {getDescricaoFormato()}
               </p>
