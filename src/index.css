@@ -454,6 +454,11 @@ input:focus { transform: translateY(-2px); box-shadow: 6px 6px 0 #000; }
     height: 14px !important;
   }
 
+  .hud-inferior-esquerdo {
+    bottom: 10px !important;
+    left: 8px !important;
+  }
+
   /* 2. Reduz o Aviso de Vez do Jogador (Topo Direito) */
   .hud-topo-direito {
     top: 8px !important;
