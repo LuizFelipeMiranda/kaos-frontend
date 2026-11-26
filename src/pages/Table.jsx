@@ -11,7 +11,7 @@ export default function Table(props) {
     passarVez, cartaMesa, sentido, filaPassos, resolverPasso, maoEspiadaPrevia,
     setMaoEspiadaPrevia, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, 
     jogadaBossAtiva, eventoAleatorioAtivo, regrasSelecionadas, tempoEventoRestante,
-    modoLiga, nomeLiga, totalPartidas, partidaAtual, campeoesLiga, setCampeoesLiga
+    modoLiga, nomeLiga, totalPartidas, partidaAtual, emDesempate, campeoesLiga, setCampeoesLiga
   } = props;
 
   const cartasOrdenadas = useMemo(() => {
@@ -34,7 +34,7 @@ export default function Table(props) {
           position: 'absolute',
           top: '-6px',
           right: '-6px',
-          backgroundColor: cores[posicao],
+          backgroundColor: cores[posicao] || '#95a5a6',
           border: '3px solid #000',
           borderRadius: '50%',
           width: '28px',
@@ -99,7 +99,9 @@ export default function Table(props) {
     return (
       <div className="container" style={{ marginTop: '100px' }}>
         <h1 className="logo-kaos"><div className="carta-k-logo">K</div>AOS</h1>
-        <h1 style={{ fontSize: '40px', color: '#f1c40f' }}>🏆 {modoLiga ? `FIM DA PARTIDA ${partidaAtual - 1}/${totalPartidas}` : 'VENCEDOR'} 🏆</h1>
+        <h1 style={{ fontSize: '40px', color: '#f1c40f' }}>
+          🏆 {modoLiga ? (emDesempate ? 'EMPATE NA LIGA!' : `FIM DA PARTIDA ${partidaAtual - 1}/${totalPartidas}`) : 'VENCEDOR'} 🏆
+        </h1>
         <h2 style={{ fontSize: '26px', lineHeight: '1.3' }}>{vencedor}</h2>
         <button className="btn btn-azul" onClick={() => { setVencedor(null); setJogoIniciado(false); setTempoPartida(0); }}>{t.voltarLobby}</button>
       </div>
@@ -125,12 +127,6 @@ export default function Table(props) {
           <Timer size={20} weight="bold" /> {t.tempo}: {Math.floor(tempoPartida / 60)}:{(tempoPartida % 60).toString().padStart(2, '0')}
         </div>
 
-        {modoLiga && (
-          <div className="hud-badge" style={{ fontWeight: '900', color: '#000', backgroundColor: '#f1c40f', padding: '8px 18px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Trophy size={18} weight="fill" /> {nomeLiga} ({partidaAtual}/{totalPartidas})
-          </div>
-        )}
-
         {regrasSelecionadas === 'kaos_aleatorio' && (
           <div className="hud-badge" style={{ backgroundColor: '#9b59b6', color: '#fff', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', fontWeight: 'bold', fontSize: '16px', boxShadow: '4px 4px 0 #000', display: 'flex', alignItems: 'center', gap: '8px' }}>
             Próximo Kaos: {eventoAleatorioAtivo ? 'AGORA!' : `${tempoEventoRestante}s`}
@@ -150,12 +146,20 @@ export default function Table(props) {
         )}
       </div>
 
-      {/* Container Inferior Esquerda - Código da Sala */}
-      {minhaSala && (
-        <div className="hud-inferior-esquerdo" style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 100 }}>
-          <div className="hud-badge" style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            Sala: <span style={{ color: '#f1c40f' }}>{minhaSala}</span>
-          </div>
+      {/* Container Inferior Esquerda - Nome da Liga (acima) e Código da Sala (abaixo) */}
+      {(minhaSala || modoLiga) && (
+        <div className="hud-inferior-esquerdo" style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+          {modoLiga && (
+            <div className="hud-badge" style={{ fontWeight: '900', color: '#000', backgroundColor: '#f1c40f', padding: '7px 16px', borderRadius: '14px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Trophy size={17} weight="fill" /> {nomeLiga} {emDesempate ? '(Desempate)' : `(${partidaAtual}/${totalPartidas})`}
+            </div>
+          )}
+
+          {minhaSala && (
+            <div className="hud-badge" style={{ fontWeight: '900', color: '#fff', backgroundColor: '#2c3e50', padding: '8px 20px', borderRadius: '15px', border: '3px solid #000', boxShadow: '4px 4px 0 #000', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              Sala: <span style={{ color: '#f1c40f' }}>{minhaSala}</span>
+            </div>
+          )}
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookBookmark, Gear, MusicNote, SpeakerHigh, SpeakerSlash, Copy, Check, Crown, UserPlus, Skull, Trophy } from '@phosphor-icons/react';
+import { BookBookmark, Gear, MusicNote, SpeakerHigh, SpeakerSlash, Copy, Check, Crown, UserPlus, Skull, Trophy, Lock } from '@phosphor-icons/react';
 import livePixQRCode from '../assets/livepix.png';
 
 export default function Lobby(props) {
@@ -12,7 +12,7 @@ export default function Lobby(props) {
     modalRegrasAberto, setModalRegrasAberto, modalConfigAberto, setModalConfigAberto,
     musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos,
     setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos,
-    modoLiga, nomeLiga, totalPartidas, alterarTotalPartidas, partidaAtual, setErro
+    modoLiga, nomeLiga, totalPartidas, alterarTotalPartidas, partidaAtual, emDesempate, nomesEmpatados, ligaEmAndamento, setErro
   } = props;
 
   const [linkCopiado, setLinkCopiado] = useState(false);
@@ -28,6 +28,9 @@ export default function Lobby(props) {
 
   const getDescricaoFormato = () => {
     if (modoLiga) {
+      if (emDesempate) {
+        return `MORTE SÚBITA (DESEMPATE): ${nomesEmpatados.join(' vs ')} — Quem bater primeiro dentre os empatados vence a Liga na hora!`;
+      }
       if (formatoSelecionado === 'duplas') {
         return `LIGA DO KAOS (DUPLAS - 6 JOGADORES): 1ª dupla a bater ganha 1000 pts cada e 2ª dupla ganha 700 pts cada. Vence a dupla com mais pontos ao fim de ${totalPartidas} partidas!`;
       }
@@ -48,6 +51,8 @@ export default function Lobby(props) {
     setInputNomeLiga('');
     setModalCriarLigaAberto(true);
   };
+
+  const podeEditarConfig = jogadores[0]?.id === socket.id && !ligaEmAndamento;
 
   return (
     <div className="container" style={{ position: 'relative', maxWidth: '650px', padding: '30px' }}>
@@ -116,12 +121,14 @@ export default function Lobby(props) {
       ) : (
         <>
           {modoLiga && (
-            <div style={{ backgroundColor: '#2c3e50', color: '#fff', padding: '12px 20px', borderRadius: '18px', border: '4px solid #000', boxShadow: '4px 4px 0 #000', marginBottom: '20px' }}>
+            <div style={{ backgroundColor: emDesempate ? '#8e44ad' : '#2c3e50', color: '#fff', padding: '12px 20px', borderRadius: '18px', border: '4px solid #000', boxShadow: '4px 4px 0 #000', marginBottom: '20px' }}>
               <div style={{ fontSize: '22px', fontWeight: '900', color: '#f1c40f', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                 <Trophy size={24} weight="fill" /> {nomeLiga}
               </div>
               <div style={{ fontSize: '14px', fontWeight: 'bold', marginTop: '4px' }}>
-                Partida {partidaAtual} de {totalPartidas} • Sala Cheia Obrigatória (6 jogadores)
+                {emDesempate
+                  ? `⚖️ DESEMPATE (MORTE SÚBITA) • ${nomesEmpatados.join(' vs ')}`
+                  : `Partida ${partidaAtual} de ${totalPartidas} • Sala Cheia Obrigatória (6 jogadores)`}
               </div>
             </div>
           )}
@@ -139,7 +146,7 @@ export default function Lobby(props) {
             </button>
           </div>
           
-          {jogadores[0]?.id === socket.id ? (
+          {podeEditarConfig ? (
             <div style={{ padding: '20px', border: '4px dashed #000', borderRadius: '20px', margin: '0 auto 25px auto', backgroundColor: '#f9f9f9' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
@@ -205,6 +212,12 @@ export default function Lobby(props) {
             </div>
           ) : (
             <div style={{ padding: '18px 20px', border: '4px dashed #000', borderRadius: '20px', margin: '0 auto 25px auto', backgroundColor: '#f9f9f9' }}>
+              {ligaEmAndamento && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#ecf0f1', border: '2px solid #000', borderRadius: '10px', padding: '4px 12px', fontSize: '12px', fontWeight: '900', color: '#2c3e50', marginBottom: '12px' }}>
+                  <Lock size={15} weight="bold" /> Configurações bloqueadas durante o torneio
+                </div>
+              )}
+
               <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                 <div>
                   <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#7f8c8d', display: 'block', marginBottom: '6px' }}>Modo de Jogo:</span>
@@ -265,6 +278,7 @@ export default function Lobby(props) {
             {jogadores.map((jogador, index) => {
               const ehHost = index === 0;
               const euSouHost = jogadores[0]?.id === socket.id;
+              const podeGerenciarJogador = euSouHost && !ligaEmAndamento;
               let corEquipeLobby = 'transparent';
               
               if (formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss' && jogadores.length >= 4) {
@@ -277,13 +291,13 @@ export default function Lobby(props) {
                 <div 
                   key={jogador.id}
                   className="card-jogador"
-                  draggable={euSouHost}
+                  draggable={podeGerenciarJogador}
                   onDragStart={() => (dragItem.current = index)}
                   onDragEnter={() => (dragOverItem.current = index)}
                   onDragEnd={handleSort}
                   onDragOver={(e) => e.preventDefault()}
                   style={{ 
-                    cursor: euSouHost ? 'grab' : 'default',
+                    cursor: podeGerenciarJogador ? 'grab' : 'default',
                     backgroundColor: (formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss') ? `${corEquipeLobby}22` : '#fff'
                   }}
                 >
@@ -301,11 +315,11 @@ export default function Lobby(props) {
                     {jogador.nome} {jogador.id === socket.id && <span style={{ color: '#3498db', display: 'block', fontSize: '14px' }}>{t.voce}</span>}
                   </span>
                   
-                  <span style={{ fontSize: '14px', color: modoLiga ? '#8e44ad' : '#f39c12', fontWeight: '900', marginTop: '5px', marginBottom: (euSouHost && !ehHost) ? '15px' : '0' }}>
+                  <span style={{ fontSize: '14px', color: modoLiga ? '#8e44ad' : '#f39c12', fontWeight: '900', marginTop: '5px', marginBottom: (podeGerenciarJogador && !ehHost) ? '15px' : '0' }}>
                     {modoLiga ? `⭐ ${jogador.pontos || 0} pts` : `🏆 ${jogador.vitorias || 0}`}
                   </span>
                   
-                  {euSouHost && !ehHost && (
+                  {podeGerenciarJogador && !ehHost && (
                     <button onClick={() => expulsarJogador(jogador.id)} style={{ position: 'absolute', bottom: '-10px', background: '#e74c3c', border: '3px solid #000', borderRadius: '10px', color: '#fff', padding: '2px 15px', cursor: 'pointer', fontWeight: '900', boxShadow: '2px 2px 0 #000' }} title="Expulsar">
                       EXPULSAR
                     </button>
@@ -328,7 +342,11 @@ export default function Lobby(props) {
                   opacity: (modoLiga && jogadores.length !== 6) ? 0.65 : 1
                 }}
               >
-                {modoLiga && jogadores.length !== 6 ? `Aguardando 6/6 (${jogadores.length}/6)` : t.iniciarPartida}
+                {modoLiga && jogadores.length !== 6
+                  ? `Aguardando 6/6 (${jogadores.length}/6)`
+                  : emDesempate
+                  ? 'Iniciar Desempate!'
+                  : t.iniciarPartida}
               </button>
             ) : (
               <div style={{ padding: '15px', border: '4px solid #000', borderRadius: '15px', backgroundColor: '#ecf0f1', width: '100%', maxWidth: '350px', fontWeight: 'bold' }}>
@@ -351,12 +369,15 @@ export default function Lobby(props) {
             </p>
             <input
               type="text"
-              placeholder="Nome da Liga (ex: Copa Kaos)"
-              maxLength={26}
+              placeholder="Nome da Liga (máx. 12)"
+              maxLength={12}
               value={inputNomeLiga}
-              onChange={(e) => setInputNomeLiga(e.target.value)}
-              style={{ width: '85%', fontSize: '16px', textAlign: 'center', margin: '0 0 15px 0' }}
+              onChange={(e) => setInputNomeLiga(e.target.value.slice(0, 12))}
+              style={{ width: '85%', fontSize: '16px', textAlign: 'center', margin: '0 0 6px 0' }}
             />
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#7f8c8d', marginBottom: '15px' }}>
+              {inputNomeLiga.length}/12 caracteres
+            </div>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button className="btn btn-cinza" onClick={() => setModalCriarLigaAberto(false)}>Cancelar</button>
               <button
