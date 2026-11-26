@@ -41,6 +41,8 @@ function App() {
   const [nomeLiga, setNomeLiga] = useState('');
   const [totalPartidas, setTotalPartidas] = useState(3);
   const [partidaAtual, setPartidaAtual] = useState(1);
+  const [emDesempate, setEmDesempate] = useState(false);
+  const [nomesEmpatados, setNomesEmpatados] = useState([]);
   const [campeoesLiga, setCampeoesLiga] = useState(null);
 
   const dragItem = useRef(null);
@@ -190,10 +192,13 @@ function App() {
         setNomeLiga(dados.nomeLiga || '');
         setTotalPartidas(dados.totalPartidas || 3);
         setPartidaAtual(dados.partidaAtual || 1);
+        setEmDesempate(dados.emDesempate || false);
       } else {
         setModoLiga(false);
         setNomeLiga('');
+        setEmDesempate(false);
       }
+      setNomesEmpatados([]);
       setCampeoesLiga(null);
       localStorage.setItem('kaos_sala_ativa', codigo); 
     });
@@ -210,6 +215,8 @@ function App() {
       if (cfg.partidaAtual) setPartidaAtual(cfg.partidaAtual);
       if (cfg.modoLiga !== undefined) setModoLiga(cfg.modoLiga);
       if (cfg.nomeLiga !== undefined) setNomeLiga(cfg.nomeLiga);
+      if (cfg.emDesempate !== undefined) setEmDesempate(cfg.emDesempate);
+      if (cfg.nomesEmpatados !== undefined) setNomesEmpatados(cfg.nomesEmpatados);
     });
     
     socket.on('atualizar_jogadores', (lista) => { 
@@ -315,7 +322,7 @@ function App() {
       
       socket.emit('sair_sala', minhaSala);
       setMinhaSala(null); setJogadores([]); setInfoJogadores([]);
-      setJogoIniciado(false); setVencedor(null); setCampeoesLiga(null); setModoLiga(false); setNomeLiga('');
+      setJogoIniciado(false); setVencedor(null); setCampeoesLiga(null); setModoLiga(false); setNomeLiga(''); setEmDesempate(false); setNomesEmpatados([]);
       setTempoPartida(0); setMostrandoSorteio(false);
       localStorage.removeItem('kaos_sala_ativa');
     });
@@ -343,12 +350,15 @@ function App() {
   const criarSalaLiga = (nomeDaLiga) => {
     if (!nome) return setErro('Digite o seu nome antes de criar a liga!');
     if (!nomeDaLiga || !nomeDaLiga.trim()) return setErro('Digite o nome da Liga!');
-    socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed, modoLiga: true, nomeLiga: nomeDaLiga.trim() });
+    socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed, modoLiga: true, nomeLiga: nomeDaLiga.trim().slice(0, 12) });
   };
 
   const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
 
+  const ligaEmAndamento = modoLiga && (partidaAtual > 1 || emDesempate) && !campeoesLiga;
+
   const alterarRegras = (novaRegra) => {
+    if (ligaEmAndamento) return;
     setRegrasSelecionadas(novaRegra);
     const novoFormato = novaRegra === 'boss' ? 'pvp' : formatoSelecionado;
     if (novaRegra === 'boss') setFormatoSelecionado('pvp');
@@ -358,6 +368,7 @@ function App() {
   };
 
   const alterarFormato = (novoFormato) => {
+    if (ligaEmAndamento) return;
     setFormatoSelecionado(novoFormato);
     if (minhaSala && jogadores[0]?.id === socket.id) {
       socket.emit('alterar_config_sala', { codigoSala: minhaSala, regras: regrasSelecionadas, formato: novoFormato });
@@ -365,6 +376,7 @@ function App() {
   };
 
   const alterarTotalPartidas = (qtd) => {
+    if (ligaEmAndamento) return;
     setTotalPartidas(qtd);
     if (minhaSala && jogadores[0]?.id === socket.id) {
       socket.emit('alterar_config_sala', { codigoSala: minhaSala, totalPartidas: qtd });
@@ -395,9 +407,13 @@ function App() {
     }
   };
 
-  const expulsarJogador = (idAlvo) => { socket.emit('remover_jogador', { codigoSala: minhaSala, alvoId: idAlvo }); };
+  const expulsarJogador = (idAlvo) => {
+    if (ligaEmAndamento) return;
+    socket.emit('remover_jogador', { codigoSala: minhaSala, alvoId: idAlvo });
+  };
 
   const handleSort = () => {
+    if (ligaEmAndamento) return;
     let _jogadores = [...jogadores];
     const draggedItemContent = _jogadores.splice(dragItem.current, 1)[0];
     _jogadores.splice(dragOverItem.current, 0, draggedItemContent);
@@ -421,7 +437,7 @@ function App() {
   
   const sairDaSala = () => { 
     socket.emit('sair_sala', minhaSala); setMinhaSala(null); setJogadores([]); setInfoJogadores([]); 
-    setJogoIniciado(false); setVencedor(null); setCampeoesLiga(null); setModoLiga(false); setNomeLiga('');
+    setJogoIniciado(false); setVencedor(null); setCampeoesLiga(null); setModoLiga(false); setNomeLiga(''); setEmDesempate(false); setNomesEmpatados([]);
     setTempoPartida(0); setMostrandoSorteio(false); localStorage.removeItem('kaos_sala_ativa'); 
   };
   
@@ -476,7 +492,7 @@ function App() {
     handleReconectar, jogadores, socket, regrasSelecionadas, setRegrasSelecionadas: alterarRegras, formatoSelecionado, setFormatoSelecionado: alterarFormato, iniciarPartida,
     adicionarBot, sairDaSala, expulsarJogador, handleSort, dragItem, dragOverItem, modalRegrasAberto, setModalRegrasAberto, modalConfigAberto,
     setModalConfigAberto, musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos, setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos,
-    modoLiga, nomeLiga, totalPartidas, alterarTotalPartidas, partidaAtual, setErro
+    modoLiga, nomeLiga, totalPartidas, alterarTotalPartidas, partidaAtual, emDesempate, nomesEmpatados, ligaEmAndamento, setErro
   };
 
   const tableProps = {
@@ -484,7 +500,7 @@ function App() {
     setMenuEmoteAberto, enviarEmote, minhaSala, baterNaMesa, euJaBati, posicaoNove, minhaMao, cartasSelecionadas, toggleSelecao, tentarJogarSelecionadas,
     comprasAcumuladas, comprarCarta, jaComprou, passarVez, cartaMesa, sentido, filaPassos, resolverPasso, maoEspiadaPrevia, setMaoEspiadaPrevia,
     setPayloadJogada, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, jogadaBossAtiva, eventoAleatorioAtivo, regrasSelecionadas, tempoEventoRestante,
-    modoLiga, nomeLiga, totalPartidas, partidaAtual, campeoesLiga, setCampeoesLiga
+    modoLiga, nomeLiga, totalPartidas, partidaAtual, emDesempate, campeoesLiga, setCampeoesLiga
   };
 
   return (
