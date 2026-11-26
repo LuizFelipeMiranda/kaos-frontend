@@ -12,7 +12,7 @@ export default function Lobby(props) {
     modalRegrasAberto, setModalRegrasAberto, modalConfigAberto, setModalConfigAberto,
     musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos,
     setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos,
-    modoLiga, nomeLiga, totalPartidas, alterarTotalPartidas, partidaAtual, emDesempate, nomesEmpatados, ligaEmAndamento, setErro
+    modoLiga, nomeLiga, totalPartidas, alterarTotalPartidas, partidaAtual, emDesempate, nomesEmpatados, ligaEmAndamento, ligaFinalizada, setErro
   } = props;
 
   const [linkCopiado, setLinkCopiado] = useState(false);
@@ -28,6 +28,9 @@ export default function Lobby(props) {
 
   const getDescricaoFormato = () => {
     if (modoLiga) {
+      if (ligaFinalizada) {
+        return `TORNEIO ENCERRADO: Confira a pontuação final nos cards abaixo e clique em Sair da Sala para voltar ao menu.`;
+      }
       if (emDesempate) {
         return `MORTE SÚBITA (DESEMPATE): ${nomesEmpatados.join(' vs ')} — Quem bater primeiro dentre os empatados vence a Liga na hora!`;
       }
@@ -121,12 +124,14 @@ export default function Lobby(props) {
       ) : (
         <>
           {modoLiga && (
-            <div style={{ backgroundColor: emDesempate ? '#8e44ad' : '#2c3e50', color: '#fff', padding: '12px 20px', borderRadius: '18px', border: '4px solid #000', boxShadow: '4px 4px 0 #000', marginBottom: '20px' }}>
+            <div style={{ backgroundColor: ligaFinalizada ? '#27ae60' : emDesempate ? '#8e44ad' : '#2c3e50', color: '#fff', padding: '12px 20px', borderRadius: '18px', border: '4px solid #000', boxShadow: '4px 4px 0 #000', marginBottom: '20px' }}>
               <div style={{ fontSize: '22px', fontWeight: '900', color: '#f1c40f', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                 <Trophy size={24} weight="fill" /> {nomeLiga}
               </div>
               <div style={{ fontSize: '14px', fontWeight: 'bold', marginTop: '4px' }}>
-                {emDesempate
+                {ligaFinalizada
+                  ? '🏆 Torneio Encerrado!'
+                  : emDesempate
                   ? `⚖️ DESEMPATE (MORTE SÚBITA) • ${nomesEmpatados.join(' vs ')}`
                   : `Partida ${partidaAtual} de ${totalPartidas} • Sala Cheia Obrigatória (6 jogadores)`}
               </div>
@@ -136,14 +141,16 @@ export default function Lobby(props) {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '25px' }}>
             <h2 style={{ margin: '0 0 10px 0' }}>{t.codigoSala} <span style={{ fontSize: '45px', color: '#ff4757', display: 'block' }}>{minhaSala}</span></h2>
             
-            <button 
-              onClick={copiarLinkSala}
-              className={`btn ${linkCopiado ? 'btn-verde' : 'btn-azul'}`}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 20px', fontSize: '16px' }}
-            >
-              {linkCopiado ? <Check size={20} weight="bold" /> : <Copy size={20} weight="bold" />}
-              {linkCopiado ? 'Link Copiado!' : 'Convidar via Link'}
-            </button>
+            {!ligaFinalizada && (
+              <button 
+                onClick={copiarLinkSala}
+                className={`btn ${linkCopiado ? 'btn-verde' : 'btn-azul'}`}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 20px', fontSize: '16px' }}
+              >
+                {linkCopiado ? <Check size={20} weight="bold" /> : <Copy size={20} weight="bold" />}
+                {linkCopiado ? 'Link Copiado!' : 'Convidar via Link'}
+              </button>
+            )}
           </div>
           
           {podeEditarConfig ? (
@@ -214,7 +221,7 @@ export default function Lobby(props) {
             <div style={{ padding: '18px 20px', border: '4px dashed #000', borderRadius: '20px', margin: '0 auto 25px auto', backgroundColor: '#f9f9f9' }}>
               {ligaEmAndamento && (
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#ecf0f1', border: '2px solid #000', borderRadius: '10px', padding: '4px 12px', fontSize: '12px', fontWeight: '900', color: '#2c3e50', marginBottom: '12px' }}>
-                  <Lock size={15} weight="bold" /> Configurações bloqueadas durante o torneio
+                  <Lock size={15} weight="bold" /> {ligaFinalizada ? 'Torneio encerrado' : 'Configurações bloqueadas durante o torneio'}
                 </div>
               )}
 
@@ -267,7 +274,7 @@ export default function Lobby(props) {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px' }}>
             <h3 style={{ margin: 0 }}>{t.jogadores} ({jogadores.length}/6)</h3>
-            {jogadores[0]?.id === socket.id && jogadores.length < 6 && (
+            {jogadores[0]?.id === socket.id && jogadores.length < 6 && !ligaFinalizada && (
               <button className="btn btn-roxo btn-pequeno" onClick={adicionarBot} style={{ margin: 0, display: 'flex', gap: '5px', alignItems: 'center' }}>
                 <UserPlus size={18} weight="bold" /> Adicionar Bot
               </button>
@@ -330,28 +337,30 @@ export default function Lobby(props) {
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '35px', alignItems: 'center' }}>
-            {jogadores[0]?.id === socket.id ? (
-              <button
-                className="btn btn-vermelho"
-                onClick={iniciarPartida}
-                style={{
-                  fontSize: '26px',
-                  padding: '15px 40px',
-                  width: '100%',
-                  maxWidth: '350px',
-                  opacity: (modoLiga && jogadores.length !== 6) ? 0.65 : 1
-                }}
-              >
-                {modoLiga && jogadores.length !== 6
-                  ? `Aguardando 6/6 (${jogadores.length}/6)`
-                  : emDesempate
-                  ? 'Iniciar Desempate!'
-                  : t.iniciarPartida}
-              </button>
-            ) : (
-              <div style={{ padding: '15px', border: '4px solid #000', borderRadius: '15px', backgroundColor: '#ecf0f1', width: '100%', maxWidth: '350px', fontWeight: 'bold' }}>
-                ⏳ {t.aguardandoHost}
-              </div>
+            {!ligaFinalizada && (
+              jogadores[0]?.id === socket.id ? (
+                <button
+                  className="btn btn-vermelho"
+                  onClick={iniciarPartida}
+                  style={{
+                    fontSize: '26px',
+                    padding: '15px 40px',
+                    width: '100%',
+                    maxWidth: '350px',
+                    opacity: (modoLiga && jogadores.length !== 6) ? 0.65 : 1
+                  }}
+                >
+                  {modoLiga && jogadores.length !== 6
+                    ? `Aguardando 6/6 (${jogadores.length}/6)`
+                    : emDesempate
+                    ? 'Iniciar Desempate!'
+                    : t.iniciarPartida}
+                </button>
+              ) : (
+                <div style={{ padding: '15px', border: '4px solid #000', borderRadius: '15px', backgroundColor: '#ecf0f1', width: '100%', maxWidth: '350px', fontWeight: 'bold' }}>
+                  ⏳ {t.aguardandoHost}
+                </div>
+              )
             )}
             <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>{t.sairSala}</button>
           </div>
