@@ -43,6 +43,7 @@ function App() {
   const [partidaAtual, setPartidaAtual] = useState(1);
   const [emDesempate, setEmDesempate] = useState(false);
   const [nomesEmpatados, setNomesEmpatados] = useState([]);
+  const [ligaFinalizada, setLigaFinalizada] = useState(false);
   const [campeoesLiga, setCampeoesLiga] = useState(null);
 
   const dragItem = useRef(null);
@@ -193,10 +194,12 @@ function App() {
         setTotalPartidas(dados.totalPartidas || 3);
         setPartidaAtual(dados.partidaAtual || 1);
         setEmDesempate(dados.emDesempate || false);
+        setLigaFinalizada(dados.ligaFinalizada || false);
       } else {
         setModoLiga(false);
         setNomeLiga('');
         setEmDesempate(false);
+        setLigaFinalizada(false);
       }
       setNomesEmpatados([]);
       setCampeoesLiga(null);
@@ -217,6 +220,7 @@ function App() {
       if (cfg.nomeLiga !== undefined) setNomeLiga(cfg.nomeLiga);
       if (cfg.emDesempate !== undefined) setEmDesempate(cfg.emDesempate);
       if (cfg.nomesEmpatados !== undefined) setNomesEmpatados(cfg.nomesEmpatados);
+      if (cfg.ligaFinalizada !== undefined) setLigaFinalizada(cfg.ligaFinalizada);
     });
     
     socket.on('atualizar_jogadores', (lista) => { 
@@ -244,6 +248,7 @@ function App() {
       setCartasSelecionadas([]); 
       setVencedor(null); 
       setCampeoesLiga(null);
+      setLigaFinalizada(false);
       setTempoPartida(0);
       setEventoAleatorioAtivo(null);
       
@@ -314,7 +319,10 @@ function App() {
     });
 
     socket.on('fim_de_jogo', (nomeGanhador) => { setVencedor(nomeGanhador); });
-    socket.on('fim_da_liga', (dadosCampeao) => { setCampeoesLiga(dadosCampeao); });
+    socket.on('fim_da_liga', (dadosCampeao) => {
+      setLigaFinalizada(true);
+      setCampeoesLiga(dadosCampeao);
+    });
     
     socket.on('voce_foi_removido', () => {
       setErro(idioma === 'pt' ? 'Você foi expulso da sala pelo anfitrião.' : 'You were kicked from the room.');
@@ -322,7 +330,7 @@ function App() {
       
       socket.emit('sair_sala', minhaSala);
       setMinhaSala(null); setJogadores([]); setInfoJogadores([]);
-      setJogoIniciado(false); setVencedor(null); setCampeoesLiga(null); setModoLiga(false); setNomeLiga(''); setEmDesempate(false); setNomesEmpatados([]);
+      setJogoIniciado(false); setVencedor(null); setCampeoesLiga(null); setModoLiga(false); setNomeLiga(''); setEmDesempate(false); setNomesEmpatados([]); setLigaFinalizada(false);
       setTempoPartida(0); setMostrandoSorteio(false);
       localStorage.removeItem('kaos_sala_ativa');
     });
@@ -355,7 +363,7 @@ function App() {
 
   const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
 
-  const ligaEmAndamento = modoLiga && (partidaAtual > 1 || emDesempate) && !campeoesLiga;
+  const ligaEmAndamento = modoLiga && (partidaAtual > 1 || emDesempate || ligaFinalizada);
 
   const alterarRegras = (novaRegra) => {
     if (ligaEmAndamento) return;
@@ -384,6 +392,7 @@ function App() {
   };
   
   const iniciarPartida = () => { 
+    if (ligaFinalizada) return;
     if (modoLiga && jogadores.length !== 6) {
       setErro('A Liga do Kaos requer sala cheia (6 jogadores)!'); setTimeout(() => setErro(''), 4000); return;
     }
@@ -397,6 +406,7 @@ function App() {
   };
   
   const adicionarBot = () => {
+    if (ligaFinalizada) return;
     const nomesDeBots = ['ALGA', 'BOTAS', 'VITE', 'LUNA', 'RYSER'];
     const nomesDisponiveis = nomesDeBots.filter((nomeBot) => !jogadores.some((jogador) => jogador.nome === `[BOT] ${nomeBot}`));
     if (nomesDisponiveis.length > 0) { 
@@ -437,7 +447,7 @@ function App() {
   
   const sairDaSala = () => { 
     socket.emit('sair_sala', minhaSala); setMinhaSala(null); setJogadores([]); setInfoJogadores([]); 
-    setJogoIniciado(false); setVencedor(null); setCampeoesLiga(null); setModoLiga(false); setNomeLiga(''); setEmDesempate(false); setNomesEmpatados([]);
+    setJogoIniciado(false); setVencedor(null); setCampeoesLiga(null); setModoLiga(false); setNomeLiga(''); setEmDesempate(false); setNomesEmpatados([]); setLigaFinalizada(false);
     setTempoPartida(0); setMostrandoSorteio(false); localStorage.removeItem('kaos_sala_ativa'); 
   };
   
@@ -492,7 +502,7 @@ function App() {
     handleReconectar, jogadores, socket, regrasSelecionadas, setRegrasSelecionadas: alterarRegras, formatoSelecionado, setFormatoSelecionado: alterarFormato, iniciarPartida,
     adicionarBot, sairDaSala, expulsarJogador, handleSort, dragItem, dragOverItem, modalRegrasAberto, setModalRegrasAberto, modalConfigAberto,
     setModalConfigAberto, musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos, setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos,
-    modoLiga, nomeLiga, totalPartidas, alterarTotalPartidas, partidaAtual, emDesempate, nomesEmpatados, ligaEmAndamento, setErro
+    modoLiga, nomeLiga, totalPartidas, alterarTotalPartidas, partidaAtual, emDesempate, nomesEmpatados, ligaEmAndamento, ligaFinalizada, setErro
   };
 
   const tableProps = {
