@@ -1,20 +1,23 @@
 import { useState } from 'react';
-import { BookBookmark, Gear, MusicNote, SpeakerHigh, SpeakerSlash, Copy, Check, Crown, UserPlus, Skull } from '@phosphor-icons/react';
+import { BookBookmark, Gear, MusicNote, SpeakerHigh, SpeakerSlash, Copy, Check, Crown, UserPlus, Skull, Trophy } from '@phosphor-icons/react';
 import livePixQRCode from '../assets/livepix.png';
 
 export default function Lobby(props) {
   const {
     t, idioma, setIdioma, nome, setNome, meuAvatarSeed, roletarAvatar,
-    codigoSalaInput, setCodigoSalaInput, minhaSala, criarSala, entrarSala,
+    codigoSalaInput, setCodigoSalaInput, minhaSala, criarSala, criarSalaLiga, entrarSala,
     handleReconectar, jogadores, socket, regrasSelecionadas, setRegrasSelecionadas,
     formatoSelecionado, setFormatoSelecionado, iniciarPartida, adicionarBot,
     sairDaSala, expulsarJogador, handleSort, dragItem, dragOverItem,
     modalRegrasAberto, setModalRegrasAberto, modalConfigAberto, setModalConfigAberto,
     musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos,
-    setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos
+    setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos,
+    modoLiga, nomeLiga, totalPartidas, alterarTotalPartidas, partidaAtual, setErro
   } = props;
 
   const [linkCopiado, setLinkCopiado] = useState(false);
+  const [modalCriarLigaAberto, setModalCriarLigaAberto] = useState(false);
+  const [inputNomeLiga, setInputNomeLiga] = useState('');
 
   const copiarLinkSala = () => {
     const url = `${window.location.origin}/?sala=${minhaSala}`;
@@ -24,10 +27,26 @@ export default function Lobby(props) {
   };
 
   const getDescricaoFormato = () => {
+    if (modoLiga) {
+      if (formatoSelecionado === 'duplas') {
+        return `LIGA DO KAOS (DUPLAS - 6 JOGADORES): 1ª dupla a bater ganha 1000 pts cada e 2ª dupla ganha 700 pts cada. Vence a dupla com mais pontos ao fim de ${totalPartidas} partidas!`;
+      }
+      return `LIGA DO KAOS (SOLO - 6 JOGADORES): 1º ganha 1000 pts, 2º ganha 700 pts e 3º ganha 500 pts. Vence quem somar mais pontos ao fim de ${totalPartidas} partidas!`;
+    }
     if (regrasSelecionadas === 'boss') return "MODO CHEFÃO: 1 vs Todos! O Chefão joga com 20 cartas e tem 2 jogadas seguidas por turno. Os outros jogadores se juntam para o derrotar! (Mínimo 3 jogadores, usa cartas Casuais).";
     if (regrasSelecionadas === 'kaos_aleatorio') return "KAOS ALEATÓRIO: Eventos aleatórios disparados a cada 50 segundos! O temporizador para e o caos acontece! (Usa cartas Casuais).";
     if (formatoSelecionado === 'duplas') return t.descDuplasReq;
     return regrasSelecionadas === 'casual' ? t.descCasual : t.descKaos;
+  };
+
+  const abrirModalLiga = () => {
+    if (!nome || !nome.trim()) {
+      setErro('Digite o seu nome antes de criar uma liga!');
+      setTimeout(() => setErro(''), 3000);
+      return;
+    }
+    setInputNomeLiga('');
+    setModalCriarLigaAberto(true);
   };
 
   return (
@@ -63,7 +82,16 @@ export default function Lobby(props) {
             <input type="text" placeholder={t.seuNome} maxLength={12} value={nome} onChange={(e) => setNome(e.target.value)} style={{ padding: '12px', borderRadius: '15px', border: '4px solid #000', fontSize: '18px', textAlign: 'center', fontWeight: 'bold', width: '80%', maxWidth: '250px', boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.1)' }} />
           </div>
 
-          <button className="btn btn-verde" onClick={criarSala} style={{ fontSize: '22px', padding: '12px 30px' }}>{t.criarSala}</button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <button className="btn btn-verde" onClick={criarSala} style={{ fontSize: '22px', padding: '12px 30px' }}>{t.criarSala}</button>
+            <button
+              className="btn"
+              onClick={abrirModalLiga}
+              style={{ fontSize: '18px', padding: '10px 26px', backgroundColor: '#f1c40f', color: '#000', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Trophy size={22} weight="fill" /> Liga do Kaos
+            </button>
+          </div>
           
           <h3 style={{ margin: '20px 0', color: '#000', fontSize: '20px' }}>{t.ou}</h3>
 
@@ -87,6 +115,17 @@ export default function Lobby(props) {
         </>
       ) : (
         <>
+          {modoLiga && (
+            <div style={{ backgroundColor: '#2c3e50', color: '#fff', padding: '12px 20px', borderRadius: '18px', border: '4px solid #000', boxShadow: '4px 4px 0 #000', marginBottom: '20px' }}>
+              <div style={{ fontSize: '22px', fontWeight: '900', color: '#f1c40f', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <Trophy size={24} weight="fill" /> {nomeLiga}
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', marginTop: '4px' }}>
+                Partida {partidaAtual} de {totalPartidas} • Sala Cheia Obrigatória (6 jogadores)
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '25px' }}>
             <h2 style={{ margin: '0 0 10px 0' }}>{t.codigoSala} <span style={{ fontSize: '45px', color: '#ff4757', display: 'block' }}>{minhaSala}</span></h2>
             
@@ -117,17 +156,17 @@ export default function Lobby(props) {
                       >
                         Kaos Aleatório
                       </button>
-
                     </div>
 
-                    <button 
-                      className={`btn btn-modo ${regrasSelecionadas === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} 
-                      onClick={() => setRegrasSelecionadas('boss')} 
-                      style={{ width: '100%', marginTop: '5px', backgroundColor: regrasSelecionadas === 'boss' ? '#e74c3c' : '', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                    >
-                      <Skull size={20} weight="bold" /> CHEFÃO (1 vs Todos)
-                    </button>
-                    
+                    {!modoLiga && (
+                      <button 
+                        className={`btn btn-modo ${regrasSelecionadas === 'boss' ? 'btn-vermelho' : 'btn-cinza'}`} 
+                        onClick={() => setRegrasSelecionadas('boss')} 
+                        style={{ width: '100%', marginTop: '5px', backgroundColor: regrasSelecionadas === 'boss' ? '#e74c3c' : '', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      >
+                        <Skull size={20} weight="bold" /> CHEFÃO (1 vs Todos)
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div style={{ width: '4px', height: '90px', backgroundColor: '#000', margin: '0 15px', borderRadius: '2px' }}></div>
@@ -139,6 +178,27 @@ export default function Lobby(props) {
                   </div>
                 </div>
               </div>
+
+              {modoLiga && (
+                <div style={{ marginTop: '15px', paddingTop: '12px', borderTop: '3px dashed #ccc' }}>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>Duração do Torneio:</h3>
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                    <button
+                      className={`btn btn-modo ${totalPartidas === 3 ? 'btn-roxo' : 'btn-cinza'}`}
+                      onClick={() => alterarTotalPartidas(3)}
+                    >
+                      Melhor de 3 Partidas
+                    </button>
+                    <button
+                      className={`btn btn-modo ${totalPartidas === 5 ? 'btn-roxo' : 'btn-cinza'}`}
+                      onClick={() => alterarTotalPartidas(5)}
+                    >
+                      Melhor de 5 Partidas
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <p style={{ fontSize: '13px', margin: '15px 0 0 0', fontWeight: 'bold', color: '#7f8c8d' }}>
                 {getDescricaoFormato()}
               </p>
@@ -169,6 +229,21 @@ export default function Lobby(props) {
                     {(formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss') ? t.duplas : t.pvp}
                   </span>
                 </div>
+
+                {modoLiga && (
+                  <>
+                    <div style={{ width: '3px', height: '45px', backgroundColor: '#000', borderRadius: '2px' }}></div>
+                    <div>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#7f8c8d', display: 'block', marginBottom: '6px' }}>Duração:</span>
+                      <span style={{
+                        display: 'inline-block', padding: '6px 16px', borderRadius: '12px', border: '3px solid #000', fontWeight: '900', fontSize: '15px', boxShadow: '2px 2px 0 #000',
+                        backgroundColor: '#9b59b6', color: '#fff'
+                      }}>
+                        Melhor de {totalPartidas}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <p style={{ fontSize: '13px', margin: '15px 0 0 0', fontWeight: 'bold', color: '#7f8c8d' }}>
@@ -226,7 +301,9 @@ export default function Lobby(props) {
                     {jogador.nome} {jogador.id === socket.id && <span style={{ color: '#3498db', display: 'block', fontSize: '14px' }}>{t.voce}</span>}
                   </span>
                   
-                  <span style={{ fontSize: '14px', color: '#f39c12', fontWeight: 'bold', marginTop: '5px', marginBottom: (euSouHost && !ehHost) ? '15px' : '0' }}>🏆 {jogador.vitorias || 0}</span>
+                  <span style={{ fontSize: '14px', color: modoLiga ? '#8e44ad' : '#f39c12', fontWeight: '900', marginTop: '5px', marginBottom: (euSouHost && !ehHost) ? '15px' : '0' }}>
+                    {modoLiga ? `⭐ ${jogador.pontos || 0} pts` : `🏆 ${jogador.vitorias || 0}`}
+                  </span>
                   
                   {euSouHost && !ehHost && (
                     <button onClick={() => expulsarJogador(jogador.id)} style={{ position: 'absolute', bottom: '-10px', background: '#e74c3c', border: '3px solid #000', borderRadius: '10px', color: '#fff', padding: '2px 15px', cursor: 'pointer', fontWeight: '900', boxShadow: '2px 2px 0 #000' }} title="Expulsar">
@@ -240,7 +317,19 @@ export default function Lobby(props) {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '35px', alignItems: 'center' }}>
             {jogadores[0]?.id === socket.id ? (
-              <button className="btn btn-vermelho" onClick={iniciarPartida} style={{ fontSize: '26px', padding: '15px 40px', width: '100%', maxWidth: '350px' }}>{t.iniciarPartida}</button>
+              <button
+                className="btn btn-vermelho"
+                onClick={iniciarPartida}
+                style={{
+                  fontSize: '26px',
+                  padding: '15px 40px',
+                  width: '100%',
+                  maxWidth: '350px',
+                  opacity: (modoLiga && jogadores.length !== 6) ? 0.65 : 1
+                }}
+              >
+                {modoLiga && jogadores.length !== 6 ? `Aguardando 6/6 (${jogadores.length}/6)` : t.iniciarPartida}
+              </button>
             ) : (
               <div style={{ padding: '15px', border: '4px solid #000', borderRadius: '15px', backgroundColor: '#ecf0f1', width: '100%', maxWidth: '350px', fontWeight: 'bold' }}>
                 ⏳ {t.aguardandoHost}
@@ -249,6 +338,44 @@ export default function Lobby(props) {
             <button className="btn btn-cinza" onClick={sairDaSala} style={{ marginTop: '10px' }}>{t.sairSala}</button>
           </div>
         </>
+      )}
+
+      {modalCriarLigaAberto && (
+        <div className="modal-overlay" style={{ zIndex: 1300, backdropFilter: 'blur(5px)' }}>
+          <div className="modal-content" style={{ width: '90%', maxWidth: '400px', border: '6px solid #000', borderRadius: '25px', boxShadow: '8px 8px 0 #000' }}>
+            <h2 style={{ marginTop: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <Trophy size={28} weight="fill" color="#f1c40f" /> Liga do Kaos
+            </h2>
+            <p style={{ fontSize: '14px', color: '#7f8c8d', fontWeight: 'bold', margin: '0 0 15px 0' }}>
+              Torneio exclusivo para 6 jogadores (Solo ou Duplas) com pontuação por pódio!
+            </p>
+            <input
+              type="text"
+              placeholder="Nome da Liga (ex: Copa Kaos)"
+              maxLength={26}
+              value={inputNomeLiga}
+              onChange={(e) => setInputNomeLiga(e.target.value)}
+              style={{ width: '85%', fontSize: '16px', textAlign: 'center', margin: '0 0 15px 0' }}
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button className="btn btn-cinza" onClick={() => setModalCriarLigaAberto(false)}>Cancelar</button>
+              <button
+                className="btn btn-verde"
+                onClick={() => {
+                  if (!inputNomeLiga.trim()) {
+                    setErro('Digite o nome da Liga!');
+                    setTimeout(() => setErro(''), 3000);
+                    return;
+                  }
+                  criarSalaLiga(inputNomeLiga);
+                  setModalCriarLigaAberto(false);
+                }}
+              >
+                Criar Liga
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {modalRegrasAberto && (
