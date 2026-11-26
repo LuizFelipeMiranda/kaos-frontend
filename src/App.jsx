@@ -36,6 +36,13 @@ function App() {
   const [regrasSelecionadas, setRegrasSelecionadas] = useState('kaos'); 
   const [formatoSelecionado, setFormatoSelecionado] = useState('pvp'); 
 
+  // ESTADOS DA LIGA DO KAOS
+  const [modoLiga, setModoLiga] = useState(false);
+  const [nomeLiga, setNomeLiga] = useState('');
+  const [totalPartidas, setTotalPartidas] = useState(3);
+  const [partidaAtual, setPartidaAtual] = useState(1);
+  const [campeoesLiga, setCampeoesLiga] = useState(null);
+
   const dragItem = useRef(null);
   const dragOverItem = useRef(null);
 
@@ -59,7 +66,6 @@ function App() {
   
   const [eventoAleatorioAtivo, setEventoAleatorioAtivo] = useState(null); 
   
-  // NOVOS ESTADOS PARA O TEMPORIZADOR DO EVENTO (50s)
   const [tempoEventoRestante, setTempoEventoRestante] = useState(50);
   const [tempoRefEvento, setTempoRefEvento] = useState(() => Date.now());
 
@@ -94,15 +100,15 @@ function App() {
 
   useEffect(() => {
     let interval;
-    if (jogoIniciado && !vencedor) {
+    if (jogoIniciado && !vencedor && !campeoesLiga) {
       interval = setInterval(() => setTempoPartida(prev => prev + 1), 1000);
     }
     return () => clearInterval(interval);
-  }, [jogoIniciado, vencedor]);
+  }, [jogoIniciado, vencedor, campeoesLiga]);
 
   useEffect(() => {
     let interval;
-    if (jogoIniciado && !vencedor && !eventoNoveAtivo && !eventoAleatorioAtivo) {
+    if (jogoIniciado && !vencedor && !campeoesLiga && !eventoNoveAtivo && !eventoAleatorioAtivo) {
       interval = setInterval(() => {
         const passado = Math.floor((Date.now() - tempoReferencia) / 1000);
         setTempoTurnoRestante(Math.max(25 - passado, 0));
@@ -114,14 +120,14 @@ function App() {
       }, 500);
     }
     return () => clearInterval(interval);
-  }, [jogoIniciado, vencedor, eventoNoveAtivo, eventoAleatorioAtivo, tempoReferencia, tempoRefEvento, regrasSelecionadas]);
+  }, [jogoIniciado, vencedor, campeoesLiga, eventoNoveAtivo, eventoAleatorioAtivo, tempoReferencia, tempoRefEvento, regrasSelecionadas]);
 
   useEffect(() => {
     if (audioMusicaRef.current) audioMusicaRef.current.pause();
     if (audioJogoRef.current) audioJogoRef.current.pause();
     if (audioVitoriaRef.current) audioVitoriaRef.current.pause();
 
-    if (vencedor) {
+    if (vencedor || campeoesLiga) {
       if (audioVitoriaRef.current && efeitosAtivos) {
         audioVitoriaRef.current.volume = volumeEfeitos;
         audioVitoriaRef.current.currentTime = 0;
@@ -137,7 +143,7 @@ function App() {
         }
       }
     }
-  }, [musicaAtiva, volumeMusica, vencedor, jogoIniciado, efeitosAtivos, volumeEfeitos]);
+  }, [musicaAtiva, volumeMusica, vencedor, campeoesLiga, jogoIniciado, efeitosAtivos, volumeEfeitos]);
 
   const tocarEfeito = useCallback((tipo = 'carta') => {
     if (!efeitosAtivos) return;
@@ -173,11 +179,22 @@ function App() {
   }, [mostrandoSorteio, jogadorSorteado, jogadores]);
 
   useEffect(() => {
-    socket.on('sala_criada', (codigo) => { 
+    socket.on('sala_criada', (dados) => { 
+      const codigo = typeof dados === 'string' ? dados : dados.codigo;
       setMinhaSala(codigo); 
-      setJogadores([{ id: socket.id, nome: nome, avatar: meuAvatarSeed, vitorias: 0 }]); 
+      setJogadores([{ id: socket.id, nome: nome, avatar: meuAvatarSeed, vitorias: 0, pontos: 0, posicaoPodio: null }]); 
       setRegrasSelecionadas('kaos');
       setFormatoSelecionado('pvp');
+      if (typeof dados === 'object') {
+        setModoLiga(dados.modoLiga || false);
+        setNomeLiga(dados.nomeLiga || '');
+        setTotalPartidas(dados.totalPartidas || 3);
+        setPartidaAtual(dados.partidaAtual || 1);
+      } else {
+        setModoLiga(false);
+        setNomeLiga('');
+      }
+      setCampeoesLiga(null);
       localStorage.setItem('kaos_sala_ativa', codigo); 
     });
     
@@ -186,9 +203,13 @@ function App() {
       localStorage.setItem('kaos_sala_ativa', codigo); 
     });
 
-    socket.on('config_sala_atualizada', ({ regras, formato }) => {
-      setRegrasSelecionadas(regras);
-      setFormatoSelecionado(formato);
+    socket.on('config_sala_atualizada', (cfg) => {
+      if (cfg.regras) setRegrasSelecionadas(cfg.regras);
+      if (cfg.formato) setFormatoSelecionado(cfg.formato);
+      if (cfg.totalPartidas) setTotalPartidas(cfg.totalPartidas);
+      if (cfg.partidaAtual) setPartidaAtual(cfg.partidaAtual);
+      if (cfg.modoLiga !== undefined) setModoLiga(cfg.modoLiga);
+      if (cfg.nomeLiga !== undefined) setNomeLiga(cfg.nomeLiga);
     });
     
     socket.on('atualizar_jogadores', (lista) => { 
@@ -215,6 +236,7 @@ function App() {
       setJogadaBossAtiva(dados.jogadaBossAtiva || 1);
       setCartasSelecionadas([]); 
       setVencedor(null); 
+      setCampeoesLiga(null);
       setTempoPartida(0);
       setEventoAleatorioAtivo(null);
       
@@ -285,6 +307,7 @@ function App() {
     });
 
     socket.on('fim_de_jogo', (nomeGanhador) => { setVencedor(nomeGanhador); });
+    socket.on('fim_da_liga', (dadosCampeao) => { setCampeoesLiga(dadosCampeao); });
     
     socket.on('voce_foi_removido', () => {
       setErro(idioma === 'pt' ? 'Você foi expulso da sala pelo anfitrião.' : 'You were kicked from the room.');
@@ -292,7 +315,8 @@ function App() {
       
       socket.emit('sair_sala', minhaSala);
       setMinhaSala(null); setJogadores([]); setInfoJogadores([]);
-      setJogoIniciado(false); setVencedor(null); setTempoPartida(0); setMostrandoSorteio(false);
+      setJogoIniciado(false); setVencedor(null); setCampeoesLiga(null); setModoLiga(false); setNomeLiga('');
+      setTempoPartida(0); setMostrandoSorteio(false);
       localStorage.removeItem('kaos_sala_ativa');
     });
     
@@ -307,14 +331,21 @@ function App() {
       socket.off('sala_criada'); socket.off('entrou_na_sala'); socket.off('config_sala_atualizada'); socket.off('atualizar_jogadores'); 
       socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); 
       socket.off('mao_espiao_previa'); socket.off('emote_recebido'); socket.off('erro'); 
-      socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo');
+      socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo'); socket.off('fim_da_liga');
       socket.off('evento_aleatorio_iniciado'); socket.off('evento_aleatorio_concluido'); socket.off('olhar_cartas_lado');
       socket.off('voce_foi_removido'); socket.off('disconnect');
     };
   }, [nome, meuAvatarSeed, tocarEfeito, idioma, minhaSala]);
 
   const roletarAvatar = () => { setMeuAvatarSeed(gerarSeedAleatoria()); };
-  const criarSala = () => { if (!nome) return setErro('Digite o seu nome!'); socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed }); };
+  const criarSala = () => { if (!nome) return setErro('Digite o seu nome!'); socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed, modoLiga: false }); };
+  
+  const criarSalaLiga = (nomeDaLiga) => {
+    if (!nome) return setErro('Digite o seu nome antes de criar a liga!');
+    if (!nomeDaLiga || !nomeDaLiga.trim()) return setErro('Digite o nome da Liga!');
+    socket.emit('criar_sala', { nomeJogador: nome, avatar: meuAvatarSeed, modoLiga: true, nomeLiga: nomeDaLiga.trim() });
+  };
+
   const entrarSala = () => { if (!nome || !codigoSalaInput) return setErro('Preencha os campos!'); socket.emit('entrar_sala', { codigoSala: codigoSalaInput, nomeJogador: nome, avatar: meuAvatarSeed }); };
 
   const alterarRegras = (novaRegra) => {
@@ -332,8 +363,18 @@ function App() {
       socket.emit('alterar_config_sala', { codigoSala: minhaSala, regras: regrasSelecionadas, formato: novoFormato });
     }
   };
+
+  const alterarTotalPartidas = (qtd) => {
+    setTotalPartidas(qtd);
+    if (minhaSala && jogadores[0]?.id === socket.id) {
+      socket.emit('alterar_config_sala', { codigoSala: minhaSala, totalPartidas: qtd });
+    }
+  };
   
   const iniciarPartida = () => { 
+    if (modoLiga && jogadores.length !== 6) {
+      setErro('A Liga do Kaos requer sala cheia (6 jogadores)!'); setTimeout(() => setErro(''), 4000); return;
+    }
     if (formatoSelecionado === 'duplas' && regrasSelecionadas !== 'boss' && (jogadores.length !== 4 && jogadores.length !== 6)) {
       setErro('O modo Duplas requer exatamente 4 ou 6 jogadores!'); setTimeout(() => setErro(''), 4000); return;
     }
@@ -380,7 +421,8 @@ function App() {
   
   const sairDaSala = () => { 
     socket.emit('sair_sala', minhaSala); setMinhaSala(null); setJogadores([]); setInfoJogadores([]); 
-    setJogoIniciado(false); setVencedor(null); setTempoPartida(0); setMostrandoSorteio(false); localStorage.removeItem('kaos_sala_ativa'); 
+    setJogoIniciado(false); setVencedor(null); setCampeoesLiga(null); setModoLiga(false); setNomeLiga('');
+    setTempoPartida(0); setMostrandoSorteio(false); localStorage.removeItem('kaos_sala_ativa'); 
   };
   
   const toggleSelecao = (cartaClicada) => { 
@@ -430,17 +472,19 @@ function App() {
   const jogadorDaVez = infoJogadores.find(j => j.id === turnoAtual);
 
   const lobbyProps = {
-    t, idioma, setIdioma, nome, setNome, meuAvatarSeed, roletarAvatar, codigoSalaInput, setCodigoSalaInput, minhaSala, criarSala, entrarSala,
+    t, idioma, setIdioma, nome, setNome, meuAvatarSeed, roletarAvatar, codigoSalaInput, setCodigoSalaInput, minhaSala, criarSala, criarSalaLiga, entrarSala,
     handleReconectar, jogadores, socket, regrasSelecionadas, setRegrasSelecionadas: alterarRegras, formatoSelecionado, setFormatoSelecionado: alterarFormato, iniciarPartida,
     adicionarBot, sairDaSala, expulsarJogador, handleSort, dragItem, dragOverItem, modalRegrasAberto, setModalRegrasAberto, modalConfigAberto,
-    setModalConfigAberto, musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos, setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos
+    setModalConfigAberto, musicaAtiva, setMusicaAtiva, volumeMusica, setVolumeMusica, efeitosAtivos, setEfeitosAtivos, volumeEfeitos, setVolumeEfeitos,
+    modoLiga, nomeLiga, totalPartidas, alterarTotalPartidas, partidaAtual, setErro
   };
 
   const tableProps = {
     t, idioma, socket, tempoPartida, meuJogadorInfo, turnoAtual, eventoNoveAtivo, tempoTurnoRestante, oponentesOrdenados, emotesAtivos, menuEmoteAberto,
     setMenuEmoteAberto, enviarEmote, minhaSala, baterNaMesa, euJaBati, posicaoNove, minhaMao, cartasSelecionadas, toggleSelecao, tentarJogarSelecionadas,
     comprasAcumuladas, comprarCarta, jaComprou, passarVez, cartaMesa, sentido, filaPassos, resolverPasso, maoEspiadaPrevia, setMaoEspiadaPrevia,
-    setPayloadJogada, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, jogadaBossAtiva, eventoAleatorioAtivo, regrasSelecionadas, tempoEventoRestante
+    setPayloadJogada, vencedor, setVencedor, setJogoIniciado, setTempoPartida, jogadorDaVez, jogadaBossAtiva, eventoAleatorioAtivo, regrasSelecionadas, tempoEventoRestante,
+    modoLiga, nomeLiga, totalPartidas, partidaAtual, campeoesLiga, setCampeoesLiga
   };
 
   return (
@@ -490,7 +534,7 @@ function App() {
 
       <div className="ocultar-no-retrato">
         {erro && <div className="notificacao-topo-esquerdo" style={{ top: jogoIniciado ? '75px' : '20px' }}>{erro}</div>}
-        {vencedor || jogoIniciado ? <Table {...tableProps} /> : <Lobby {...lobbyProps} />}
+        {vencedor || campeoesLiga || jogoIniciado ? <Table {...tableProps} /> : <Lobby {...lobbyProps} />}
       </div>
     </div>
   );
