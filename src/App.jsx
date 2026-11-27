@@ -246,6 +246,9 @@ function App() {
       setInfoJogadores(dados.infoJogadores || []); 
       setJogadaBossAtiva(dados.jogadaBossAtiva || 1);
       setCartasSelecionadas([]); 
+      setFilaPassos([]);
+      setPayloadJogada(null);
+      setMaoEspiadaPrevia(null);
       setVencedor(null); 
       setCampeoesLiga(null);
       setLigaFinalizada(false);
@@ -270,12 +273,25 @@ function App() {
       setInfoJogadores(dados.infoJogadores || []); 
       if (dados.jogadaBossAtiva) setJogadaBossAtiva(dados.jogadaBossAtiva);
       setCartasSelecionadas([]); 
+
+      if (dados.turnoAtual !== socket.id) {
+        setFilaPassos([]);
+        setPayloadJogada(null);
+        setMaoEspiadaPrevia(null);
+      }
       
       if (dados.resetarTempo) { 
         setTempoReferencia(Date.now()); 
         setTempoTurnoRestante(25); 
       }
       tocarEfeito('carta');
+    });
+
+    socket.on('cancelar_modal_efeito', () => {
+      setFilaPassos([]);
+      setPayloadJogada(null);
+      setMaoEspiadaPrevia(null);
+      setCartasSelecionadas([]);
     });
 
     socket.on('evento_aleatorio_iniciado', (evento) => {
@@ -344,7 +360,7 @@ function App() {
 
     return () => {
       socket.off('sala_criada'); socket.off('entrou_na_sala'); socket.off('config_sala_atualizada'); socket.off('atualizar_jogadores'); 
-      socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); 
+      socket.off('sorteando_primeiro_jogador'); socket.off('partida_iniciada'); socket.off('estado_atualizado'); socket.off('cancelar_modal_efeito');
       socket.off('mao_espiao_previa'); socket.off('emote_recebido'); socket.off('erro'); 
       socket.off('iniciar_evento_nove'); socket.off('fim_evento_nove'); socket.off('fim_de_jogo'); socket.off('fim_da_liga');
       socket.off('evento_aleatorio_iniciado'); socket.off('evento_aleatorio_concluido'); socket.off('olhar_cartas_lado');
@@ -468,9 +484,14 @@ function App() {
     if (ultimaCarta.cor === 'preto' && ultimaCarta.valor !== 'escolher_numero') passosMapeados.push('cor');
 
     if (passosMapeados.length > 0) { 
-      setFilaPassos(passosMapeados); setPayloadJogada({ codigoSala: minhaSala, cartas: cartasSelecionadas }); 
+      socket.emit('iniciando_efeito_carta', minhaSala);
+      setTempoReferencia(Date.now());
+      setTempoTurnoRestante(25);
+      setFilaPassos(passosMapeados); 
+      setPayloadJogada({ codigoSala: minhaSala, cartas: cartasSelecionadas }); 
     } else { 
-      socket.emit('jogar_cartas', { codigoSala: minhaSala, cartas: cartasSelecionadas }); setCartasSelecionadas([]); 
+      socket.emit('jogar_cartas', { codigoSala: minhaSala, cartas: cartasSelecionadas }); 
+      setCartasSelecionadas([]); 
     }
   };
 
